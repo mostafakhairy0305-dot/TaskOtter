@@ -641,6 +641,156 @@ func TestAllPublicTasksIntegration(t *testing.T) {
 	})
 }
 
+// Stub-based behavioral tests — these run real task commands against the
+// dryRunEnv stub (nvm.sh present but fake) so they exercise actual task logic
+// without downloading or installing anything.
+
+func TestVersionTaskExitsSuccessfully(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	result := runTask(t, root, dryRunEnv(t), "--yes", "version")
+
+	assertExitCode(t, result, 0)
+}
+
+func TestLsTaskExitsSuccessfully(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	result := runTask(t, root, dryRunEnv(t), "--yes", "ls")
+
+	assertExitCode(t, result, 0)
+}
+
+// TestInstallIsIdempotentWithStubNvm verifies that running task install twice
+// succeeds both times — the second run should be a no-op because the status
+// check sees nvm.sh already present.
+func TestInstallIsIdempotentWithStubNvm(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	env := dryRunEnv(t)
+
+	assertExitCode(t, runTask(t, root, env, "--yes", "install"), 0)
+	assertExitCode(t, runTask(t, root, env, "--yes", "install"), 0)
+}
+
+// TestInstallUndoRemovesNvmDir runs install:undo with a stub environment and
+// verifies that the NVM directory is actually removed from disk.
+func TestInstallUndoRemovesNvmDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	env := dryRunEnv(t)
+	nvmDir := envValue(env, "NVM_DIR")
+
+	assertDirExists(t, nvmDir)
+
+	result := runTask(t, root, env, "--yes", "install:undo")
+	assertExitCode(t, result, 0)
+
+	assertDirNotExists(t, nvmDir)
+}
+
+// TestNodeInstallWithVersionPrintsVersionInOutput verifies that running
+// node:install VERSION=18.0.0 produces output that mentions 18.0.0, confirming
+// the task forwards the right version to the underlying nvm command.
+func TestNodeInstallWithVersionPrintsVersionInOutput(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	result := runTask(t, root, dryRunEnv(t), "--yes", "node:install", "VERSION=18.0.0")
+
+	assertExitCode(t, result, 0)
+	assertContains(t, result.combined(), "18.0.0")
+}
+
+// TestNodeInstallDefaultVersionUsesLts verifies that omitting VERSION causes
+// node:install to target the LTS stream rather than a specific version.
+func TestNodeInstallDefaultVersionUsesLts(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	result := runTask(t, root, dryRunEnv(t), "--yes", "node:install")
+
+	assertExitCode(t, result, 0)
+	assertContains(t, result.combined(), "--lts")
+}
+
+// TestNodeInstallSkipsAlreadyInstalledVersion verifies that node:install
+// does not re-run the install when the requested version directory already
+// exists — no "Installing" message should appear in the output.
+func TestNodeInstallSkipsAlreadyInstalledVersion(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	env := dryRunEnv(t)
+	nvmDir := envValue(env, "NVM_DIR")
+
+	versionDir := filepath.Join(nvmDir, "versions", "node", "v18.0.0")
+	if err := os.MkdirAll(versionDir, 0755); err != nil {
+		t.Fatalf("failed to create stub version dir: %v", err)
+	}
+
+	result := runTask(t, root, env, "--yes", "node:install", "VERSION=18.0.0")
+
+	assertExitCode(t, result, 0)
+	assertNotContains(t, result.combined(), "Installing Node.js 18.0.0")
+}
+
+// TestNodeUninstallSkipsWhenVersionNotInstalled verifies that node:uninstall
+// does nothing when the requested version is not installed — the status check
+// should treat it as already complete with no "Uninstalling" output.
+func TestNodeUninstallSkipsWhenVersionNotInstalled(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	result := runTask(t, root, dryRunEnv(t), "--yes", "node:uninstall", "VERSION=18.0.0")
+
+	assertExitCode(t, result, 0)
+	assertNotContains(t, result.combined(), "Uninstalling Node.js 18.0.0")
+}
+
+// TestNodeUninstallWithInstalledVersionPrintsVersionInOutput verifies that
+// when a version directory exists, node:uninstall runs and its output
+// contains the targeted version number.
+func TestNodeUninstallWithInstalledVersionPrintsVersionInOutput(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub nvm tests target Unix-like systems")
+	}
+
+	root := repoRoot(t)
+	env := dryRunEnv(t)
+	nvmDir := envValue(env, "NVM_DIR")
+
+	versionDir := filepath.Join(nvmDir, "versions", "node", "v18.0.0")
+	if err := os.MkdirAll(versionDir, 0755); err != nil {
+		t.Fatalf("failed to create stub version dir: %v", err)
+	}
+
+	result := runTask(t, root, env, "--yes", "node:uninstall", "VERSION=18.0.0")
+
+	assertExitCode(t, result, 0)
+	assertContains(t, result.combined(), "18.0.0")
+}
+
 type LoadedTaskfile struct {
 	Path  string
 	Root  taskNode

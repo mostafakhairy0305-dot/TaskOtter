@@ -1,5 +1,16 @@
 # NVM Taskfile Public Tasks
 
+## What is NVM?
+
+NVM (Node Version Manager) is a command-line tool that lets you install and switch between multiple versions of Node.js on the same machine. It is useful when different projects require different Node.js versions, or when you need to test against a specific version without affecting your system-wide Node.js installation.
+
+There are two separate implementations:
+
+- **[nvm-sh](https://github.com/nvm-sh/nvm)** — the original implementation for Linux, macOS, and WSL. It is sourced into your shell session and manages Node.js versions under `~/.nvm`.
+- **[nvm-windows](https://github.com/coreybutler/nvm-windows)** — a separate project for Windows with a similar interface but a different installation mechanism.
+
+---
+
 This document describes the public tasks exposed by the NVM Taskfile.
 
 The Taskfile provides one cross-platform interface for managing NVM and Node.js versions.
