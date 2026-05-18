@@ -200,6 +200,7 @@ func TestPublicTasksHaveMetadata(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			task := mustTask(t, tf, spec.Name)
 
 			if task.node.Kind != yaml.MappingNode {
@@ -238,6 +239,7 @@ func TestDestructivePublicTasksHavePrompt(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			if !spec.RequiresPrompt {
 				return
 			}
@@ -269,6 +271,7 @@ func TestInstallTasksUseGithubGroupOutput(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			if !spec.RequiresGroupOutput {
 				return
 			}
@@ -292,6 +295,7 @@ func TestPublicTasksHaveCommands(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			task := mustTask(t, tf, spec.Name)
 
 			cmds := task.field("cmds")
@@ -311,6 +315,7 @@ func TestTaskSummariesWork(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			if !spec.RequiresSummary {
 				return
 			}
@@ -335,6 +340,7 @@ func TestPublicTasksDryRunWithExpectedArgs(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			if !spec.MustDryRunWithArgs {
 				return
 			}
@@ -363,6 +369,7 @@ func TestOptionalVersionTasksDryRunWithoutVersion(t *testing.T) {
 		spec := spec
 
 		t.Run(spec.Name, func(t *testing.T) {
+			t.Parallel()
 			if !spec.MustDryRunWithoutArgs {
 				return
 			}
@@ -441,6 +448,7 @@ func TestAliasesDryRun(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.alias, func(t *testing.T) {
+			t.Parallel()
 			args := append([]string{"--dry", "--yes", tc.alias}, tc.args...)
 			result := runTask(t, root, dryRunEnv(t), args...)
 
@@ -465,6 +473,7 @@ func TestReferencedScriptsExist(t *testing.T) {
 			command := command
 
 			t.Run(taskName, func(t *testing.T) {
+				t.Parallel()
 				for _, scriptPath := range referencedLocalShellScripts(command) {
 					abs := filepath.Join(root, scriptPath)
 
@@ -649,6 +658,7 @@ func TestVersionTaskExitsSuccessfully(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	result := runTask(t, root, dryRunEnv(t), "--yes", "version")
@@ -660,6 +670,7 @@ func TestLsTaskExitsSuccessfully(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	result := runTask(t, root, dryRunEnv(t), "--yes", "ls")
@@ -674,6 +685,7 @@ func TestInstallIsIdempotentWithStubNvm(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	env := dryRunEnv(t)
@@ -688,6 +700,7 @@ func TestInstallUndoRemovesNvmDir(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	env := dryRunEnv(t)
@@ -708,6 +721,7 @@ func TestNodeInstallWithVersionPrintsVersionInOutput(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	result := runTask(t, root, dryRunEnv(t), "--yes", "node:install", "VERSION=18.0.0")
@@ -722,6 +736,7 @@ func TestNodeInstallDefaultVersionUsesLts(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	result := runTask(t, root, dryRunEnv(t), "--yes", "node:install")
@@ -737,6 +752,7 @@ func TestNodeInstallSkipsAlreadyInstalledVersion(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	env := dryRunEnv(t)
@@ -760,6 +776,7 @@ func TestNodeUninstallSkipsWhenVersionNotInstalled(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	result := runTask(t, root, dryRunEnv(t), "--yes", "node:uninstall", "VERSION=18.0.0")
@@ -775,6 +792,7 @@ func TestNodeUninstallWithInstalledVersionPrintsVersionInOutput(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("stub nvm tests target Unix-like systems")
 	}
+	t.Parallel()
 
 	root := repoRoot(t)
 	env := dryRunEnv(t)
