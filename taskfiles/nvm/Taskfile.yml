@@ -1,0 +1,394 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+vars:
+  NVM_SH_VERSION: v0.40.1
+  NVM_WINDOWS_VERSION: v1.1.12
+  NVM_WINDOWS_ZIP_URL: https://github.com/coreybutler/nvm-windows/releases/download/{{.NVM_WINDOWS_VERSION}}/nvm-setup.zip
+  NVM_SH_INSTALL_URL: https://raw.githubusercontent.com/nvm-sh/nvm/{{.NVM_SH_VERSION}}/install.sh
+  DEFAULT_NODE_VERSION_UNIX: '--lts'
+  DEFAULT_NODE_VERSION_WINDOWS: lts
+  NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
+
+tasks:
+  default:
+    desc: Show available NVM automation tasks
+    summary: Display the list of available NVM-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    desc: Install NVM on the current operating system
+    summary: Install the correct NVM implementation for the current platform. Windows uses nvm-windows from nvm-setup.zip. Linux, macOS, and WSL use nvm-sh through the official install script.
+    cmds:
+      - task: _install:windows
+      - task: _install:unix
+
+  install:undo:
+    desc: Remove NVM from the current operating system
+    summary: Undo the NVM installation for the current platform. On Windows this runs the nvm-windows uninstaller. On Linux, macOS, and WSL this removes the local nvm-sh directory.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove NVM from this machine.
+      - Node.js versions managed by NVM may also become unavailable.
+      - Continue?
+    cmds:
+      - task: _install:undo:windows
+      - task: _install:undo:unix
+
+  version:
+    desc: Show the installed NVM version
+    summary: Print the currently installed NVM version for the active platform.
+    deps:
+      - install
+    cmds:
+      - task: _version:windows
+      - task: _version:unix
+
+  node:install:
+    desc: Install a Node.js version with NVM
+    summary: Install the Node.js version provided through VERSION. If VERSION is not provided, install the latest LTS version for the current platform.
+    aliases:
+      - node:uninstall:undo
+    deps:
+      - install
+    cmds:
+      - task: _node:install:windows
+        vars:
+          VERSION: '{{default .DEFAULT_NODE_VERSION_WINDOWS .VERSION}}'
+      - task: _node:install:unix
+        vars:
+          VERSION: '{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}'
+
+  node:uninstall:
+    desc: Uninstall a Node.js version managed by NVM
+    summary: Remove the Node.js version provided through VERSION from the local NVM installation.
+    aliases:
+      - node:install:undo
+    deps:
+      - install
+    requires:
+      vars:
+        - VERSION
+    prompt:
+      - This will uninstall Node.js {{.VERSION}} from NVM.
+      - Any projects currently using this version may stop working until another version is selected.
+      - Continue?
+    cmds:
+      - task: _node:uninstall:windows
+        vars:
+          VERSION: '{{.VERSION}}'
+      - task: _node:uninstall:unix
+        vars:
+          VERSION: '{{.VERSION}}'
+
+  node:use:
+    desc: Switch to a Node.js version
+    summary: Install (if needed) and activate the Node.js version provided through VERSION. If VERSION is not provided, use the latest LTS version for the current platform.
+    deps:
+      - task: node:install
+        vars:
+          VERSION: '{{.VERSION}}'
+    cmds:
+      - task: _node:use:windows
+        vars:
+          VERSION: '{{default .DEFAULT_NODE_VERSION_WINDOWS .VERSION}}'
+      - task: _node:use:unix
+        vars:
+          VERSION: '{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}'
+
+  ls:
+    desc: List Node.js versions installed through NVM
+    summary: Show all Node.js versions installed and managed by NVM on the current machine.
+    aliases:
+      - list
+    deps:
+      - install
+    cmds:
+      - task: _ls:windows
+      - task: _ls:unix
+
+  node:version:
+    desc: Show the active Node.js and npm versions
+    summary: Print the currently active Node.js and npm versions available through the current platform-specific NVM setup.
+    aliases:
+      - node:current
+      - node:active
+    deps:
+      - install
+    cmds:
+      - task: _node:version:windows
+      - task: _node:version:unix
+
+  _install:windows:
+    internal: true
+    desc: Install nvm-windows
+    summary: Download nvm-setup.zip from the latest nvm-windows release, extract it, run the installer silently, and clean up temporary files.
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { exit 0 } else { exit 1 }"
+        msg: Run Terminal or PowerShell as Administrator before installing nvm-windows.
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command node -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+        msg: Existing Node.js detected. Uninstall the existing Node.js installation before installing nvm-windows to avoid PATH conflicts.
+    cmds:
+      - echo Downloading nvm-setup.zip...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $zip = Join-Path $env:TEMP 'nvm-setup.zip'; $dir = Join-Path $env:TEMP 'nvm-setup'; Remove-Item $zip -Force -ErrorAction SilentlyContinue; Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue; Invoke-WebRequest -Uri '{{.NVM_WINDOWS_ZIP_URL}}' -OutFile $zip; Expand-Archive -Path $zip -DestinationPath $dir -Force; Start-Process -FilePath (Join-Path $dir 'nvm-setup.exe') -ArgumentList '/SILENT /SUPPRESSMSGBOXES /NORESTART' -Wait; Remove-Item $zip -Force -ErrorAction SilentlyContinue; Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue"
+      - echo nvm-windows installed. Close and reopen your terminal if nvm is not detected immediately.
+
+  _install:undo:windows:
+    internal: true
+    desc: Remove nvm-windows
+    summary: Run the nvm-windows uninstaller from NVM_HOME if it exists.
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { exit 0 } else { exit 1 }"
+        msg: Run Terminal or PowerShell as Administrator before uninstalling nvm-windows.
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:NVM_HOME -and (Test-Path (Join-Path $env:NVM_HOME 'unins000.exe'))) { exit 0 } else { exit 1 }"
+        msg: nvm-windows uninstaller was not found. Check NVM_HOME or uninstall it manually from Apps & Features.
+    cmds:
+      - echo Uninstalling nvm-windows...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$uninstaller = Join-Path $env:NVM_HOME 'unins000.exe'; Start-Process -FilePath $uninstaller -ArgumentList '/SILENT /SUPPRESSMSGBOXES /NORESTART' -Wait"
+      - echo nvm-windows uninstall command completed. Reopen terminal after uninstall.
+
+  _version:windows:
+    internal: true
+    desc: Show nvm-windows version
+    summary: Print the installed nvm-windows version.
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: nvm is not installed or not available in PATH.
+    cmds:
+      - nvm version
+
+  _node:install:windows:
+    internal: true
+    desc: Install Node.js with nvm-windows
+    summary: Install the requested Node.js version using nvm-windows. The default public value is lts when VERSION is omitted.
+    platforms: [windows]
+    requires:
+      vars:
+        - VERSION
+    env:
+      VERSION: '{{.VERSION}}'
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = $env:VERSION; if ($v -eq 'lts' -or $v -eq 'latest' -or $v -eq 'newest') { exit 1 }; if ($env:NVM_HOME -and (Test-Path (Join-Path $env:NVM_HOME ('v' + $v)))) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: nvm is not installed or not available in PATH.
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { exit 0 } else { exit 1 }"
+        msg: Run Terminal or PowerShell as Administrator because nvm-windows may need admin rights for symlinks.
+    cmds:
+      - echo Installing Node.js {{.VERSION}} with nvm-windows...
+      - nvm install %VERSION%
+
+  _node:uninstall:windows:
+    internal: true
+    desc: Uninstall Node.js from nvm-windows
+    summary: Remove the requested Node.js version from the local nvm-windows installation.
+    platforms: [windows]
+    requires:
+      vars:
+        - VERSION
+    env:
+      VERSION: '{{.VERSION}}'
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:NVM_HOME -and (Test-Path (Join-Path $env:NVM_HOME ('v' + $env:VERSION)))) { exit 1 } else { exit 0 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: nvm is not installed or not available in PATH.
+    cmds:
+      - echo Uninstalling Node.js {{.VERSION}} with nvm-windows...
+      - nvm uninstall %VERSION%
+
+  _node:use:windows:
+    internal: true
+    desc: Use Node.js with nvm-windows
+    summary: Switch the active Windows Node.js symlink to the requested version. The default public value is lts when VERSION is omitted.
+    platforms: [windows]
+    requires:
+      vars:
+        - VERSION
+    env:
+      VERSION: '{{.VERSION}}'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: nvm is not installed or not available in PATH.
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = $env:VERSION; if ($v -eq 'lts' -or $v -eq 'latest' -or $v -eq 'newest') { exit 0 }; if ($env:NVM_HOME -and (Test-Path (Join-Path $env:NVM_HOME ('v' + $v)))) { exit 0 } else { exit 1 }"
+        msg: Node.js {{.VERSION}} is not installed. Run task node:install VERSION={{.VERSION}} first.
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { exit 0 } else { exit 1 }"
+        msg: Run Terminal or PowerShell as Administrator because nvm-windows needs admin rights for nvm use.
+    cmds:
+      - echo Switching to Node.js {{.VERSION}}...
+      - nvm use %VERSION%
+
+  _ls:windows:
+    internal: true
+    desc: List Node.js versions from nvm-windows
+    summary: Show all Node.js versions installed under nvm-windows.
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: nvm is not installed or not available in PATH.
+    cmds:
+      - nvm list
+
+  _node:version:windows:
+    internal: true
+    desc: Show active Windows Node.js version
+    summary: Print the active Node.js and npm versions available on Windows.
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: node is not available in PATH. Run task node:use first.
+    cmds:
+      - nvm current
+      - node --version
+      - npm --version
+
+  _install:unix:
+    internal: true
+    desc: Install nvm-sh
+    summary: Install nvm-sh on Linux, macOS, or WSL using curl or wget and the official nvm-sh install script URL.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - test -s "$HOME/.nvm/nvm.sh"
+    preconditions:
+      - sh: command -v bash >/dev/null 2>&1
+        msg: bash is required.
+      - sh: command -v git >/dev/null 2>&1
+        msg: git is required by the nvm-sh installer.
+      - sh: command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1
+        msg: curl or wget is required to download the nvm-sh installation script.
+    cmds:
+      - echo Installing nvm-sh {{.NVM_SH_VERSION}}...
+      - cmd: curl -o- "{{.NVM_SH_INSTALL_URL}}" | bash
+        if: command -v curl >/dev/null 2>&1
+      - cmd: wget -qO- "{{.NVM_SH_INSTALL_URL}}" | bash
+        if: '! command -v curl >/dev/null 2>&1 && command -v wget >/dev/null 2>&1'
+      - echo 'nvm-sh installed. Restart your shell or run . "$HOME/.nvm/nvm.sh" to load nvm in the current session.'
+
+  _install:undo:unix:
+    internal: true
+    desc: Remove nvm-sh
+    summary: Remove the local nvm-sh installation directory from Linux, macOS, or WSL.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - test ! -d "$HOME/.nvm"
+    cmds:
+      - echo Removing nvm-sh from "$HOME/.nvm"...
+      - bash -lc 'export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm unload || true'
+      - rm -rf "$HOME/.nvm"
+      - echo Removed "$HOME/.nvm".
+      - bash -c 'found=$(grep -rl "NVM_DIR\|nvm\.sh" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" 2>/dev/null || true); [ -n "$found" ] && echo "Manually remove NVM_DIR lines from:" && echo "$found" | sed "s/^/  /" || echo "No NVM_DIR references found in shell profile files."'
+
+  _version:unix:
+    internal: true
+    desc: Show nvm-sh version
+    summary: Print the installed nvm-sh version on Linux, macOS, or WSL.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -s "$HOME/.nvm/nvm.sh"
+        msg: nvm-sh is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.NVM_LOAD}}; nvm --version'
+
+  _node:install:unix:
+    internal: true
+    desc: Install Node.js with nvm-sh
+    summary: Install the requested Node.js version using nvm-sh on Linux, macOS, or WSL. The default public value is --lts when VERSION is omitted.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars:
+        - VERSION
+    env:
+      VERSION: '{{.VERSION}}'
+    status:
+      - bash -lc 'if [ "{{.VERSION}}" = "--lts" ] || [ "{{.VERSION}}" = "node" ]; then exit 1; fi; test -d "$HOME/.nvm/versions/node/v{{.VERSION}}"'
+    preconditions:
+      - sh: test -s "$HOME/.nvm/nvm.sh"
+        msg: nvm-sh is not installed. Run task install first.
+    cmds:
+      - echo Installing Node.js {{.VERSION}} with nvm-sh...
+      - bash -lc '{{.NVM_LOAD}}; nvm install "$VERSION"'
+
+  _node:uninstall:unix:
+    internal: true
+    desc: Uninstall Node.js from nvm-sh
+    summary: Remove the requested Node.js version from the local nvm-sh installation.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars:
+        - VERSION
+    env:
+      VERSION: '{{.VERSION}}'
+    status:
+      - test ! -d "$HOME/.nvm/versions/node/v{{.VERSION}}"
+    preconditions:
+      - sh: test -s "$HOME/.nvm/nvm.sh"
+        msg: nvm-sh is not installed. Run task install first.
+    cmds:
+      - echo Uninstalling Node.js {{.VERSION}} with nvm-sh...
+      - bash -lc '{{.NVM_LOAD}}; nvm uninstall "$VERSION"'
+
+  _node:use:unix:
+    internal: true
+    desc: Use Node.js with nvm-sh
+    summary: Activate the requested Node.js version in nvm-sh and set it as the default Node.js version for future shells.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars:
+        - VERSION
+    env:
+      VERSION: '{{.VERSION}}'
+    preconditions:
+      - sh: test -s "$HOME/.nvm/nvm.sh"
+        msg: nvm-sh is not installed. Run task install first.
+      - sh: bash -lc '{{.NVM_LOAD}}; nvm version "$VERSION" >/dev/null 2>&1'
+        msg: Node.js {{.VERSION}} is not installed. Run task node:install VERSION={{.VERSION}} first.
+    cmds:
+      - echo Switching to Node.js {{.VERSION}}...
+      - bash -lc '{{.NVM_LOAD}}; nvm use "$VERSION"; nvm alias default "$(nvm current)"'
+      - echo 'Node.js {{.VERSION}} set as default for new shells. Run . "$HOME/.nvm/nvm.sh" && nvm use {{.VERSION}} to activate in the current session.'
+
+  _ls:unix:
+    internal: true
+    desc: List Node.js versions from nvm-sh
+    summary: Show all Node.js versions installed under nvm-sh on Linux, macOS, or WSL.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -s "$HOME/.nvm/nvm.sh"
+        msg: nvm-sh is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.NVM_LOAD}}; nvm ls'
+
+  _node:version:unix:
+    internal: true
+    desc: Show active Unix Node.js version
+    summary: Print the active Node.js and npm versions available after loading nvm-sh.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -s "$HOME/.nvm/nvm.sh"
+        msg: nvm-sh is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.NVM_LOAD}}; nvm current; node --version; npm --version'

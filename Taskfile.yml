@@ -1,0 +1,13 @@
+version: '3'
+
+includes:
+  nvm:
+    taskfile: taskfiles/nvm/Taskfile.yml
+
+tasks:
+  default:
+    desc: List available tasks
+    summary: Show all tasks available in this Taskfile and its includes.
+    silent: true
+    cmds:
+      - task --list

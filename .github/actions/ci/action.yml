@@ -1,0 +1,30 @@
+name: CI
+description: Set up Go and Task, vet, and test the project.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    - name: Install Taskfile CLI
+      uses: go-task/setup-task@v2
+      with:
+        version: "3.x"
+
+    - name: Show versions
+      shell: bash
+      run: |
+        go version
+        task --version
+
+    - name: Vet
+      shell: bash
+      run: go vet ./...
+
+    - name: Test
+      shell: bash
+      run: go test ./... -v -timeout 5m
