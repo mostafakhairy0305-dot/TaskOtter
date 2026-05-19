@@ -1,6 +1,8 @@
 version: '3'
 
 includes:
+  bun:
+    taskfile: taskfiles/bun/Taskfile.yml
   nvm:
     taskfile: taskfiles/nvm/Taskfile.yml
 

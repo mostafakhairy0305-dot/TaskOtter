@@ -1,4 +1,4 @@
-package fnm_test
+package bun_test
 
 import (
 	"bytes"
@@ -19,14 +19,12 @@ import (
 )
 
 type PublicTaskSpec struct {
-	Name                  string
-	Args                  map[string]string
-	MustDryRunWithoutArgs bool
-	MustDryRunWithArgs    bool
-	ExpectedDefaultTokens []string
-	RequiresGroupOutput   bool
-	RequiresPrompt        bool
-	RequiresSummary       bool
+	Name                string
+	Args                map[string]string
+	MustDryRunWithArgs  bool
+	RequiresGroupOutput bool
+	RequiresPrompt      bool
+	RequiresSummary     bool
 }
 
 var expectedPublicTasks = []PublicTaskSpec{
@@ -44,42 +42,19 @@ var expectedPublicTasks = []PublicTaskSpec{
 		RequiresSummary:     true,
 	},
 	{
-		Name:               "ls",
-		MustDryRunWithArgs: true,
-		RequiresSummary:    true,
-	},
-	{
-		Name:                  "node:install",
-		Args:                  map[string]string{"VERSION": "24.0.0"},
-		MustDryRunWithoutArgs: true,
-		MustDryRunWithArgs:    true,
-		ExpectedDefaultTokens: []string{"--lts"},
-		RequiresGroupOutput:   true,
-		RequiresSummary:       true,
-	},
-	{
-		Name:                "node:uninstall",
-		Args:                map[string]string{"VERSION": "24.0.0"},
+		Name:                "upgrade",
 		MustDryRunWithArgs:  true,
 		RequiresGroupOutput: true,
-		RequiresPrompt:      true,
 		RequiresSummary:     true,
 	},
 	{
-		Name:                  "node:use",
-		Args:                  map[string]string{"VERSION": "24.0.0"},
-		MustDryRunWithoutArgs: true,
-		MustDryRunWithArgs:    true,
-		ExpectedDefaultTokens: []string{"--lts"},
-		RequiresSummary:       true,
+		Name:                "upgrade:canary",
+		MustDryRunWithArgs:  true,
+		RequiresGroupOutput: true,
+		RequiresSummary:     true,
 	},
 	{
-		Name:               "node:version",
-		MustDryRunWithArgs: true,
-		RequiresSummary:    true,
-	},
-	{
-		Name:                "shell:setup",
+		Name:                "upgrade:stable",
 		MustDryRunWithArgs:  true,
 		RequiresGroupOutput: true,
 		RequiresSummary:     true,
@@ -354,7 +329,7 @@ func TestPublicTasksDryRunWithExpectedArgs(t *testing.T) {
 			args := []string{"--dry", "--yes", spec.Name}
 			args = append(args, taskArgs(spec.Args)...)
 
-			result := runTask(t, root, fnmDryRunEnv(t), args...)
+			result := runTask(t, root, bunDryRunEnv(t), args...)
 
 			assertExitCode(t, result, 0)
 
@@ -363,40 +338,6 @@ func TestPublicTasksDryRunWithExpectedArgs(t *testing.T) {
 			assertNotContains(t, strings.ToLower(out), "unknown task")
 			assertNotContains(t, strings.ToLower(out), "cannot find")
 			assertNotContains(t, strings.ToLower(out), "missing required")
-		})
-	}
-}
-
-func TestOptionalVersionTasksDryRunWithoutVersion(t *testing.T) {
-	root := repoRoot(t)
-	tf := loadTaskfile(t)
-
-	for _, spec := range expectedPublicTasks {
-		spec := spec
-
-		t.Run(spec.Name, func(t *testing.T) {
-			t.Parallel()
-			if !spec.MustDryRunWithoutArgs {
-				return
-			}
-
-			result := runTask(t, root, fnmDryRunEnv(t), "--dry", "--yes", spec.Name)
-
-			assertExitCode(t, result, 0)
-
-			out := result.combined()
-			assertNotContains(t, strings.ToLower(out), "missing required")
-			assertNotContains(t, strings.ToLower(out), "required variable")
-
-			// silent:true suppresses command text in dry-run output, so verify
-			// default token values via YAML vars instead of subprocess output.
-			if len(spec.ExpectedDefaultTokens) > 0 {
-				vars := tf.Root.field("vars")
-				varsText := nodeText(vars)
-				for _, token := range spec.ExpectedDefaultTokens {
-					assertContains(t, varsText, token)
-				}
-			}
 		})
 	}
 }
@@ -415,20 +356,12 @@ func TestUndoPairsExist(t *testing.T) {
 		}
 	}
 
-	for _, p := range []struct{ task, undoAlias, undoTarget string }{
-		{"node:install", "node:install:undo", "node:uninstall"},
-		{"node:uninstall", "node:uninstall:undo", "node:install"},
-	} {
-		if _, ok := tf.Tasks[p.task]; !ok {
-			t.Fatalf("task %q is missing", p.task)
-		}
-		target, ok := tf.Tasks[p.undoTarget]
-		if !ok {
-			t.Fatalf("undo target %q is missing for task %q", p.undoTarget, p.task)
-		}
-		if !hasAlias(target, p.undoAlias) {
-			t.Fatalf("task %q is missing alias %q (undo of %q)", p.undoTarget, p.undoAlias, p.task)
-		}
+	undoTask, ok := tf.Tasks["install:undo"]
+	if !ok {
+		t.Fatal("task install:undo is missing")
+	}
+	if !hasAlias(undoTask, "uninstall") {
+		t.Fatal("task install:undo is missing alias uninstall")
 	}
 }
 
@@ -439,12 +372,7 @@ func TestAliasesDryRun(t *testing.T) {
 		alias string
 		args  []string
 	}{
-		{"list", nil},
 		{"uninstall", nil},
-		{"node:install:undo", []string{"VERSION=24.0.0"}},
-		{"node:uninstall:undo", []string{"VERSION=24.0.0"}},
-		{"node:current", nil},
-		{"node:active", nil},
 	}
 
 	for _, tc := range cases {
@@ -453,7 +381,7 @@ func TestAliasesDryRun(t *testing.T) {
 		t.Run(tc.alias, func(t *testing.T) {
 			t.Parallel()
 			args := append([]string{"--dry", "--yes", tc.alias}, tc.args...)
-			result := runTask(t, root, fnmDryRunEnv(t), args...)
+			result := runTask(t, root, bunDryRunEnv(t), args...)
 
 			assertExitCode(t, result, 0)
 
@@ -540,234 +468,141 @@ func TestNoPlaceholderTextInTaskfile(t *testing.T) {
 }
 
 // Stub-based behavioral tests — these run real task commands against the
-// fnmDryRunEnv stub (a fake fnm binary) so they exercise actual task logic
+// bunDryRunEnv stub (a fake bun binary) so they exercise actual task logic
 // without downloading or installing anything.
 
 func TestVersionTaskExitsSuccessfully(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	result := runTask(t, root, fnmDryRunEnv(t), "--yes", "version")
+	result := runTask(t, root, bunDryRunEnv(t), "--yes", "version")
 
 	assertExitCode(t, result, 0)
 }
 
-func TestLsTaskExitsSuccessfully(t *testing.T) {
+func TestVersionTaskPrintsBunVersion(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	result := runTask(t, root, fnmDryRunEnv(t), "--yes", "ls")
+	result := runTask(t, root, bunDryRunEnv(t), "--yes", "version")
 
 	assertExitCode(t, result, 0)
+	assertContains(t, result.combined(), "1.")
 }
 
-// TestInstallIsIdempotentWithStubFnm verifies that running task install twice
+// TestInstallIsIdempotentWithStubBun verifies that running task install twice
 // succeeds both times — the second run should be a no-op because the status
-// check sees the stub fnm binary already in PATH.
-func TestInstallIsIdempotentWithStubFnm(t *testing.T) {
+// check sees the stub bun binary already present.
+func TestInstallIsIdempotentWithStubBun(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	env := fnmDryRunEnv(t)
+	env := bunDryRunEnv(t)
 
 	assertExitCode(t, runTask(t, root, env, "--yes", "install"), 0)
 	assertExitCode(t, runTask(t, root, env, "--yes", "install"), 0)
 }
 
-// TestInstallUndoRemovesFnmBinary runs install:undo and verifies the fnm
-// binary is actually removed from $HOME/.local/bin.
-func TestInstallUndoRemovesFnmBinary(t *testing.T) {
+// TestInstallSkipsWhenBunIsAlreadyPresent verifies that install does not
+// print an "Installing" message when the stub bun binary is already present
+// and no VERSION is specified — the status check should short-circuit the task.
+func TestInstallSkipsWhenBunIsAlreadyPresent(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	env := fnmDryRunEnv(t)
-	home := envValue(env, "HOME")
-	stubBin := filepath.Join(home, ".local", "bin", "fnm")
+	result := runTask(t, root, bunDryRunEnv(t), "--yes", "install")
 
-	assertFileExists(t, stubBin)
+	assertExitCode(t, result, 0)
+	assertNotContains(t, result.combined(), "Installing Bun")
+}
+
+// TestInstallUndoRemovesBunDir runs install:undo and verifies that the
+// $HOME/.bun directory is actually removed from disk.
+func TestInstallUndoRemovesBunDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub bun tests target Unix-like systems")
+	}
+	t.Parallel()
+
+	root := repoRoot(t)
+	env := bunDryRunEnv(t)
+	bunDir := bunInstallDir(env)
+
+	assertDirExists(t, bunDir)
 
 	result := runTask(t, root, env, "--yes", "install:undo")
 	assertExitCode(t, result, 0)
 
-	if _, err := os.Stat(stubBin); !os.IsNotExist(err) {
-		t.Fatalf("expected fnm binary at %s to be removed after install:undo", stubBin)
-	}
+	assertDirNotExists(t, bunDir)
 }
 
-// TestNodeInstallWithVersionPrintsVersionInOutput verifies that running
-// node:install VERSION=18.0.0 produces output that mentions 18.0.0, confirming
-// the task forwards the right version to the underlying fnm command.
-func TestNodeInstallWithVersionPrintsVersionInOutput(t *testing.T) {
+// TestInstallUndoIsIdempotent verifies that running install:undo when Bun is
+// already absent exits successfully without error.
+func TestInstallUndoIsIdempotent(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	result := runTask(t, root, fnmDryRunEnv(t), "--yes", "node:install", "VERSION=18.0.0")
+	env := bunDryRunEnv(t)
+
+	assertExitCode(t, runTask(t, root, env, "--yes", "install:undo"), 0)
+	assertExitCode(t, runTask(t, root, env, "--yes", "install:undo"), 0)
+}
+
+// TestUpgradeExitsSuccessfully verifies that task upgrade succeeds when the
+// stub bun binary is present, exercising the full install dep → upgrade path.
+func TestUpgradeExitsSuccessfully(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("stub bun tests target Unix-like systems")
+	}
+	t.Parallel()
+
+	root := repoRoot(t)
+	result := runTask(t, root, bunDryRunEnv(t), "--yes", "upgrade")
 
 	assertExitCode(t, result, 0)
-	assertContains(t, result.combined(), "18.0.0")
 }
 
-// TestNodeInstallDefaultVersionUsesLts verifies that omitting VERSION causes
-// node:install to target the LTS stream rather than a specific version.
-func TestNodeInstallDefaultVersionUsesLts(t *testing.T) {
+// TestUpgradeCanaryExitsSuccessfully verifies that task upgrade:canary succeeds
+// when the stub bun binary is present.
+func TestUpgradeCanaryExitsSuccessfully(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	result := runTask(t, root, fnmDryRunEnv(t), "--yes", "node:install")
+	result := runTask(t, root, bunDryRunEnv(t), "--yes", "upgrade:canary")
 
 	assertExitCode(t, result, 0)
-	assertContains(t, result.combined(), "--lts")
 }
 
-// TestNodeUninstallWithInstalledVersionPrintsVersionInOutput verifies that
-// node:uninstall runs and its output contains the targeted version number.
-func TestNodeUninstallWithInstalledVersionPrintsVersionInOutput(t *testing.T) {
+// TestUpgradeStableExitsSuccessfully verifies that task upgrade:stable succeeds
+// when the stub bun binary is present.
+func TestUpgradeStableExitsSuccessfully(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
+		t.Skip("stub bun tests target Unix-like systems")
 	}
 	t.Parallel()
 
 	root := repoRoot(t)
-	result := runTask(t, root, fnmDryRunEnv(t), "--yes", "node:uninstall", "VERSION=18.0.0")
+	result := runTask(t, root, bunDryRunEnv(t), "--yes", "upgrade:stable")
 
 	assertExitCode(t, result, 0)
-	assertContains(t, result.combined(), "18.0.0")
-}
-
-// TestShellSetupAddsActivationToProfile verifies that task shell:setup writes
-// an fnm activation line to at least one of the user's shell profile files.
-func TestShellSetupAddsActivationToProfile(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
-	}
-	t.Parallel()
-
-	root := repoRoot(t)
-	env := fnmFreshProfileEnv(t)
-	home := envValue(env, "HOME")
-
-	result := runTask(t, root, env, "--yes", "shell:setup")
-	assertExitCode(t, result, 0)
-
-	profilePaths := []string{
-		filepath.Join(home, ".bashrc"),
-		filepath.Join(home, ".bash_profile"),
-		filepath.Join(home, ".profile"),
-		filepath.Join(home, ".zshrc"),
-		filepath.Join(home, ".zprofile"),
-		filepath.Join(home, ".config", "fish", "config.fish"),
-	}
-
-	found := false
-	for _, p := range profilePaths {
-		content, err := os.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		if strings.Contains(string(content), "fnm env") {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		t.Fatalf("expected at least one shell profile to contain 'fnm env' after task shell:setup")
-	}
-}
-
-// TestShellSetupIsIdempotent verifies that running shell:setup twice does not
-// duplicate the activation line in any profile file.
-func TestShellSetupIsIdempotent(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
-	}
-	t.Parallel()
-
-	root := repoRoot(t)
-	env := fnmFreshProfileEnv(t)
-	home := envValue(env, "HOME")
-
-	assertExitCode(t, runTask(t, root, env, "--yes", "shell:setup"), 0)
-	assertExitCode(t, runTask(t, root, env, "--yes", "shell:setup"), 0)
-
-	profilePaths := []string{
-		filepath.Join(home, ".bashrc"),
-		filepath.Join(home, ".bash_profile"),
-		filepath.Join(home, ".profile"),
-		filepath.Join(home, ".zshrc"),
-		filepath.Join(home, ".zprofile"),
-		filepath.Join(home, ".config", "fish", "config.fish"),
-	}
-
-	for _, p := range profilePaths {
-		content, err := os.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		if count := strings.Count(string(content), "fnm env"); count > 1 {
-			t.Fatalf("profile %s contains 'fnm env' %d times after two shell:setup runs; want at most 1", p, count)
-		}
-	}
-}
-
-// TestInstallAlsoConfiguresShellActivation verifies that running task install
-// with a stub fnm environment also configures the shell profile, so users get
-// a ready-to-use setup from a single install command.
-func TestInstallAlsoConfiguresShellActivation(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("stub fnm tests target Unix-like systems")
-	}
-	t.Parallel()
-
-	root := repoRoot(t)
-	env := fnmFreshProfileEnv(t)
-	home := envValue(env, "HOME")
-
-	result := runTask(t, root, env, "--yes", "install")
-	assertExitCode(t, result, 0)
-
-	profilePaths := []string{
-		filepath.Join(home, ".bashrc"),
-		filepath.Join(home, ".bash_profile"),
-		filepath.Join(home, ".profile"),
-		filepath.Join(home, ".zshrc"),
-		filepath.Join(home, ".zprofile"),
-		filepath.Join(home, ".config", "fish", "config.fish"),
-	}
-
-	found := false
-	for _, p := range profilePaths {
-		content, err := os.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		if strings.Contains(string(content), "fnm env") {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		t.Fatalf("expected task install to configure shell activation but no profile contains 'fnm env'")
-	}
 }
 
 func TestRealInstallerFlowOnlyWhenExplicitlyEnabled(t *testing.T) {
@@ -776,18 +611,18 @@ func TestRealInstallerFlowOnlyWhenExplicitlyEnabled(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		t.Skip("real fnm shell installer tests are intended for Unix-like systems")
+		t.Skip("real bun installer tests are intended for Unix-like systems")
 	}
 
 	root := repoRoot(t)
 	env := isolatedEnv(t)
 	home := envValue(env, "HOME")
-	fnmBin := filepath.Join(home, ".local", "bin", "fnm")
+	bunBin := filepath.Join(home, ".bun", "bin", "bun")
 
 	install := runTaskTimeout(t, root, env, 10*time.Minute, "--yes", "install")
 	assertExitCode(t, install, 0)
 
-	assertFileExists(t, fnmBin)
+	assertFileExists(t, bunBin)
 
 	version := runTaskTimeout(t, root, env, 10*time.Minute, "version")
 	assertExitCode(t, version, 0)
@@ -795,14 +630,14 @@ func TestRealInstallerFlowOnlyWhenExplicitlyEnabled(t *testing.T) {
 	undo := runTaskTimeout(t, root, env, 10*time.Minute, "--yes", "install:undo")
 	assertExitCode(t, undo, 0)
 
-	if _, err := os.Stat(fnmBin); !os.IsNotExist(err) {
-		t.Fatalf("expected fnm binary to be removed after install:undo: %s", fnmBin)
+	if _, err := os.Stat(filepath.Join(home, ".bun")); !os.IsNotExist(err) {
+		t.Fatalf("expected .bun directory to be removed after install:undo: %s", home)
 	}
 }
 
 func TestAllPublicTasksIntegration(t *testing.T) {
 	if os.Getenv("RUN_INTEGRATION_TESTS") != "1" {
-		t.Skip("set RUN_INTEGRATION_TESTS=1 to run integration tests (downloads and installs fnm and Node.js)")
+		t.Skip("set RUN_INTEGRATION_TESTS=1 to run integration tests (downloads and installs Bun)")
 	}
 
 	if runtime.GOOS == "windows" {
@@ -812,7 +647,7 @@ func TestAllPublicTasksIntegration(t *testing.T) {
 	root := repoRoot(t)
 	env := isolatedEnv(t)
 	home := envValue(env, "HOME")
-	fnmBin := filepath.Join(home, ".local", "bin", "fnm")
+	bunBin := filepath.Join(home, ".bun", "bin", "bun")
 
 	step := func(name string, fn func(t *testing.T)) {
 		t.Helper()
@@ -829,63 +664,75 @@ func TestAllPublicTasksIntegration(t *testing.T) {
 		return result
 	}
 
-	step("install — fnm binary is present on disk", func(t *testing.T) {
+	step("install — bun binary is present on disk", func(t *testing.T) {
 		run(t, "--yes", "install")
-		assertFileExists(t, fnmBin)
+		assertFileExists(t, bunBin)
 	})
 
-	step("version — fnm version string is printed", func(t *testing.T) {
+	step("version — bun version string is printed", func(t *testing.T) {
 		result := run(t, "version")
 		assertNotEmpty(t, result.combined(), "version output is empty")
 	})
 
-	step("node:install — default LTS version directory is created", func(t *testing.T) {
-		run(t, "--yes", "node:install")
-		fnmRoot := fnmRootDir(env)
-		assertDirHasEntries(t, filepath.Join(fnmRoot, "node-versions"))
+	step("upgrade — bun upgrades without error", func(t *testing.T) {
+		run(t, "--yes", "upgrade")
+		assertFileExists(t, bunBin)
 	})
 
-	step("ls — installed versions appear in output", func(t *testing.T) {
-		result := run(t, "ls")
-		assertNotEmpty(t, result.combined(), "ls output is empty")
+	step("upgrade:canary — bun switches to canary without error", func(t *testing.T) {
+		run(t, "--yes", "upgrade:canary")
+		assertFileExists(t, bunBin)
 	})
 
-	const secondary = "18.0.0"
-
-	step("node:install VERSION=18.0.0 — specific version directory is created", func(t *testing.T) {
-		run(t, "--yes", "node:install", "VERSION="+secondary)
-		fnmRoot := fnmRootDir(env)
-		assertDirExists(t, filepath.Join(fnmRoot, "node-versions", "v"+secondary))
+	step("upgrade:stable — bun switches back to stable without error", func(t *testing.T) {
+		run(t, "--yes", "upgrade:stable")
+		assertFileExists(t, bunBin)
 	})
 
-	step("node:uninstall VERSION=18.0.0 — specific version directory is removed", func(t *testing.T) {
-		run(t, "--yes", "node:uninstall", "VERSION="+secondary)
-		fnmRoot := fnmRootDir(env)
-		assertDirNotExists(t, filepath.Join(fnmRoot, "node-versions", "v"+secondary))
-	})
-
-	step("node:use — LTS is activated without error", func(t *testing.T) {
-		run(t, "--yes", "node:use")
-	})
-
-	step("node:version — active node and npm version strings are printed", func(t *testing.T) {
-		result := run(t, "node:version")
-		assertContains(t, result.combined(), "v")
-	})
-
-	step("install:undo — fnm binary is removed", func(t *testing.T) {
+	step("install:undo — .bun directory is removed", func(t *testing.T) {
 		run(t, "--yes", "install:undo")
-		if _, err := os.Stat(fnmBin); !os.IsNotExist(err) {
-			t.Fatalf("expected fnm binary to be removed: %s", fnmBin)
-		}
+		assertDirNotExists(t, filepath.Join(home, ".bun"))
 	})
 }
 
-// fnmRootDir returns the path where stub fnm reports its data directory.
-// The stub echoes "$HOME/.local/share/fnm" so this mirrors that logic.
-func fnmRootDir(env []string) string {
+// bunInstallDir returns the path where bun is installed in the stub environment.
+func bunInstallDir(env []string) string {
 	home := envValue(env, "HOME")
-	return filepath.Join(home, ".local", "share", "fnm")
+	return filepath.Join(home, ".bun")
+}
+
+// bunDryRunEnv returns an isolated environment with a stub bun binary installed
+// at $HOME/.bun/bin/bun and added to PATH. The stub satisfies bun precondition
+// checks (command -v bun, test -f $HOME/.bun/bin/bun) and responds to the
+// subcommands used in task commands without performing real operations.
+func bunDryRunEnv(t *testing.T) []string {
+	t.Helper()
+
+	env := isolatedEnv(t)
+	home := envValue(env, "HOME")
+
+	bunBinDir := filepath.Join(home, ".bun", "bin")
+	if err := os.MkdirAll(bunBinDir, 0755); err != nil {
+		t.Fatalf("failed to create stub bun dir: %v", err)
+	}
+
+	stub := "#!/usr/bin/env bash\n" +
+		"case \"$1\" in\n" +
+		"  --version) echo \"1.2.3\" ;;\n" +
+		"  --revision) echo \"abc1234\" ;;\n" +
+		"  upgrade) echo \"Bun is already at the latest version\" ;;\n" +
+		"  *) exit 0 ;;\n" +
+		"esac\n"
+
+	stubPath := filepath.Join(bunBinDir, "bun")
+	if err := os.WriteFile(stubPath, []byte(stub), 0755); err != nil {
+		t.Fatalf("failed to create stub bun binary: %v", err)
+	}
+
+	path := envValue(env, "PATH")
+	env = setEnv(env, "PATH", bunBinDir+":"+path)
+
+	return env
 }
 
 type LoadedTaskfile struct {
@@ -1098,82 +945,6 @@ func isolatedEnv(t *testing.T) []string {
 	env = setEnv(env, "TASK_COLOR", "0")
 	env = setEnv(env, "NO_COLOR", "1")
 	env = setEnv(env, "TASK_ASSUME_YES", "true")
-
-	return env
-}
-
-// fnmDryRunEnv returns an isolated environment with a stub fnm binary installed
-// at $HOME/.local/bin/fnm and added to PATH. The stub satisfies fnm precondition
-// checks (command -v fnm) and responds to the subcommands used in status checks
-// and task commands without performing real operations.
-//
-// .bashrc is pre-populated with both the FNM_INSTALL_DIR path export and the
-// fnm env activation line so the _shell:setup:unix status check — which requires
-// both grep patterns in the same file — exits 0 immediately and shell:setup is
-// skipped for all tests that do not specifically test shell:setup. Tests that
-// exercise shell:setup behaviour must use fnmFreshProfileEnv instead.
-func fnmDryRunEnv(t *testing.T) []string {
-	t.Helper()
-
-	env := isolatedEnv(t)
-	home := envValue(env, "HOME")
-
-	binDir := filepath.Join(home, ".local", "bin")
-	if err := os.MkdirAll(binDir, 0755); err != nil {
-		t.Fatalf("failed to create stub bin dir: %v", err)
-	}
-
-	fnmRoot := filepath.Join(home, ".local", "share", "fnm")
-
-	stub := "#!/usr/bin/env bash\n" +
-		"case \"$1\" in\n" +
-		"  --version) echo \"fnm 1.37.1 stub\" ;;\n" +
-		"  root) echo \"" + fnmRoot + "\" ;;\n" +
-		"  list|ls) echo \"* v20.0.0 default\" ;;\n" +
-		"  current) echo \"v20.0.0\" ;;\n" +
-		"  env) echo \"# fnm stub env\" ;;\n" +
-		"  *) exit 0 ;;\n" +
-		"esac\n"
-
-	stubPath := filepath.Join(binDir, "fnm")
-	if err := os.WriteFile(stubPath, []byte(stub), 0755); err != nil {
-		t.Fatalf("failed to create stub fnm binary: %v", err)
-	}
-
-	// Pre-populate .bashrc with both the FNM_INSTALL_DIR path export and the
-	// fnm env activation line. The _shell:setup:unix status check greps for
-	// the literal string '$HOME/.local/share/fnm' (single-quoted pattern, no
-	// expansion) and 'fnm env' in the same file. Both must be present in the
-	// same file for the status check to exit 0 and skip shell:setup.
-	// Tests that exercise shell:setup behaviour use fnmFreshProfileEnv instead.
-	bashrc := filepath.Join(home, ".bashrc")
-	bashrcContent := "# fnm (Fast Node Manager)\n" +
-		"export PATH=\"$HOME/.local/share/fnm:$HOME/.local/bin:$PATH\"\n" +
-		"eval \"$(fnm env --use-on-cd --shell bash)\"\n"
-	if err := os.WriteFile(bashrc, []byte(bashrcContent), 0644); err != nil {
-		t.Fatalf("failed to pre-populate shell profile: %v", err)
-	}
-
-	path := envValue(env, "PATH")
-	env = setEnv(env, "PATH", binDir+":"+path)
-
-	return env
-}
-
-// fnmFreshProfileEnv returns the same stub environment as fnmDryRunEnv but
-// with an empty .bashrc, so shell:setup actually runs and writes the
-// activation line. Use this only in tests that specifically verify
-// shell:setup behaviour.
-func fnmFreshProfileEnv(t *testing.T) []string {
-	t.Helper()
-
-	env := fnmDryRunEnv(t)
-	home := envValue(env, "HOME")
-
-	bashrc := filepath.Join(home, ".bashrc")
-	if err := os.WriteFile(bashrc, []byte(""), 0644); err != nil {
-		t.Fatalf("failed to clear shell profile: %v", err)
-	}
 
 	return env
 }
@@ -1626,18 +1397,5 @@ func assertDirNotExists(t *testing.T, path string) {
 
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Fatalf("expected %s to not exist, but it does", path)
-	}
-}
-
-func assertDirHasEntries(t *testing.T, path string) {
-	t.Helper()
-
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		t.Fatalf("failed to read directory %s: %v", path, err)
-	}
-
-	if len(entries) == 0 {
-		t.Fatalf("expected %s to contain at least one entry", path)
 	}
 }

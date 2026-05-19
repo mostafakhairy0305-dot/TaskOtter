@@ -10,8 +10,9 @@ silent: true
 
 vars:
   FNM_INSTALL_URL: https://fnm.vercel.app/install
+  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
   DEFAULT_NODE_VERSION: '--lts'
-  FNM_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
+  FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"'
 
 tasks:
   default:
@@ -22,7 +23,7 @@ tasks:
 
   install:
     desc: Install fnm on the current operating system
-    summary: Install fnm for the current platform and configure shell activation. Linux and macOS use the official install script. Windows uses winget. Shell activation is written to the current user's shell profile automatically.
+    summary: Install fnm for the current platform and configure shell activation. Linux and macOS use the official install script with --install-dir and --skip-shell so shell configuration is handled exclusively by the shell:setup task. Windows uses winget.
     cmds:
       - task: _install:unix
       - task: _install:windows
@@ -30,7 +31,7 @@ tasks:
 
   install:undo:
     desc: Remove fnm from the current operating system
-    summary: Undo the fnm installation for the current platform. On Linux and macOS this removes the fnm binary from the local bin directory. On Windows this runs winget uninstall.
+    summary: Undo the fnm installation for the current platform. On Linux and macOS this removes the fnm install directory and any standalone binary. On Windows this runs winget uninstall.
     aliases:
       - uninstall
     prompt:
@@ -43,9 +44,7 @@ tasks:
 
   version:
     desc: Show the installed fnm version
-    summary: Print the currently installed fnm version for the active platform.
-    deps:
-      - install
+    summary: Print the currently installed fnm version for the active platform. Fails clearly if fnm is not installed.
     cmds:
       - task: _version:unix
       - task: _version:windows
@@ -93,7 +92,7 @@ tasks:
     deps:
       - task: node:install
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: '{{default .DEFAULT_NODE_VERSION .VERSION}}'
     cmds:
       - task: _node:use:unix
         vars:
@@ -104,30 +103,26 @@ tasks:
 
   ls:
     desc: List Node.js versions installed through fnm
-    summary: Show all Node.js versions installed and managed by fnm on the current machine.
+    summary: Show all Node.js versions installed and managed by fnm on the current machine. Fails clearly if fnm is not installed.
     aliases:
       - list
-    deps:
-      - install
     cmds:
       - task: _ls:unix
       - task: _ls:windows
 
   node:version:
     desc: Show the active Node.js and npm versions
-    summary: Print the currently active Node.js and npm versions available through fnm on the current platform.
+    summary: Print the currently active Node.js and npm versions available through fnm on the current platform. Fails clearly if fnm is not installed.
     aliases:
       - node:current
       - node:active
-    deps:
-      - install
     cmds:
       - task: _node:version:unix
       - task: _node:version:windows
 
   shell:setup:
     desc: Configure fnm activation in the current user's shell profile
-    summary: Detect the current shell and append the fnm env activation line to the appropriate shell profile file if not already present. Supports bash, zsh, and fish on Unix and PowerShell on Windows.
+    summary: Detect the current shell and append the fnm PATH export and env activation line to the appropriate shell profile file if not already present. Supports bash, zsh, and fish on Unix and PowerShell on Windows.
     cmds:
       - task: _shell:setup:unix
       - task: _shell:setup:windows
@@ -135,55 +130,70 @@ tasks:
   _shell:setup:unix:
     internal: true
     desc: Configure fnm shell activation on Linux or macOS
-    summary: Detect the current shell and add eval fnm env to the appropriate shell profile on Linux or macOS. Skipped if fnm activation is already present in any profile file.
+    summary: Detect the current shell and write the fnm PATH export plus eval fnm env to the appropriate shell profile on Linux or macOS. Skipped if fnm activation is already present in any profile file.
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - bash -c 'for f in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.config/fish/config.fish"; do grep -q "fnm env" "$f" 2>/dev/null && exit 0; done; exit 1'
+      - |
+        for f in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.config/fish/config.fish"; do
+          grep -qF '{{.FNM_INSTALL_DIR}}' "$f" 2>/dev/null && grep -q "fnm env" "$f" 2>/dev/null && exit 0
+        done
+        exit 1
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
     cmds:
       - echo Configuring fnm shell activation...
       - |
-        export PATH="$HOME/.local/bin:$PATH"
+        export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"
         shell_name="$(basename "${SHELL:-}")"
         case "$shell_name" in
           bash)
             profile_candidates=("$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile")
-            activation='eval "$(fnm env --use-on-cd --shell bash)"'
+            activation_path='export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"'
+            activation_env='eval "$(fnm env --use-on-cd --shell bash)"'
             ;;
           zsh)
             profile_candidates=("$HOME/.zshrc" "$HOME/.zprofile")
-            activation='eval "$(fnm env --use-on-cd --shell zsh)"'
+            activation_path='export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"'
+            activation_env='eval "$(fnm env --use-on-cd --shell zsh)"'
             ;;
           fish)
             profile_candidates=("$HOME/.config/fish/config.fish")
-            activation="fnm env --use-on-cd --shell fish | source"
+            activation_path='set -gx PATH "{{.FNM_INSTALL_DIR}}" "$HOME/.local/bin" $PATH'
+            activation_env='fnm env --use-on-cd --shell fish | source'
             ;;
           *)
             printf 'Shell "%s" is not auto-configured. Add fnm activation manually:\n' "${shell_name:-unknown}"
+            printf '  export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"\n'
             printf '  eval "$(fnm env --use-on-cd)"\n'
             exit 0
             ;;
         esac
         for profile in "${profile_candidates[@]}"; do
-          if [ -f "$profile" ] && grep -q "fnm env" "$profile" 2>/dev/null; then
-            printf 'fnm is already activated in %s.\n' "$profile"
+          [ -f "$profile" ] || continue
+          has_path=false
+          has_env=false
+          grep -qF '{{.FNM_INSTALL_DIR}}' "$profile" 2>/dev/null && has_path=true
+          grep -q "fnm env" "$profile" 2>/dev/null && has_env=true
+          if [ "$has_path" = true ] && [ "$has_env" = true ]; then
+            printf 'fnm is already configured in %s.\n' "$profile"
             exit 0
           fi
-        done
-        for profile in "${profile_candidates[@]}"; do
-          if [ -f "$profile" ]; then
-            printf '\n# fnm (Fast Node Manager)\n%s\n' "$activation" >> "$profile"
-            printf 'fnm activation added to %s.\n' "$profile"
-            printf 'Restart your shell or run: source %s\n' "$profile"
-            exit 0
+          if [ "$has_path" = false ] && [ "$has_env" = false ]; then
+            printf '\n# fnm (Fast Node Manager)\n%s\n%s\n' "$activation_path" "$activation_env" >> "$profile"
+          elif [ "$has_path" = false ]; then
+            printf '\n%s\n' "$activation_path" >> "$profile"
+          else
+            printf '\n%s\n' "$activation_env" >> "$profile"
           fi
+          printf 'fnm activation updated in %s.\n' "$profile"
+          printf 'Restart your shell or run: source %s\n' "$profile"
+          exit 0
         done
         profile="${profile_candidates[0]}"
         mkdir -p "$(dirname "$profile")"
-        printf '# fnm (Fast Node Manager)\n%s\n' "$activation" > "$profile"
+        printf '# fnm (Fast Node Manager)\n%s\n%s\n' "$activation_path" "$activation_env" > "$profile"
         printf 'fnm activation added to %s.\n' "$profile"
         printf 'Restart your shell or run: source %s\n' "$profile"
 
@@ -204,32 +214,35 @@ tasks:
   _install:unix:
     internal: true
     desc: Install fnm on Linux or macOS via the official install script
-    summary: Download and run the fnm install script on Linux or macOS. Installs the fnm binary to $HOME/.local/bin. Skipped if fnm is already available.
+    summary: Download and run the fnm install script with --install-dir and --skip-shell on Linux or macOS. Installs fnm to the directory configured in FNM_INSTALL_DIR. Shell setup is handled by the shell:setup task. Skipped if fnm is already available.
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download the fnm installation script.
+      - sh: command -v unzip >/dev/null 2>&1
+        msg: unzip is required to install fnm.
     cmds:
       - echo Installing fnm...
-      - curl -fsSL "{{.FNM_INSTALL_URL}}" | bash
-      - echo 'fnm installed. Restart your shell or add $HOME/.local/bin to PATH to use fnm.'
+      - curl -fsSL "{{.FNM_INSTALL_URL}}" | bash -s -- --install-dir "{{.FNM_INSTALL_DIR}}" --skip-shell
+      - echo "fnm installed to {{.FNM_INSTALL_DIR}}. Run task shell:setup to configure your shell, then restart your terminal."
 
   _install:undo:unix:
     internal: true
     desc: Remove fnm on Linux or macOS
-    summary: Remove the fnm binary from $HOME/.local/bin on Linux or macOS. Skipped if fnm is not present.
+    summary: Remove the configured fnm install directory and the $HOME/.local/bin/fnm binary if present on Linux or macOS. Skipped if neither path exists.
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v fnm >/dev/null 2>&1 && test ! -f "$HOME/.local/bin/fnm"'
+      - test ! -d "{{.FNM_INSTALL_DIR}}" && test ! -f "$HOME/.local/bin/fnm"
     cmds:
-      - echo Removing fnm from "$HOME/.local/bin/fnm"...
+      - echo Removing fnm...
+      - rm -rf "{{.FNM_INSTALL_DIR}}"
       - rm -f "$HOME/.local/bin/fnm"
-      - echo fnm binary removed.
-      - bash -c 'found=$(grep -rl "fnm env\|fnm\.sh" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" 2>/dev/null || true); [ -n "$found" ] && echo "Manually remove fnm lines from:" && echo "$found" | sed "s/^/  /" || echo "No fnm references found in shell profile files."'
+      - echo fnm removed.
+      - bash -c 'found=$(grep -rl "fnm env\|local/share/fnm\|local/bin/fnm" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" 2>/dev/null || true); [ -n "$found" ] && echo "Manually remove fnm lines from:" && echo "$found" | sed "s/^/  /" || echo "No fnm references found in shell profile files."'
 
   _install:windows:
     internal: true
@@ -265,7 +278,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed or not in PATH. Run task install first.
     cmds:
       - bash -lc '{{.FNM_LOAD}}; fnm --version'
@@ -292,10 +305,8 @@ tasks:
         - VERSION
     env:
       VERSION: '{{.VERSION}}'
-    status:
-      - bash -lc '{{.FNM_LOAD}}; if [ "{{.VERSION}}" = "--lts" ] || [ "{{.VERSION}}" = "latest" ]; then exit 1; fi; test -d "$(fnm root)/node-versions/v{{.VERSION}}"'
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
     cmds:
       - echo Installing Node.js {{.VERSION}} with fnm...
@@ -311,8 +322,6 @@ tasks:
         - VERSION
     env:
       VERSION: '{{.VERSION}}'
-    status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = $env:VERSION; if ($v -eq '--lts' -or $v -eq 'latest') { exit 1 }; $root = & fnm root 2>$null; if ($root -and (Test-Path (Join-Path $root 'node-versions' ('v' + $v)))) { exit 0 } else { exit 1 }"
     preconditions:
       - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: fnm is not installed or not available in PATH.
@@ -331,10 +340,8 @@ tasks:
         - VERSION
     env:
       VERSION: '{{.VERSION}}'
-    status:
-      - bash -lc '{{.FNM_LOAD}}; test ! -d "$(fnm root)/node-versions/v{{.VERSION}}"'
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
     cmds:
       - echo Uninstalling Node.js {{.VERSION}} with fnm...
@@ -350,8 +357,6 @@ tasks:
         - VERSION
     env:
       VERSION: '{{.VERSION}}'
-    status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = $env:VERSION; $root = & fnm root 2>$null; if (-not $root -or -not (Test-Path (Join-Path $root 'node-versions' ('v' + $v)))) { exit 0 } else { exit 1 }"
     preconditions:
       - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: fnm is not installed or not available in PATH.
@@ -362,7 +367,7 @@ tasks:
   _node:use:unix:
     internal: true
     desc: Activate a Node.js version with fnm on Linux or macOS
-    summary: Switch to the requested Node.js version and set it as the default for new shells on Linux or macOS.
+    summary: Switch to the requested Node.js version, set it as the default for new shells on Linux or macOS, and print instructions for activating it in the current shell session.
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     requires:
@@ -371,19 +376,18 @@ tasks:
     env:
       VERSION: '{{.VERSION}}'
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
-      - sh: bash -lc '{{.FNM_LOAD}}; if [ "{{.VERSION}}" = "--lts" ] || [ "{{.VERSION}}" = "latest" ]; then exit 0; fi; test -d "$(fnm root)/node-versions/v{{.VERSION}}"'
-        msg: Node.js {{.VERSION}} is not installed. Run task node:install VERSION={{.VERSION}} first.
     cmds:
       - echo Switching to Node.js {{.VERSION}}...
-      - bash -lc '{{.FNM_LOAD}}; fnm use "$VERSION"; fnm default "$(fnm current)"'
-      - echo 'Node.js {{.VERSION}} set as default. Run eval "$(fnm env)" to activate in the current shell session.'
+      - bash -lc '{{.FNM_LOAD}}; eval "$(fnm env --use-on-cd --shell bash)"; fnm use "$VERSION"; current="$(fnm current)"; fnm default "$current"; printf "Node.js %s set as default for future shells.\n" "$current"'
+      - |
+        echo 'For the current shell, run: eval "$(fnm env --use-on-cd --shell bash)"'
 
   _node:use:windows:
     internal: true
     desc: Activate a Node.js version with fnm on Windows
-    summary: Switch to the requested Node.js version and set it as the default for new shells on Windows.
+    summary: Load fnm env, switch to the requested Node.js version, resolve the concrete version with fnm current, and set it as the default for new shells on Windows.
     platforms: [windows]
     requires:
       vars:
@@ -393,12 +397,9 @@ tasks:
     preconditions:
       - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: fnm is not installed or not available in PATH.
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = $env:VERSION; if ($v -eq '--lts' -or $v -eq 'latest') { exit 0 }; $root = & fnm root 2>$null; if ($root -and (Test-Path (Join-Path $root 'node-versions' ('v' + $v)))) { exit 0 } else { exit 1 }"
-        msg: Node.js {{.VERSION}} is not installed. Run task node:install VERSION={{.VERSION}} first.
     cmds:
       - echo Switching to Node.js {{.VERSION}}...
-      - fnm use %VERSION%
-      - fnm default %VERSION%
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression; fnm use $env:VERSION; fnm default (fnm current)"
 
   _ls:unix:
     internal: true
@@ -407,7 +408,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
     cmds:
       - bash -lc '{{.FNM_LOAD}}; fnm list'
@@ -426,14 +427,14 @@ tasks:
   _node:version:unix:
     internal: true
     desc: Show active Node.js version on Linux or macOS
-    summary: Print the active Node.js and npm versions available after loading fnm on Linux or macOS.
+    summary: Print the active Node.js and npm versions by evaluating fnm env to bring Node.js binaries into scope on Linux or macOS.
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     preconditions:
-      - sh: command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
+      - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
     cmds:
-      - bash -lc '{{.FNM_LOAD}}; eval "$(fnm env 2>/dev/null)"; fnm current; node --version; npm --version'
+      - bash -lc '{{.FNM_LOAD}}; eval "$(fnm env --use-on-cd --shell bash)"; fnm current; node --version; npm --version'
 
   _node:version:windows:
     internal: true
@@ -443,9 +444,5 @@ tasks:
     preconditions:
       - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: fnm is not installed or not available in PATH.
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
-        msg: node is not available in PATH. Run task node:use first.
     cmds:
-      - fnm current
-      - node --version
-      - npm --version
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression; fnm current; node --version; npm --version"

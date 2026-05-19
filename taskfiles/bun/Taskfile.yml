@@ -1,0 +1,294 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+vars:
+  BUN_INSTALL_URL: https://bun.com/install
+  BUN_INSTALL_PS1_URL: https://bun.sh/install.ps1
+  BUN_LOAD: 'export BUN_INSTALL="$HOME/.bun"; export PATH="$BUN_INSTALL/bin:$PATH"'
+  VERSION: ''
+
+tasks:
+  default:
+    desc: Show available Bun automation tasks
+    summary: Display the list of available Bun-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Bun on the current operating system
+    summary: |
+      Install Bun for the current platform using the official installer.
+      On macOS and Linux, downloads the official installer script to a temporary file
+      and executes it, installing the Bun binary to ~/.bun/bin.
+      On Windows, downloads the official PowerShell installer script to a temporary
+      file and executes it, installing the Bun binary to ~\.bun\bin.
+      Pass VERSION=1.x.y to install a specific release instead of the latest.
+    cmds:
+      - task: _install:unix
+        vars:
+          VERSION: '{{.VERSION}}'
+      - task: _install:windows
+        vars:
+          VERSION: '{{.VERSION}}'
+
+  install:undo:
+    desc: Remove Bun from the current operating system
+    summary: |
+      Undo the Bun installation for the current platform.
+      On macOS and Linux this removes ~/.bun entirely.
+      On Windows, runs the official uninstall script if present; otherwise removes
+      the .bun directory directly. Detects Bun by directory presence, not by PATH,
+      so it works even if bun is not yet in PATH after a fresh install.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove Bun from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:unix
+      - task: _install:undo:windows
+
+  version:
+    desc: Show the installed Bun version and revision
+    summary: Print the currently installed Bun version and exact commit revision. Auto-installs Bun if missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  upgrade:
+    desc: Upgrade Bun to the latest stable release
+    summary: |
+      Upgrade the installed Bun binary to the latest stable release using bun upgrade.
+      Homebrew users should run brew upgrade bun instead to avoid conflicts.
+      Scoop users should run scoop update bun instead to avoid conflicts.
+      Auto-installs Bun if missing.
+    deps:
+      - install
+    cmds:
+      - task: _upgrade:unix
+      - task: _upgrade:windows
+
+  upgrade:canary:
+    desc: Upgrade Bun to the latest canary (pre-release) build
+    summary: |
+      Switch the installed Bun binary to the latest canary build using bun upgrade --canary.
+      Canary builds are untested and automatically upload crash reports to the Bun team.
+      Auto-installs Bun if missing.
+    deps:
+      - install
+    cmds:
+      - task: _upgrade:canary:unix
+      - task: _upgrade:canary:windows
+
+  upgrade:stable:
+    desc: Switch Bun back to the latest stable release from canary
+    summary: |
+      Downgrade or switch from a canary build back to the latest stable Bun release
+      using bun upgrade --stable.
+      Auto-installs Bun if missing.
+    deps:
+      - install
+    cmds:
+      - task: _upgrade:stable:unix
+      - task: _upgrade:stable:windows
+
+  _install:unix:
+    internal: true
+    desc: Install Bun on macOS or Linux via the official install script
+    summary: |
+      Download the official Bun install script to a temporary file and execute it on macOS or Linux.
+      Installs the Bun binary to ~/.bun/bin. The temporary file is removed after execution.
+      Pass VERSION=1.x.y to install a specific release.
+      Requires curl and unzip (Linux only needs unzip explicitly).
+      Skipped when VERSION is empty and Bun is already installed.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '[ -z "{{.VERSION}}" ]'
+      - 'test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1'
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required to download the Bun installation script.
+      - sh: command -v unzip >/dev/null 2>&1
+        msg: "unzip is required to install Bun. Run: sudo apt install unzip"
+    cmds:
+      - |
+        if [ -n "{{.VERSION}}" ]; then
+          echo 'Installing Bun v{{.VERSION}}...'
+        else
+          echo 'Installing Bun (latest)...'
+        fi
+        tmpfile=$(mktemp /tmp/bun-install.XXXXXX.sh)
+        trap 'rm -f "$tmpfile"' EXIT
+        curl -fsSL "{{.BUN_INSTALL_URL}}" -o "$tmpfile"
+        if [ -n "{{.VERSION}}" ]; then
+          bash "$tmpfile" "bun-v{{.VERSION}}"
+        else
+          bash "$tmpfile"
+        fi
+      - echo 'Bun installed. Restart your shell or add ~/.bun/bin to PATH to use bun.'
+
+  _install:windows:
+    internal: true
+    desc: Install Bun on Windows via the official PowerShell script
+    summary: |
+      Download the official Bun PowerShell install script to a temporary file and execute it on Windows.
+      Installs the Bun binary to %USERPROFILE%\.bun\bin. The temporary file is removed after execution.
+      Pass VERSION=1.x.y to install a specific release.
+      Requires Windows 10 version 1809 (build 17763) or later.
+      Skipped when VERSION is empty and Bun is already available.
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.VERSION}}') { exit 1 } else { exit 0 }"
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = [System.Environment]::OSVersion.Version; if ($v.Major -gt 10 -or ($v.Major -eq 10 -and $v.Build -ge 17763)) { exit 0 } else { exit 1 }"
+        msg: Bun requires Windows 10 version 1809 (build 17763) or later.
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = '{{.VERSION}}'; $tmp = [IO.Path]::Combine($env:TEMP, 'bun-install-' + [System.Guid]::NewGuid().ToString() + '.ps1'); Invoke-WebRequest -Uri '{{.BUN_INSTALL_PS1_URL}}' -OutFile $tmp; try { if ($v) { Write-Host \"Installing Bun v$v on Windows...\"; & $tmp -Version $v } else { Write-Host 'Installing Bun (latest) on Windows...'; & $tmp } } finally { Remove-Item $tmp -ErrorAction SilentlyContinue }"
+      - echo 'Bun installed. Restart your terminal to use bun.'
+
+  _install:undo:unix:
+    internal: true
+    desc: Remove Bun from macOS or Linux
+    summary: Remove the ~/.bun directory and its contents from macOS or Linux. Skipped if Bun is not present.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - test ! -d "$HOME/.bun"
+    cmds:
+      - echo 'Removing Bun from "$HOME/.bun"...'
+      - rm -rf "$HOME/.bun"
+      - echo 'Bun removed.'
+      - bash -c 'found=$(grep -rl "BUN_INSTALL\|\.bun/bin" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" 2>/dev/null || true); [ -n "$found" ] && echo "Manually remove Bun lines from:" && echo "$found" | sed "s/^/  /" || echo "No Bun references found in shell profile files."'
+
+  _install:undo:windows:
+    internal: true
+    desc: Remove Bun from Windows
+    summary: |
+      Remove Bun on Windows. Runs the official uninstall script if present at %USERPROFILE%\.bun\uninstall.ps1.
+      Falls back to removing the .bun directory directly when the uninstall script is missing.
+      Detects Bun by directory presence so it works even if bun is not in PATH.
+      Skipped if the .bun directory is already absent.
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\")) { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Uninstalling Bun on Windows...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bunDir = \"$env:USERPROFILE\.bun\"; $uninstall = \"$bunDir\uninstall.ps1\"; if (Test-Path $uninstall) { Write-Host 'Running Bun uninstall script...'; & $uninstall } elseif (Test-Path $bunDir) { Write-Host \"Removing $bunDir...\"; Remove-Item -Recurse -Force $bunDir; Write-Host 'Bun directory removed.' } else { Write-Host 'Bun is already absent.' }"
+      - echo 'Bun removed. Restart your terminal.'
+
+  _version:unix:
+    internal: true
+    desc: Show Bun version and revision on macOS or Linux
+    summary: Print the installed Bun version and exact commit revision on macOS or Linux.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1
+        msg: Bun is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.BUN_LOAD}}; bun --version; bun --revision'
+
+  _version:windows:
+    internal: true
+    desc: Show Bun version and revision on Windows
+    summary: |
+      Print the installed Bun version and exact commit revision on Windows.
+      Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+        msg: Bun is not installed or not available. Run task install first.
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun --version; & $bun --revision"
+
+  _upgrade:unix:
+    internal: true
+    desc: Upgrade Bun to the latest stable release on macOS or Linux
+    summary: Run bun upgrade on macOS or Linux to update the Bun binary to the latest stable release.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1
+        msg: Bun is not installed. Run task install first.
+    cmds:
+      - echo Upgrading Bun to the latest stable release...
+      - bash -lc '{{.BUN_LOAD}}; bun upgrade'
+
+  _upgrade:windows:
+    internal: true
+    desc: Upgrade Bun to the latest stable release on Windows
+    summary: |
+      Run bun upgrade on Windows to update the Bun binary to the latest stable release.
+      Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+        msg: Bun is not installed or not available in PATH. Run task install first.
+    cmds:
+      - echo Upgrading Bun to the latest stable release...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade"
+
+  _upgrade:canary:unix:
+    internal: true
+    desc: Upgrade Bun to the latest canary build on macOS or Linux
+    summary: Run bun upgrade --canary on macOS or Linux to switch to the latest untested canary build.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1
+        msg: Bun is not installed. Run task install first.
+    cmds:
+      - echo Upgrading Bun to the latest canary build...
+      - bash -lc '{{.BUN_LOAD}}; bun upgrade --canary'
+
+  _upgrade:canary:windows:
+    internal: true
+    desc: Upgrade Bun to the latest canary build on Windows
+    summary: |
+      Run bun upgrade --canary on Windows to switch to the latest untested canary build.
+      Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+        msg: Bun is not installed or not available in PATH. Run task install first.
+    cmds:
+      - echo Upgrading Bun to the latest canary build...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --canary"
+
+  _upgrade:stable:unix:
+    internal: true
+    desc: Switch Bun back to stable from canary on macOS or Linux
+    summary: Run bun upgrade --stable on macOS or Linux to switch from a canary build back to the latest stable release.
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1
+        msg: Bun is not installed. Run task install first.
+    cmds:
+      - echo Switching Bun back to the latest stable release...
+      - bash -lc '{{.BUN_LOAD}}; bun upgrade --stable'
+
+  _upgrade:stable:windows:
+    internal: true
+    desc: Switch Bun back to stable from canary on Windows
+    summary: |
+      Run bun upgrade --stable on Windows to switch from a canary build back to the latest stable release.
+      Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+        msg: Bun is not installed or not available in PATH. Run task install first.
+    cmds:
+      - echo Switching Bun back to the latest stable release...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --stable"
