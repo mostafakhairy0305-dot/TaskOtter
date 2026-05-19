@@ -1142,7 +1142,6 @@ func isolatedEnv(t *testing.T) []string {
 
 	env = setEnv(env, "HOME", home)
 	env = setEnv(env, "PROFILE", profile)
-	env = setEnv(env, "BASH_ENV", profile)
 	env = setEnv(env, "ZDOTDIR", home)
 	env = setEnv(env, "CI", "true")
 	env = setEnv(env, "TASK_COLOR", "0")
@@ -1157,12 +1156,10 @@ func isolatedEnv(t *testing.T) []string {
 // checks (command -v fnm) and responds to the subcommands used in status checks
 // and task commands without performing real operations.
 //
-// .bashrc is pre-populated with an fnm activation line so that the shell:setup
-// status check ("does any profile already contain 'fnm env'?") exits 0 and the
-// entire shell:setup task is skipped. This avoids multiple bash subprocess
-// spawns per test on CI where process start-up is expensive. Tests that
-// specifically exercise shell:setup behaviour must use fnmFreshProfileEnv
-// instead.
+// .bashrc is pre-populated with a comment containing "fnm env" so that the
+// shell:setup status check exits 0 immediately and the task is skipped for all
+// tests that do not specifically test shell:setup. Tests that exercise
+// shell:setup behaviour must use fnmFreshProfileEnv instead.
 func fnmDryRunEnv(t *testing.T) []string {
 	t.Helper()
 
@@ -1199,12 +1196,10 @@ func fnmDryRunEnv(t *testing.T) []string {
 		t.Fatalf("failed to create stub version dir: %v", err)
 	}
 
-	// Pre-populate .bashrc with a comment that satisfies the shell:setup status
-	// check (grep -q "fnm env") so the task is skipped and no bash subprocesses
-	// are spawned. A comment is used instead of live activation code because
-	// isolatedEnv sets BASH_ENV=$HOME/.bashrc, which causes every bash -c call
-	// in the Taskfile to source .bashrc. Live eval code would spawn the stub fnm
-	// on every subprocess, creating 2x subprocess overhead per task command.
+	// Pre-populate .bashrc with a comment containing "fnm env" so the
+	// _shell:setup:unix status check (grep -q "fnm env") exits 0 and the
+	// entire shell:setup task — and all its bash subprocesses — is skipped.
+	// Tests that exercise shell:setup behaviour use fnmFreshProfileEnv instead.
 	bashrc := filepath.Join(home, ".bashrc")
 	if err := os.WriteFile(bashrc, []byte("# fnm env - pre-configured for test\n"), 0644); err != nil {
 		t.Fatalf("failed to pre-populate shell profile: %v", err)

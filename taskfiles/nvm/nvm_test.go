@@ -1016,7 +1016,6 @@ func isolatedEnv(t *testing.T) []string {
 	env = setEnv(env, "HOME", home)
 	env = setEnv(env, "NVM_DIR", nvmDir)
 	env = setEnv(env, "PROFILE", profile)
-	env = setEnv(env, "BASH_ENV", profile)
 	env = setEnv(env, "ZDOTDIR", home)
 	env = setEnv(env, "CI", "true")
 	env = setEnv(env, "TASK_COLOR", "0")
