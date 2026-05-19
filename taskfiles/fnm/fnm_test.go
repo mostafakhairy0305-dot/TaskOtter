@@ -710,7 +710,7 @@ func TestShellSetupAddsActivationToProfile(t *testing.T) {
 	t.Parallel()
 
 	root := repoRoot(t)
-	env := fnmDryRunEnv(t)
+	env := fnmFreshProfileEnv(t)
 	home := envValue(env, "HOME")
 
 	result := runTask(t, root, env, "--yes", "shell:setup")
@@ -751,7 +751,7 @@ func TestShellSetupIsIdempotent(t *testing.T) {
 	t.Parallel()
 
 	root := repoRoot(t)
-	env := fnmDryRunEnv(t)
+	env := fnmFreshProfileEnv(t)
 	home := envValue(env, "HOME")
 
 	assertExitCode(t, runTask(t, root, env, "--yes", "shell:setup"), 0)
@@ -787,7 +787,7 @@ func TestInstallAlsoConfiguresShellActivation(t *testing.T) {
 	t.Parallel()
 
 	root := repoRoot(t)
-	env := fnmDryRunEnv(t)
+	env := fnmFreshProfileEnv(t)
 	home := envValue(env, "HOME")
 
 	result := runTask(t, root, env, "--yes", "install")
@@ -1156,6 +1156,13 @@ func isolatedEnv(t *testing.T) []string {
 // at $HOME/.local/bin/fnm and added to PATH. The stub satisfies fnm precondition
 // checks (command -v fnm) and responds to the subcommands used in status checks
 // and task commands without performing real operations.
+//
+// .bashrc is pre-populated with an fnm activation line so that the shell:setup
+// status check ("does any profile already contain 'fnm env'?") exits 0 and the
+// entire shell:setup task is skipped. This avoids multiple bash subprocess
+// spawns per test on CI where process start-up is expensive. Tests that
+// specifically exercise shell:setup behaviour must use fnmFreshProfileEnv
+// instead.
 func fnmDryRunEnv(t *testing.T) []string {
 	t.Helper()
 
@@ -1192,8 +1199,37 @@ func fnmDryRunEnv(t *testing.T) []string {
 		t.Fatalf("failed to create stub version dir: %v", err)
 	}
 
+	// Pre-populate .bashrc with a comment that satisfies the shell:setup status
+	// check (grep -q "fnm env") so the task is skipped and no bash subprocesses
+	// are spawned. A comment is used instead of live activation code because
+	// isolatedEnv sets BASH_ENV=$HOME/.bashrc, which causes every bash -c call
+	// in the Taskfile to source .bashrc. Live eval code would spawn the stub fnm
+	// on every subprocess, creating 2x subprocess overhead per task command.
+	bashrc := filepath.Join(home, ".bashrc")
+	if err := os.WriteFile(bashrc, []byte("# fnm env - pre-configured for test\n"), 0644); err != nil {
+		t.Fatalf("failed to pre-populate shell profile: %v", err)
+	}
+
 	path := envValue(env, "PATH")
 	env = setEnv(env, "PATH", binDir+":"+path)
+
+	return env
+}
+
+// fnmFreshProfileEnv returns the same stub environment as fnmDryRunEnv but
+// with an empty .bashrc, so shell:setup actually runs and writes the
+// activation line. Use this only in tests that specifically verify
+// shell:setup behaviour.
+func fnmFreshProfileEnv(t *testing.T) []string {
+	t.Helper()
+
+	env := fnmDryRunEnv(t)
+	home := envValue(env, "HOME")
+
+	bashrc := filepath.Join(home, ".bashrc")
+	if err := os.WriteFile(bashrc, []byte(""), 0644); err != nil {
+		t.Fatalf("failed to clear shell profile: %v", err)
+	}
 
 	return env
 }
