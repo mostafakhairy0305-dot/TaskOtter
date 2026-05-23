@@ -3,8 +3,20 @@ version: '3'
 includes:
   bun:
     taskfile: taskfiles/bun/Taskfile.yml
+  corepack:
+    taskfile: taskfiles/corepack/Taskfile.yml
+  fnm:
+    taskfile: taskfiles/fnm/Taskfile.yml
+  npm:
+    taskfile: taskfiles/npm/Taskfile.yml
   nvm:
     taskfile: taskfiles/nvm/Taskfile.yml
+  pnpm:
+    taskfile: taskfiles/pnpm/Taskfile.yml
+  typescript:
+    taskfile: taskfiles/typescript/Taskfile.yml
+  yarn:
+    taskfile: taskfiles/yarn/Taskfile.yml
 
 tasks:
   default:

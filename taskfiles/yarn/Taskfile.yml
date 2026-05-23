@@ -1,0 +1,387 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  corepack:
+    taskfile: ../corepack/Taskfile.yml
+  fnm:
+    taskfile: ../fnm/Taskfile.yml
+  nvm:
+    taskfile: ../nvm/Taskfile.yml
+
+vars:
+  NODE_MANAGER: fnm
+  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
+  FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
+  NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
+  FNM_USE: '{{if .NODE_VERSION}}fnm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then fnm use; fi{{end}}'
+  NVM_USE: '{{if .NODE_VERSION}}nvm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}'
+  NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
+  NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
+  NODE_VERSION: ''
+
+tasks:
+  default:
+    desc: Show available Yarn automation tasks
+    summary: Display the list of available Yarn-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  node:setup:
+    desc: Install Node.js using the selected node manager
+    summary: |
+      Install Node.js through the node manager selected by NODE_MANAGER (default: fnm).
+      Set NODE_MANAGER=nvm to use nvm instead. Pass NODE_VERSION to target a
+      specific Node.js release; defaults to LTS when omitted.
+    cmds:
+      - task: _node:setup:unix
+      - task: _node:setup:windows
+
+  manager:setup:
+    desc: Enable Corepack for Yarn commands
+    summary: Ensure Corepack is installed and enable its package manager shims for Yarn projects.
+    cmds:
+      - task: corepack:setup
+
+  manager:pin:
+    desc: Pin Yarn in package.json with Corepack
+    summary: Use Corepack to write yarn@PACKAGE_MANAGER_VERSION to the current project's packageManager field.
+    requires:
+      vars: [PACKAGE_MANAGER_VERSION]
+    cmds:
+      - task: corepack:use
+        vars:
+          PACKAGE_MANAGER: yarn
+          VERSION: '{{.PACKAGE_MANAGER_VERSION}}'
+
+  version:
+    desc: Show the active Node.js and Yarn versions
+    summary: Print the Node.js and Yarn versions after loading the selected Node.js runtime.
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  install:
+    desc: Install project dependencies with yarn install
+    summary: Install dependencies from package.json using the Yarn version available to the project.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: install}
+      - task: _yarn:windows
+        vars: {ARGS: install}
+
+  ci:
+    desc: Validate a lockfile-safe Yarn install
+    summary: Run yarn install --immutable and fail if Yarn would modify yarn.lock.
+    cmds:
+      - task: _ci:unix
+      - task: _ci:windows
+
+  run:
+    desc: Run a package.json script with Yarn
+    summary: Run SCRIPT through yarn run and forward arguments passed after -- to that script.
+    requires:
+      vars: [SCRIPT]
+    cmds:
+      - task: _run:unix
+        vars:
+          SCRIPT: '{{.SCRIPT}}'
+          CLI_ARGS: '{{.CLI_ARGS}}'
+      - task: _run:windows
+        vars:
+          SCRIPT: '{{.SCRIPT}}'
+          CLI_ARGS: '{{.CLI_ARGS}}'
+
+  dev:
+    desc: Start the development script with Yarn
+    summary: Execute the dev script defined in package.json through yarn run dev.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: run dev}
+      - task: _yarn:windows
+        vars: {ARGS: run dev}
+
+  test:
+    desc: Run the project test script with Yarn
+    summary: Execute the test script defined in package.json through yarn test.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: test}
+      - task: _yarn:windows
+        vars: {ARGS: test}
+
+  build:
+    desc: Build the project with Yarn
+    summary: Execute the build script defined in package.json through yarn run build.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: run build}
+      - task: _yarn:windows
+        vars: {ARGS: run build}
+
+  lint:
+    desc: Lint the project with Yarn
+    summary: Execute the lint script defined in package.json through yarn run lint.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: run lint}
+      - task: _yarn:windows
+        vars: {ARGS: run lint}
+
+  format:
+    desc: Format source files with Yarn
+    summary: Execute the format script defined in package.json through yarn run format.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: run format}
+      - task: _yarn:windows
+        vars: {ARGS: run format}
+
+  typecheck:
+    desc: Type check the project with Yarn
+    summary: Execute the typecheck script defined in package.json through yarn run typecheck.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: run typecheck}
+      - task: _yarn:windows
+        vars: {ARGS: run typecheck}
+
+  update:
+    desc: Update dependencies with yarn up
+    summary: Run yarn up against all dependency patterns to update project resolutions with modern Yarn.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: "up '*'"}
+      - task: _yarn:windows
+        vars: {ARGS: "up '*'"}
+
+  audit:
+    desc: Run a Yarn vulnerability audit
+    summary: Run yarn npm audit and propagate vulnerability findings for CI enforcement.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: npm audit}
+      - task: _yarn:windows
+        vars: {ARGS: npm audit}
+
+  audit:report:
+    desc: Report Yarn audit findings without failing
+    summary: Run yarn npm audit for local review while ignoring its vulnerability exit code.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: npm audit}
+        ignore_error: true
+      - task: _yarn:windows
+        vars: {ARGS: npm audit}
+        ignore_error: true
+
+  audit:json:
+    desc: Output Yarn audit findings as JSON
+    summary: Run yarn npm audit --json for tooling and propagate the Yarn audit exit code.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: npm audit --json}
+      - task: _yarn:windows
+        vars: {ARGS: npm audit --json}
+
+  cache:clean:
+    desc: Clear the Yarn cache
+    summary: Run yarn cache clean to remove Yarn cache entries available to the active project.
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: cache clean}
+      - task: _yarn:windows
+        vars: {ARGS: cache clean}
+
+  clean:
+    desc: Remove the node_modules directory
+    summary: Delete node_modules when the project uses a node_modules Yarn linker.
+    prompt:
+      - This will delete the node_modules directory.
+      - Continue?
+    cmds:
+      - task: _clean:unix
+      - task: _clean:windows
+
+  clean:all:
+    desc: Remove node_modules and yarn.lock
+    summary: Delete node_modules and yarn.lock so a later Yarn install regenerates the lockfile.
+    prompt:
+      - 'WARNING: This will permanently delete node_modules AND yarn.lock.'
+      - Continue?
+    cmds:
+      - task: _clean:all:unix
+      - task: _clean:all:windows
+
+  _node:setup:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+    cmds:
+      - |
+        if [ "{{.NODE_MANAGER}}" = "nvm" ]; then
+          if [ -n "$NODE_VERSION" ]; then task nvm:node:install VERSION="$NODE_VERSION"; else task nvm:node:install; fi
+        else
+          if [ -n "$NODE_VERSION" ]; then task fnm:node:install VERSION="$NODE_VERSION"; else task fnm:node:install; fi
+        fi
+
+  _node:setup:windows:
+    internal: true
+    platforms: [windows]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'nvm') { if ($env:NODE_VERSION) { task nvm:node:install \"VERSION=$env:NODE_VERSION\" } else { task nvm:node:install } } else { if ($env:NODE_VERSION) { task fnm:node:install \"VERSION=$env:NODE_VERSION\" } else { task fnm:node:install } }"
+
+  _yarn:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: '{{.USER_WORKING_DIR}}'
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars: [ARGS]
+    env:
+      COREPACK_ENABLE_AUTO_PIN: '1'
+    preconditions:
+      - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+        msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
+      - sh: 'test -f "{{.USER_WORKING_DIR}}/package.json"'
+        msg: 'package.json not found. Run this task from the Yarn project root.'
+    cmds:
+      - |
+        bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; command -v corepack >/dev/null 2>&1 || { echo "corepack is not available. Run: task manager:setup"; exit 1; }; corepack yarn {{.ARGS}}'
+
+  _yarn:windows:
+    internal: true
+    platforms: [windows]
+    dir: '{{.USER_WORKING_DIR}}'
+    requires:
+      vars: [ARGS]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+      COREPACK_ENABLE_AUTO_PIN: '1'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -ne 'fnm' -and '{{.NODE_MANAGER}}' -ne 'nvm') { exit 1 } else { exit 0 }"
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command {{.NODE_MANAGER}} -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: '"{{.NODE_MANAGER}}" is not installed or not available in PATH. Run: task node:setup'
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
+        msg: 'package.json not found. Run this task from the Yarn project root.'
+    cmds:
+      - |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm') { fnm env --shell powershell | Out-String | Invoke-Expression; if ($env:NODE_VERSION) { fnm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { fnm use } } else { if ($env:NODE_VERSION) { nvm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { $v = if (Test-Path '.node-version') { (Get-Content '.node-version' -Raw).Trim() } else { (Get-Content '.nvmrc' -Raw).Trim() }; nvm use $v } }; if (-not (Get-Command corepack -ErrorAction SilentlyContinue)) { Write-Error 'corepack is not available. Run: task manager:setup'; exit 1 }; corepack yarn {{.ARGS}}"
+
+  _ci:unix:
+    internal: true
+    platforms: [linux, darwin]
+    preconditions:
+      - sh: 'test -f "{{.USER_WORKING_DIR}}/yarn.lock"'
+        msg: 'yarn.lock not found. Yarn CI installs require a lockfile.'
+    cmds:
+      - task: _yarn:unix
+        vars: {ARGS: install --immutable}
+
+  _ci:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.USER_WORKING_DIR}}\yarn.lock') { exit 0 } else { exit 1 }"
+        msg: 'yarn.lock not found. Yarn CI installs require a lockfile.'
+    cmds:
+      - task: _yarn:windows
+        vars: {ARGS: install --immutable}
+
+  _run:unix:
+    internal: true
+    platforms: [linux, darwin]
+    env:
+      SCRIPT: '{{.SCRIPT}}'
+    preconditions:
+      - sh: 'printf "%s" "$SCRIPT" | grep -qE "^[A-Za-z0-9:_-]+$"'
+        msg: 'SCRIPT "{{.SCRIPT}}" contains invalid characters.'
+    cmds:
+      - task: _yarn:unix
+        vars:
+          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+
+  _run:windows:
+    internal: true
+    platforms: [windows]
+    env:
+      SCRIPT: '{{.SCRIPT}}'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:SCRIPT -match '^[A-Za-z0-9:_-]+$') { exit 0 } else { exit 1 }"
+        msg: 'SCRIPT "{{.SCRIPT}}" contains invalid characters.'
+    cmds:
+      - task: _yarn:windows
+        vars:
+          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+
+  _version:unix:
+    internal: true
+    platforms: [linux, darwin]
+    preconditions:
+      - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+        msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
+    cmds:
+      - |
+        bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; command -v corepack >/dev/null 2>&1 || { echo "corepack is not available. Run: task manager:setup"; exit 1; }; node --version; corepack yarn --version'
+
+  _version:windows:
+    internal: true
+    platforms: [windows]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -ne 'fnm' -and '{{.NODE_MANAGER}}' -ne 'nvm') { exit 1 } else { exit 0 }"
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command {{.NODE_MANAGER}} -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: '"{{.NODE_MANAGER}}" is not installed or not available in PATH. Run: task node:setup'
+    cmds:
+      - |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm') { fnm env --shell powershell | Out-String | Invoke-Expression; if ($env:NODE_VERSION) { fnm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { fnm use } } else { if ($env:NODE_VERSION) { nvm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { $v = if (Test-Path '.node-version') { (Get-Content '.node-version' -Raw).Trim() } else { (Get-Content '.nvmrc' -Raw).Trim() }; nvm use $v } }; if (-not (Get-Command corepack -ErrorAction SilentlyContinue)) { Write-Error 'corepack is not available. Run: task manager:setup'; exit 1 }; node --version; corepack yarn --version"
+
+  _clean:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: '{{.USER_WORKING_DIR}}'
+    status: ['test ! -d node_modules']
+    cmds:
+      - rm -rf node_modules
+
+  _clean:windows:
+    internal: true
+    platforms: [windows]
+    dir: '{{.USER_WORKING_DIR}}'
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules') { exit 1 } else { exit 0 }"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Recurse -Force 'node_modules'"
+
+  _clean:all:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - rm -rf node_modules
+      - rm -f yarn.lock
+
+  _clean:all:windows:
+    internal: true
+    platforms: [windows]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules') { Remove-Item -Recurse -Force 'node_modules' }; if (Test-Path 'yarn.lock') { Remove-Item -Force 'yarn.lock' }"

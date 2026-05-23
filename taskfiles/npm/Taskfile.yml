@@ -1,0 +1,578 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  corepack:
+    taskfile: ../corepack/Taskfile.yml
+  fnm:
+    taskfile: ../fnm/Taskfile.yml
+  nvm:
+    taskfile: ../nvm/Taskfile.yml
+
+vars:
+  NODE_MANAGER: fnm
+  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
+  # Unix: add fnm binary to PATH then activate the selected Node.js environment.
+  # eval "$(fnm env --shell bash)" makes the active Node.js version (and npm) available.
+  FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
+  NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
+  # Unix: switch to NODE_VERSION when set; otherwise honour .node-version/.nvmrc if present.
+  FNM_USE: '{{if .NODE_VERSION}}fnm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then fnm use; fi{{end}}'
+  NVM_USE: '{{if .NODE_VERSION}}nvm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}'
+  NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
+  NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
+  NODE_VERSION: ''
+
+tasks:
+  default:
+    desc: Show available npm automation tasks
+    summary: Display the list of available npm-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  node:setup:
+    desc: Install Node.js and npm using the selected node manager
+    summary: |
+      Install Node.js (and npm) via the node manager selected by NODE_MANAGER (default: fnm).
+      Set NODE_MANAGER=nvm to use nvm instead. Pass NODE_VERSION to target a specific
+      release; defaults to LTS when omitted.
+      Requires the selected node manager taskfile to be included in the root Taskfile
+      as either fnm: or nvm:. See README.md for setup instructions.
+    cmds:
+      - task: _node:setup:unix
+      - task: _node:setup:windows
+
+  manager:setup:
+    desc: Enable Corepack for npm project commands
+    summary: Ensure Corepack is installed and enable package manager shims before Corepack-managed npm commands.
+    cmds:
+      - task: corepack:setup
+
+  manager:pin:
+    desc: Pin npm in package.json with Corepack
+    summary: |
+      Run Corepack to write npm@PACKAGE_MANAGER_VERSION to the current
+      project's packageManager field before Corepack-managed npm commands run.
+    requires:
+      vars:
+        - PACKAGE_MANAGER_VERSION
+    cmds:
+      - task: corepack:use
+        vars:
+          PACKAGE_MANAGER: npm
+          VERSION: '{{.PACKAGE_MANAGER_VERSION}}'
+
+  version:
+    desc: Show the active Node.js and npm versions
+    summary: |
+      Print the currently active Node.js and npm versions by loading the runtime
+      environment via the node manager selected by NODE_MANAGER (default: fnm).
+      Fails clearly if the selected node manager is not installed.
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  install:
+    desc: Install project dependencies with npm install
+    summary: |
+      Run npm install to install all dependencies listed in package.json.
+      The Node.js runtime is loaded via the node manager selected by NODE_MANAGER.
+      Set NODE_VERSION to pin a specific runtime; omit to use the project version
+      file (.node-version or .nvmrc) if present, otherwise the manager default.
+      Must be run from the Node.js project root (where package.json lives).
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: install
+      - task: _npm:windows
+        vars:
+          ARGS: install
+
+  ci:
+    desc: Install project dependencies with npm ci
+    summary: |
+      Run npm ci for a clean, reproducible install driven by package-lock.json.
+      Removes node_modules before installing. Suited for CI pipelines where a
+      consistent, reproducible dependency tree is required. Fails if
+      package-lock.json is absent or out of sync with package.json.
+    cmds:
+      - task: _ci:unix
+      - task: _ci:windows
+
+  run:
+    desc: Run a package.json script (SCRIPT=<name>)
+    summary: |
+      Execute the npm script named by SCRIPT using npm run. Pass extra CLI
+      arguments after -- to forward them directly to the script.
+      Script names may contain letters, numbers, colons, hyphens, and underscores.
+      Examples:
+        task npm:run SCRIPT=dev
+        task npm:run SCRIPT=test -- --watch --coverage
+    requires:
+      vars:
+        - SCRIPT
+    cmds:
+      - task: _run:unix
+        vars:
+          SCRIPT: '{{.SCRIPT}}'
+          CLI_ARGS: '{{.CLI_ARGS}}'
+      - task: _run:windows
+        vars:
+          SCRIPT: '{{.SCRIPT}}'
+          CLI_ARGS: '{{.CLI_ARGS}}'
+
+  dev:
+    desc: Start the development server with npm run dev
+    summary: |
+      Execute the dev script defined under scripts.dev in package.json via npm run dev.
+      Must be run from the Node.js project root (where package.json lives).
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: run dev
+      - task: _npm:windows
+        vars:
+          ARGS: run dev
+
+  test:
+    desc: Run the project test suite with npm test
+    summary: |
+      Execute the test script defined in package.json using npm test.
+      Equivalent to npm run test but uses the npm test shorthand which
+      allows passing extra arguments after --.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: test
+      - task: _npm:windows
+        vars:
+          ARGS: test
+
+  build:
+    desc: Build the project with npm run build
+    summary: |
+      Execute the build script defined under scripts.build in package.json via npm run build.
+      Must be run from the Node.js project root (where package.json lives).
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: run build
+      - task: _npm:windows
+        vars:
+          ARGS: run build
+
+  lint:
+    desc: Lint the project with npm run lint
+    summary: |
+      Execute the lint script defined under scripts.lint in package.json via npm run lint.
+      Must be run from the Node.js project root (where package.json lives).
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: run lint
+      - task: _npm:windows
+        vars:
+          ARGS: run lint
+
+  format:
+    desc: Format source files with npm run format
+    summary: |
+      Execute the format script defined under scripts.format in package.json via npm run format.
+      Must be run from the Node.js project root (where package.json lives).
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: run format
+      - task: _npm:windows
+        vars:
+          ARGS: run format
+
+  typecheck:
+    desc: Run type checking with npm run typecheck
+    summary: |
+      Execute the typecheck script defined under scripts.typecheck in package.json
+      via npm run typecheck. Must be run from the Node.js project root.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: run typecheck
+      - task: _npm:windows
+        vars:
+          ARGS: run typecheck
+
+  outdated:
+    desc: List outdated npm packages (non-strict, for local review)
+    summary: |
+      Run npm outdated to show packages with newer versions available.
+      Exit code is ignored — use this for local review without breaking a pipeline.
+      npm outdated exits non-zero when outdated packages exist; this task treats
+      that as informational. Use task outdated:strict for CI enforcement.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: outdated
+        ignore_error: true
+      - task: _npm:windows
+        vars:
+          ARGS: outdated
+        ignore_error: true
+
+  outdated:strict:
+    desc: List outdated packages and fail if any exist (CI enforcement)
+    summary: |
+      Run npm outdated and fail the task when any packages are out of date.
+      npm outdated exits non-zero when outdated packages are found; this task
+      propagates that exit code so CI pipelines can enforce currency.
+      Use task outdated for non-strict local review.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: outdated
+      - task: _npm:windows
+        vars:
+          ARGS: outdated
+
+  audit:
+    desc: Run a security vulnerability audit (strict, CI enforcement)
+    summary: |
+      Run npm audit and fail when vulnerabilities are found. npm audit exits
+      non-zero when the tree contains vulnerabilities; this task propagates
+      that exit code for CI enforcement. Use task audit:report for non-strict
+      local reporting that does not fail the pipeline.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: audit
+      - task: _npm:windows
+        vars:
+          ARGS: audit
+
+  audit:report:
+    desc: Report npm vulnerabilities without failing (local review)
+    summary: |
+      Run npm audit and display the vulnerability report. Unlike audit, this
+      task ignores the exit code so it never breaks a local workflow. Suitable
+      for developer review sessions. Use task audit for strict CI enforcement.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: audit
+        ignore_error: true
+      - task: _npm:windows
+        vars:
+          ARGS: audit
+        ignore_error: true
+
+  audit:fix:
+    desc: Fix security vulnerabilities with npm audit fix
+    summary: |
+      Run npm audit fix to automatically resolve known vulnerabilities in the
+      project dependency tree where a non-breaking fix is available.
+      May update both package-lock.json and node_modules.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: audit fix
+      - task: _npm:windows
+        vars:
+          ARGS: audit fix
+
+  audit:json:
+    desc: Output npm audit results as JSON for tooling or dashboards
+    summary: |
+      Run npm audit --json and emit the full vulnerability report as structured JSON.
+      Useful for feeding into security dashboards, scripts, or CI tooling that
+      consumes machine-readable output. Exit code follows npm audit — non-zero
+      when vulnerabilities exist.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: audit --json
+      - task: _npm:windows
+        vars:
+          ARGS: audit --json
+
+  update:
+    desc: Update all packages within declared version ranges
+    summary: |
+      Run npm update to bring all installed packages to the latest versions
+      permitted by the version ranges declared in package.json. Updates
+      both node_modules and package-lock.json.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: update
+      - task: _npm:windows
+        vars:
+          ARGS: update
+
+  doctor:
+    desc: Check npm environment health with npm doctor
+    summary: |
+      Run npm doctor to verify the npm environment is configured correctly.
+      Checks Node.js version, npm registry connectivity, file permissions,
+      and required tools. Useful for diagnosing installation or configuration
+      problems. Must be run from the Node.js project root.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: doctor
+      - task: _npm:windows
+        vars:
+          ARGS: doctor
+
+  cache:clean:
+    desc: Clear the npm cache with npm cache clean
+    summary: |
+      Run npm cache clean --force to remove all cached data from the npm cache.
+      Useful when resolving corrupt cache issues or freeing disk space.
+      Does not remove node_modules or modify package-lock.json.
+      Must be run from the Node.js project root.
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: cache clean --force
+      - task: _npm:windows
+        vars:
+          ARGS: cache clean --force
+
+  clean:
+    desc: Remove the node_modules directory
+    summary: |
+      Delete the node_modules directory. Does nothing if node_modules does not
+      already exist. Run task install after to restore all dependencies.
+    prompt:
+      - This will delete the node_modules directory.
+      - Continue?
+    cmds:
+      - task: _clean:unix
+      - task: _clean:windows
+
+  clean:all:
+    desc: Remove node_modules and package-lock.json (destructive — regenerates lockfile)
+    summary: |
+      Delete both node_modules and package-lock.json for a fully clean slate.
+      WARNING: This permanently removes package-lock.json, which records the exact
+      resolved dependency tree. Regenerating it via npm install may produce a
+      different tree if upstream package ranges have changed. Use only when the
+      lock file is corrupt or conflicted, then audit the new lock file carefully.
+      Run task install after to restore dependencies and regenerate package-lock.json.
+    aliases:
+      - reset:deps
+    prompt:
+      - 'WARNING: This will permanently delete node_modules AND package-lock.json.'
+      - Regenerating the lockfile may produce a different dependency tree.
+      - Continue?
+    cmds:
+      - task: _clean:all:unix
+      - task: _clean:all:windows
+
+  _node:setup:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+    preconditions:
+      - sh: 'task --list-all 2>/dev/null | grep -q "{{.NODE_MANAGER}}:node:install"'
+        msg: 'node:setup requires the {{.NODE_MANAGER}} taskfile included in the root Taskfile. Add: {{.NODE_MANAGER}}: taskfile: taskfiles/{{.NODE_MANAGER}}/Taskfile.yml'
+    cmds:
+      - |
+        if [ "{{.NODE_MANAGER}}" = "nvm" ]; then
+          if [ -n "$NODE_VERSION" ]; then
+            task nvm:node:install VERSION="$NODE_VERSION"
+          else
+            task nvm:node:install
+          fi
+        else
+          if [ -n "$NODE_VERSION" ]; then
+            task fnm:node:install VERSION="$NODE_VERSION"
+          else
+            task fnm:node:install
+          fi
+        fi
+
+  _node:setup:windows:
+    internal: true
+    platforms: [windows]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((task --list-all 2>$null | Out-String) -match '{{.NODE_MANAGER}}:node:install') { exit 0 } else { exit 1 }"
+        msg: 'node:setup requires the {{.NODE_MANAGER}} taskfile included in the root Taskfile. Add: {{.NODE_MANAGER}}: taskfile: taskfiles/{{.NODE_MANAGER}}/Taskfile.yml'
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'nvm') { if ($env:NODE_VERSION) { task nvm:node:install \"VERSION=$env:NODE_VERSION\" } else { task nvm:node:install } } else { if ($env:NODE_VERSION) { task fnm:node:install \"VERSION=$env:NODE_VERSION\" } else { task fnm:node:install } }"
+
+  _npm:unix:
+    internal: true
+    platforms: [linux, darwin]
+    # Run in the user's working directory so npm finds the project's package.json.
+    dir: '{{.USER_WORKING_DIR}}'
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars:
+        - ARGS
+    env:
+      COREPACK_ENABLE_AUTO_PIN: '1'
+    preconditions:
+      - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+        msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
+      - sh: 'test -f "{{.USER_WORKING_DIR}}/package.json"'
+        msg: 'package.json not found. Run this task from the Node.js project root.'
+    cmds:
+      - |
+        bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; command -v corepack >/dev/null 2>&1 || { echo "corepack is not available. Run: task manager:setup"; exit 1; }; corepack npm {{.ARGS}}'
+
+  _npm:windows:
+    internal: true
+    platforms: [windows]
+    # Run in the user's working directory so npm finds the project's package.json.
+    dir: '{{.USER_WORKING_DIR}}'
+    requires:
+      vars:
+        - ARGS
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+      COREPACK_ENABLE_AUTO_PIN: '1'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -ne 'fnm' -and '{{.NODE_MANAGER}}' -ne 'nvm') { exit 1 } else { exit 0 }"
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command {{.NODE_MANAGER}} -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: '"{{.NODE_MANAGER}}" is not installed or not available in PATH. Run: task node:setup'
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
+        msg: 'package.json not found. Run this task from the Node.js project root.'
+    cmds:
+      - |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm') { fnm env --shell powershell | Out-String | Invoke-Expression; if ($env:NODE_VERSION) { fnm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { fnm use } } else { if ($env:NODE_VERSION) { nvm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { $v = if (Test-Path '.node-version') { (Get-Content '.node-version' -Raw).Trim() } else { (Get-Content '.nvmrc' -Raw).Trim() }; nvm use $v } }; if (-not (Get-Command corepack -ErrorAction SilentlyContinue)) { Write-Error 'corepack is not available. Run: task manager:setup'; exit 1 }; corepack npm {{.ARGS}}"
+
+  _ci:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: 'test -f "{{.USER_WORKING_DIR}}/package-lock.json"'
+        msg: 'package-lock.json not found. npm ci requires a lockfile.'
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: ci
+
+  _ci:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.USER_WORKING_DIR}}\package-lock.json') { exit 0 } else { exit 1 }"
+        msg: 'package-lock.json not found. npm ci requires a lockfile.'
+    cmds:
+      - task: _npm:windows
+        vars:
+          ARGS: ci
+
+  _run:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars:
+        - SCRIPT
+    env:
+      SCRIPT: '{{.SCRIPT}}'
+    preconditions:
+      - sh: 'printf "%s" "$SCRIPT" | grep -qE "^[A-Za-z0-9:_-]+$"'
+        msg: 'SCRIPT "{{.SCRIPT}}" contains invalid characters. Use only letters, numbers, colons, hyphens, and underscores.'
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+
+  _run:windows:
+    internal: true
+    platforms: [windows]
+    requires:
+      vars:
+        - SCRIPT
+    env:
+      SCRIPT: '{{.SCRIPT}}'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:SCRIPT -match '^[A-Za-z0-9:_-]+$') { exit 0 } else { exit 1 }"
+        msg: 'SCRIPT "{{.SCRIPT}}" contains invalid characters. Use only letters, numbers, colons, hyphens, and underscores.'
+    cmds:
+      - task: _npm:windows
+        vars:
+          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+
+  _version:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+        msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
+    cmds:
+      - bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; node --version; npm --version'
+
+  _version:windows:
+    internal: true
+    platforms: [windows]
+    env:
+      NODE_VERSION: '{{.NODE_VERSION}}'
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -ne 'fnm' -and '{{.NODE_MANAGER}}' -ne 'nvm') { exit 1 } else { exit 0 }"
+        msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command {{.NODE_MANAGER}} -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: '"{{.NODE_MANAGER}}" is not installed or not available in PATH. Run: task node:setup'
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm') { fnm env --shell powershell | Out-String | Invoke-Expression; if ($env:NODE_VERSION) { fnm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { fnm use } } else { if ($env:NODE_VERSION) { nvm use $env:NODE_VERSION } elseif ((Test-Path '.node-version') -or (Test-Path '.nvmrc')) { $v = if (Test-Path '.node-version') { (Get-Content '.node-version' -Raw).Trim() } else { (Get-Content '.nvmrc' -Raw).Trim() }; nvm use $v } }; node --version; npm --version"
+
+  _clean:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: '{{.USER_WORKING_DIR}}'
+    set: [errexit, nounset, pipefail]
+    status:
+      - 'test ! -d node_modules'
+    cmds:
+      - echo Removing node_modules...
+      - rm -rf node_modules
+      - echo node_modules removed.
+
+  _clean:windows:
+    internal: true
+    platforms: [windows]
+    dir: '{{.USER_WORKING_DIR}}'
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules') { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Removing node_modules...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Recurse -Force 'node_modules'"
+      - echo node_modules removed.
+
+  _clean:all:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: '{{.USER_WORKING_DIR}}'
+    set: [errexit, nounset, pipefail]
+    cmds:
+      - echo Removing node_modules and package-lock.json...
+      - rm -rf node_modules
+      - rm -f package-lock.json
+      - echo Done.
+
+  _clean:all:windows:
+    internal: true
+    platforms: [windows]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - echo Removing node_modules and package-lock.json...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules') { Remove-Item -Recurse -Force 'node_modules' }; if (Test-Path 'package-lock.json') { Remove-Item -Force 'package-lock.json' }; Write-Host Done."
