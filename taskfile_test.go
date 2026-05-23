@@ -1,0 +1,101 @@
+package taskotter_test
+
+import (
+	"context"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+)
+
+func TestEveryTaskfileDirectoryHasReadmeAndTest(t *testing.T) {
+	err := filepath.WalkDir("taskfiles", func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || entry.Name() != "Taskfile.yml" {
+			return nil
+		}
+
+		dir := filepath.Dir(path)
+		if !fileExists(filepath.Join(dir, "README.md")) {
+			t.Fatalf("%s must include README.md", dir)
+		}
+
+		tests, err := filepath.Glob(filepath.Join(dir, "*_test.go"))
+		if err != nil {
+			return err
+		}
+		if len(tests) == 0 {
+			t.Fatalf("%s must include a *_test.go file", dir)
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk taskfiles: %v", err)
+	}
+}
+
+func TestRootToolDefaultsStayNamespaced(t *testing.T) {
+	output := rootDryRun(t, "prettier:check")
+
+	for _, token := range []string{
+		"prettier . --check",
+		".prettierignore",
+	} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root prettier dry-run missing %q\noutput:\n%s", token, output)
+		}
+	}
+
+	if strings.Contains(output, "**/*.{css,scss,sass,less,vue,svelte,astro} --check") {
+		t.Fatalf("prettier picked up stylelint targets from another include\noutput:\n%s", output)
+	}
+}
+
+func TestRootAggregatesForwardCommonOverrides(t *testing.T) {
+	output := rootDryRun(t, "check", "PM=pnpm", "TARGETS=src")
+
+	for _, token := range []string{
+		"pnpm exec eslint",
+		"pnpm exec prettier src --check",
+		"pnpm exec biome check src",
+		"pnpm exec stylelint src",
+		"pnpm exec knip",
+		"pnpm exec depcheck src",
+	} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root aggregate dry-run missing %q\noutput:\n%s", token, output)
+		}
+	}
+}
+
+func rootDryRun(t *testing.T, args ...string) string {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	allArgs := append([]string{"--dry", "--yes", "--verbose"}, args...)
+	cmd := exec.CommandContext(ctx, "task", allArgs...)
+	cmd.Env = os.Environ()
+
+	output, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		t.Fatalf("task command timed out: task %s", strings.Join(allArgs, " "))
+	}
+	if err != nil {
+		t.Fatalf("task command failed: task %s\nerror: %v\noutput:\n%s", strings.Join(allArgs, " "), err, string(output))
+	}
+
+	return string(output)
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}

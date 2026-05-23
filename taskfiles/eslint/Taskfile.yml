@@ -1,0 +1,113 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
+  PM: ""
+  TARGETS: ""
+  ESLINT_DEFAULT_TARGETS: "src/**/*.{js,jsx,ts,tsx}"
+  CONFIG: ""
+  CACHE: ""
+  ESLINT_DEFAULT_CACHE: "true"
+  EXTRA_ARGS: ""
+
+tasks:
+  default:
+    desc: Show available ESLint tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install ESLint as a local devDependency
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: eslint
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  init:
+    desc: Run the ESLint config initialization wizard
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: eslint
+          ARGS: "--init"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  config:init:
+    desc: Alias for eslint:init
+    cmds:
+      - task: init
+
+  check:
+    desc: Lint targets with ESLint
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: eslint
+          ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}{{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  fix:
+    desc: Lint targets with ESLint and apply fixes
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: eslint
+          ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}--fix {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  ci:
+    desc: Run ESLint with zero-warning CI enforcement
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: eslint
+          ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}--max-warnings=0 {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  cache:clean:
+    desc: Remove the ESLint cache directory
+    cmds:
+      - if [ -d .cache/eslint ]; then rm -rf .cache/eslint; fi
+
+  version:
+    desc: Show the locally resolved ESLint version
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: eslint
+          ARGS: "--version"
+
+  help:
+    desc: Show ESLint CLI help
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: eslint
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

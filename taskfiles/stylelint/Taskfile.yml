@@ -1,0 +1,114 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
+  PM: ""
+  TARGETS: ""
+  STYLELINT_DEFAULT_TARGETS: "**/*.{css,scss,sass,less,vue,svelte,astro}"
+  CONFIG: ""
+  CACHE: ""
+  STYLELINT_DEFAULT_CACHE: "true"
+  ALLOW_EMPTY_INPUT: ""
+  STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT: "true"
+  EXTRA_ARGS: ""
+
+tasks:
+  default:
+    desc: Show available Stylelint tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Stylelint and the standard config as local devDependencies
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: "stylelint stylelint-config-standard"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  config:init:
+    desc: Create a starter Stylelint config when none exists
+    cmds:
+      - |
+        config_file="{{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{if .CONFIG}}{{.CONFIG}}{{end}}{{end}}"
+        if [ -z "$config_file" ]; then
+          config_file=".stylelintrc.json"
+        fi
+        if [ -e "$config_file" ]; then
+          echo "$config_file already exists."
+        else
+          printf '%s\n' '{' '  "extends": "stylelint-config-standard"' '}' > "$config_file"
+          echo "Created $config_file."
+        fi
+
+  check:
+    desc: Lint stylesheet targets with Stylelint
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: stylelint
+          ARGS: '{{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}} {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}{{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}{{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  fix:
+    desc: Lint stylesheet targets with Stylelint and apply fixes
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: stylelint
+          ARGS: '{{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}} --fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}{{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}{{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  ci:
+    desc: Run Stylelint with zero-warning CI enforcement
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: stylelint
+          ARGS: '{{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}} --max-warnings=0 {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}{{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}{{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  cache:clean:
+    desc: Remove the Stylelint cache directory
+    cmds:
+      - if [ -d .cache/stylelint ]; then rm -rf .cache/stylelint; fi
+
+  version:
+    desc: Show the locally resolved Stylelint version
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: stylelint
+          ARGS: "--version"
+
+  help:
+    desc: Show Stylelint CLI help
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: stylelint
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

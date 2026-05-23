@@ -1,0 +1,119 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  EXTRA_ARGS: ""
+  CONFIG: ""
+  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
+  PM: ""
+
+tasks:
+  default:
+    desc: Show available Knip tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Knip as a local devDependency
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: knip
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  init:
+    desc: Initialize a Knip configuration
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: "--init"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  config:init:
+    desc: Alias for knip:init
+    cmds:
+      - task: init
+
+  check:
+    desc: Run Knip for unused files, exports, and dependencies
+    summary: Knip may report framework-specific false positives; review results before deleting files or dependencies.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  production:
+    desc: Run Knip against production dependency usage
+    summary: Knip may report framework-specific false positives; review results before deleting files or dependencies.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--production {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  dependencies:
+    desc: Report unused production dependencies with Knip
+    summary: Review Knip dependency results before removing packages.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--dependencies {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  dev-dependencies:
+    desc: Report unused development dependencies with Knip
+    summary: Review Knip dependency results before removing packages.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--devDependencies {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  files:
+    desc: Report unused files with Knip
+    summary: Review Knip file results before deleting files.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--files {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  exports:
+    desc: Report unused exports with Knip
+    summary: Review Knip export results before deleting code.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--exports {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  fix:
+    desc: Run Knip fix mode when supported by the installed version
+    summary: Knip fixes can update project files; dependency removals should still be reviewed manually.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  ci:
+    desc: Run Knip production checks for CI
+    summary: Knip may report framework-specific false positives; tune configuration before enforcing broadly.
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--production {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+
+  version:
+    desc: Show the locally resolved Knip version
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: "--version"}
+
+  help:
+    desc: Show Knip CLI help
+    cmds:
+      - task: js:exec
+        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: "--help", EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}

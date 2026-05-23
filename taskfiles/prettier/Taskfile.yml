@@ -1,0 +1,108 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
+  PM: ""
+  TARGETS: ""
+  PRETTIER_DEFAULT_TARGETS: "."
+  CONFIG: ""
+  IGNORE_PATH: ""
+  PRETTIER_DEFAULT_IGNORE_PATH: ".prettierignore"
+  EXTRA_ARGS: ""
+
+tasks:
+  default:
+    desc: Show available Prettier tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Prettier as a local devDependency
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: prettier
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  config:init:
+    desc: Create a starter Prettier config when none exists
+    cmds:
+      - |
+        config_file="{{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{if .CONFIG}}{{.CONFIG}}{{end}}{{end}}"
+        if [ -z "$config_file" ]; then
+          config_file=".prettierrc.json"
+        fi
+        if [ -e "$config_file" ]; then
+          echo "$config_file already exists."
+        else
+          printf '%s\n' '{' '  "singleQuote": true,' '  "semi": true' '}' > "$config_file"
+          echo "Created $config_file."
+        fi
+
+  check:
+    desc: Check formatting with Prettier
+    cmds:
+      - task: js:exec:ignore
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: prettier
+          ARGS: '{{if .PRETTIER_TARGETS_OVERRIDE}}{{.PRETTIER_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.PRETTIER_DEFAULT_TARGETS}}{{end}}{{end}} --check {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}'
+          IGNORE_PATH: "{{if .IGNORE_PATH_OVERRIDE}}{{.IGNORE_PATH_OVERRIDE}}{{else}}{{if .IGNORE_PATH}}{{.IGNORE_PATH}}{{else}}{{.PRETTIER_DEFAULT_IGNORE_PATH}}{{end}}{{end}}"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  write:
+    desc: Format files with Prettier
+    cmds:
+      - task: js:exec:ignore
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: prettier
+          ARGS: '{{if .PRETTIER_TARGETS_OVERRIDE}}{{.PRETTIER_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.PRETTIER_DEFAULT_TARGETS}}{{end}}{{end}} --write {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}'
+          IGNORE_PATH: "{{if .IGNORE_PATH_OVERRIDE}}{{.IGNORE_PATH_OVERRIDE}}{{else}}{{if .IGNORE_PATH}}{{.IGNORE_PATH}}{{else}}{{.PRETTIER_DEFAULT_IGNORE_PATH}}{{end}}{{end}}"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  fix:
+    desc: Alias for prettier:write
+    cmds:
+      - task: write
+
+  ci:
+    desc: Alias for prettier:check
+    cmds:
+      - task: check
+
+  version:
+    desc: Show the locally resolved Prettier version
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: prettier
+          ARGS: "--version"
+
+  help:
+    desc: Show Prettier CLI help
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: prettier
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

@@ -1,0 +1,110 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
+  PM: ""
+  PROJECT_PATH: ""
+  DEPCHECK_DEFAULT_PROJECT_PATH: "."
+  TARGETS: ""
+  IGNORE_PACKAGES: ""
+  EXTRA_ARGS: ""
+
+tasks:
+  default:
+    desc: Show available Depcheck tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Depcheck as a local devDependency
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: depcheck
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  check:
+    desc: Run Depcheck
+    summary: Depcheck reports unused and missing dependencies; review findings before removing packages.
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: depcheck
+          ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  json:
+    desc: Run Depcheck and print JSON output
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: depcheck
+          ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}} --json"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  ignores:
+    desc: Run Depcheck while ignoring packages from IGNORE_PACKAGES
+    summary: Set IGNORE_PACKAGES as a comma-separated list, for example IGNORE_PACKAGES="@types/*,eslint-*".
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: depcheck
+          ARGS: '{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}} --ignores="{{if .IGNORE_PACKAGES_OVERRIDE}}{{.IGNORE_PACKAGES_OVERRIDE}}{{else}}{{.IGNORE_PACKAGES}}{{end}}"'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  skip-missing:
+    desc: Run Depcheck while ignoring missing dependency reports
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: depcheck
+          ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}} --skip-missing=true"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  ci:
+    desc: Run Depcheck with CI failure on dependency findings
+    summary: Depcheck exits non-zero when unused or missing dependencies are found.
+    cmds:
+      - task: check
+
+  version:
+    desc: Show the locally resolved Depcheck version
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: depcheck
+          ARGS: "--version"
+
+  help:
+    desc: Show Depcheck CLI help
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: depcheck
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

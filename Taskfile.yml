@@ -1,6 +1,58 @@
-version: '3'
+version: "3"
 
 includes:
+  eslint:
+    taskfile: taskfiles/eslint/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      ESLINT_TARGETS_OVERRIDE: "{{.TARGETS}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      CACHE_OVERRIDE: "{{.CACHE}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  prettier:
+    taskfile: taskfiles/prettier/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      PRETTIER_TARGETS_OVERRIDE: "{{.TARGETS}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      IGNORE_PATH_OVERRIDE: "{{.IGNORE_PATH}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  biome:
+    taskfile: taskfiles/biome/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      BIOME_TARGETS_OVERRIDE: "{{.TARGETS}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  stylelint:
+    taskfile: taskfiles/stylelint/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      STYLELINT_TARGETS_OVERRIDE: "{{.TARGETS}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      CACHE_OVERRIDE: "{{.CACHE}}"
+      ALLOW_EMPTY_INPUT_OVERRIDE: "{{.ALLOW_EMPTY_INPUT}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  knip:
+    taskfile: taskfiles/knip/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  depcheck:
+    taskfile: taskfiles/depcheck/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      DEPCHECK_TARGETS_OVERRIDE: "{{.TARGETS}}"
+      DEPCHECK_PROJECT_PATH_OVERRIDE: "{{.PROJECT_PATH}}"
+      IGNORE_PACKAGES_OVERRIDE: "{{.IGNORE_PACKAGES}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   bun:
     taskfile: taskfiles/bun/Taskfile.yml
   corepack:
@@ -18,6 +70,17 @@ includes:
   yarn:
     taskfile: taskfiles/yarn/Taskfile.yml
 
+vars:
+  PM: ""
+  TARGETS: ""
+  CONFIG: ""
+  CACHE: ""
+  EXTRA_ARGS: ""
+  IGNORE_PATH: ""
+  ALLOW_EMPTY_INPUT: ""
+  IGNORE_PACKAGES: ""
+  PROJECT_PATH: ""
+
 tasks:
   default:
     desc: List available tasks
@@ -25,3 +88,86 @@ tasks:
     silent: true
     cmds:
       - task --list
+
+  install:tools:
+    desc: Install JS/TS linting, formatting, and dependency-audit tools
+    summary: Install ESLint, Prettier, Biome, Stylelint, Knip, and Depcheck as local devDependencies.
+    cmds:
+      - task: eslint:install
+      - task: prettier:install
+      - task: biome:install
+      - task: stylelint:install
+      - task: knip:install
+      - task: depcheck:install
+
+  check:
+    desc: Run all JS/TS checks
+    summary: Run non-mutating checks across linting, formatting, Biome, Stylelint, Knip, and Depcheck.
+    cmds:
+      - task: eslint:check
+      - task: prettier:check
+      - task: biome:check
+      - task: stylelint:check
+      - task: knip:check
+      - task: depcheck:check
+
+  fix:
+    desc: Apply safe JS/TS source fixes
+    summary: Run source-formatting and lint-fix tasks. Dependency removals remain manual.
+    cmds:
+      - task: eslint:fix
+      - task: prettier:write
+      - task: biome:check:write
+      - task: stylelint:fix
+
+  lint:
+    desc: Run JS/TS lint tasks
+    summary: Run ESLint, Biome lint, and Stylelint checks without modifying files.
+    cmds:
+      - task: eslint:check
+      - task: biome:lint
+      - task: stylelint:check
+
+  format:
+    desc: Format JS/TS project files
+    summary: Run Prettier write and Biome format write tasks.
+    cmds:
+      - task: prettier:write
+      - task: biome:format:write
+
+  audit:deps:
+    desc: Audit dependency usage
+    summary: Run Knip and Depcheck for unused files, exports, and dependencies. Review results before deleting anything.
+    cmds:
+      - task: knip:check
+      - task: depcheck:check
+
+  ci:
+    desc: Run CI-friendly JS/TS checks
+    summary: Run strict tool checks intended for continuous integration.
+    cmds:
+      - task: eslint:ci
+      - task: prettier:ci
+      - task: biome:ci
+      - task: stylelint:ci
+      - task: knip:ci
+      - task: depcheck:ci
+
+  clean:caches:
+    desc: Clean tool caches
+    summary: Remove caches created by tools that use local cache directories.
+    cmds:
+      - task: eslint:cache:clean
+      - task: biome:cache:clean
+      - task: stylelint:cache:clean
+
+  tools:versions:
+    desc: Show installed tool versions
+    summary: Print the locally resolved versions for all JS/TS tooling taskfiles.
+    cmds:
+      - task: eslint:version
+      - task: prettier:version
+      - task: biome:version
+      - task: stylelint:version
+      - task: knip:version
+      - task: depcheck:version

@@ -1,0 +1,161 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
+  PM: ""
+  TARGETS: ""
+  BIOME_DEFAULT_TARGETS: "."
+  CONFIG: ""
+  EXTRA_ARGS: ""
+
+tasks:
+  default:
+    desc: Show available Biome tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Biome as a local devDependency
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: "@biomejs/biome"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  init:
+    desc: Create a Biome config file
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: init
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  config:init:
+    desc: Alias for biome:init
+    cmds:
+      - task: init
+
+  check:
+    desc: Run Biome check
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'check {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  check:write:
+    desc: Run Biome check and write safe fixes
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'check --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  fix:
+    desc: Alias for biome:check:write
+    cmds:
+      - task: check:write
+
+  lint:
+    desc: Run Biome lint
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'lint {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  lint:fix:
+    desc: Run Biome lint and write fixes
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'lint --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  format:
+    desc: Check formatting with Biome
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'format {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  format:write:
+    desc: Format files with Biome
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'format --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  ci:
+    desc: Run Biome CI checks
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: 'ci {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  cache:clean:
+    desc: Remove common Biome cache directories if present
+    cmds:
+      - if [ -d .cache/biome ]; then rm -rf .cache/biome; fi
+      - if [ -d node_modules/.cache/biome ]; then rm -rf node_modules/.cache/biome; fi
+
+  version:
+    desc: Show the locally resolved Biome version
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: "--version"
+
+  help:
+    desc: Show Biome CLI help
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: biome
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
