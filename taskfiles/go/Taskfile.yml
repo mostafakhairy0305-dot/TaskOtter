@@ -161,10 +161,10 @@ tasks:
         if: '[ "$(id -u)" -eq 0 ]'
       - cmd: sudo tar -C "{{.INSTALL_DIR_UNIX}}" -xzf "{{.GO_TARBALL_FILE_UNIX}}"
         if: '[ "$(id -u)" -ne 0 ]'
-      - cmd: rm -f "{{.ITEM}}"
+      - cmd: rm -f "{{if eq .ITEM "version"}}{{.GO_VERSION_FILE_UNIX}}{{else}}{{.GO_TARBALL_FILE_UNIX}}{{end}}"
         for:
-          - '{{.GO_VERSION_FILE_UNIX}}'
-          - '{{.GO_TARBALL_FILE_UNIX}}'
+          - version
+          - tarball
       - echo "Go installed to {{.GO_ROOT_UNIX}}."
 
   _install:windows:msi:
@@ -194,6 +194,8 @@ tasks:
     summary: Add GO_BIN_UNIX to the current user's shell profile if it is not already available.
     platforms: [linux]
     set: [errexit, nounset, pipefail]
+    status:
+      - '[ "{{default "false" .FORCE}}" != "true" ] && command -v go >/dev/null 2>&1'
     cmds:
       - task: _shell:setup:linux:profile
         vars:
@@ -222,9 +224,6 @@ tasks:
         - GO_PROFILE
     status:
       - '[ "{{default "false" .FORCE}}" != "true" ] && command -v go >/dev/null 2>&1 || grep -qF "{{.GO_BIN_UNIX}}" "{{.GO_PROFILE}}" 2>/dev/null'
-    preconditions:
-      - sh: test -d "{{.GO_ROOT_UNIX}}"
-        msg: Go was not found at GO_ROOT_UNIX. Re-run task install after checking INSTALL_DIR_UNIX.
     cmds:
       - touch "{{.GO_PROFILE}}"
       - cmd: printf '\n# Go\n' >> "{{.GO_PROFILE}}"
