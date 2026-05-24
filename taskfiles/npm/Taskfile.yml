@@ -19,11 +19,8 @@ includes:
 vars:
   NODE_MANAGER: fnm
   FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
-  # Unix: add fnm binary to PATH then activate the selected Node.js environment.
-  # eval "$(fnm env --shell bash)" makes the active Node.js version (and npm) available.
   FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
   NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
-  # Unix: switch to NODE_VERSION when set; otherwise honour .node-version/.nvmrc if present.
   FNM_USE: '{{if .NODE_VERSION}}fnm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then fnm use; fi{{end}}'
   NVM_USE: '{{if .NODE_VERSION}}nvm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}'
   NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
@@ -105,6 +102,30 @@ tasks:
     cmds:
       - task: _ci:unix
       - task: _ci:windows
+
+  add:
+    desc: Add packages as devDependencies (PACKAGES=<pkgs>)
+    requires:
+      vars: [PACKAGES]
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: 'install -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+      - task: _npm:windows
+        vars:
+          ARGS: 'install -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+
+  exec:
+    desc: Execute a local project binary via npm exec (BINARY=<name>)
+    requires:
+      vars: [BINARY]
+    cmds:
+      - task: _npm:unix
+        vars:
+          ARGS: 'exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+      - task: _npm:windows
+        vars:
+          ARGS: 'exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
 
   run:
     desc: Run a package.json script (SCRIPT=<name>)
@@ -413,7 +434,6 @@ tasks:
   _npm:unix:
     internal: true
     platforms: [linux, darwin]
-    # Run in the user's working directory so npm finds the project's package.json.
     dir: '{{.USER_WORKING_DIR}}'
     set: [errexit, nounset, pipefail]
     requires:
@@ -435,7 +455,6 @@ tasks:
   _npm:windows:
     internal: true
     platforms: [windows]
-    # Run in the user's working directory so npm finds the project's package.json.
     dir: '{{.USER_WORKING_DIR}}'
     requires:
       vars:

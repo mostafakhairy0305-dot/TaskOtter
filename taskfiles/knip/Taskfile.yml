@@ -15,7 +15,6 @@ includes:
 vars:
   EXTRA_ARGS: ""
   CONFIG: ""
-  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
   PM: ""
 
 tasks:

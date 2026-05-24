@@ -81,6 +81,30 @@ tasks:
       - task: _ci:unix
       - task: _ci:windows
 
+  add:
+    desc: Add packages as devDependencies (PACKAGES=<pkgs>)
+    requires:
+      vars: [PACKAGES]
+    cmds:
+      - task: _pnpm:unix
+        vars:
+          ARGS: 'add -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+      - task: _pnpm:windows
+        vars:
+          ARGS: 'add -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+
+  exec:
+    desc: Execute a local project binary via pnpm exec (BINARY=<name>)
+    requires:
+      vars: [BINARY]
+    cmds:
+      - task: _pnpm:unix
+        vars:
+          ARGS: 'exec {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+      - task: _pnpm:windows
+        vars:
+          ARGS: 'exec {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+
   run:
     desc: Run a package.json script with pnpm
     summary: Run SCRIPT through pnpm run and forward arguments passed after --.

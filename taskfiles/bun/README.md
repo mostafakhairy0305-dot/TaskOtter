@@ -39,6 +39,8 @@ Installs are **idempotent**: the internal install task has a `status` check that
 
 | Task | Aliases | Variables | Description |
 |---|---|---|---|
+| `add` | — | Required `PACKAGES`; optional `EXTRA_ARGS` | Add packages as devDependencies with `bun add -d`. |
+| `exec` | — | Required `BINARY`; optional `ARGS`, `EXTRA_ARGS` | Execute a local project binary via `bun x`. |
 | `install` | — | Optional `VERSION` | Install Bun for the current operating system. Pass `VERSION=1.x.y` for a specific release. |
 | `install:undo` | `uninstall` | — | Remove Bun from the current operating system. |
 | `version` | — | — | Show the installed Bun version and revision. Auto-installs Bun if missing. |

@@ -31,6 +31,12 @@ type PublicTaskSpec struct {
 
 var expectedPublicTasks = []PublicTaskSpec{
 	{
+		Name:               "add",
+		Args:               map[string]string{"PACKAGES": "prettier"},
+		MustDryRunWithArgs: true,
+		RequiresGroupOutput: true,
+	},
+	{
 		Name:                "audit",
 		MustDryRunWithArgs:  true,
 		RequiresGroupOutput: true,
@@ -91,6 +97,12 @@ var expectedPublicTasks = []PublicTaskSpec{
 		MustDryRunWithArgs:  true,
 		RequiresGroupOutput: true,
 		RequiresSummary:     true,
+	},
+	{
+		Name:               "exec",
+		Args:               map[string]string{"BINARY": "prettier"},
+		MustDryRunWithArgs: true,
+		RequiresGroupOutput: true,
 	},
 	{
 		Name:                "doctor",

@@ -8,7 +8,6 @@ output:
 
 silent: true
 
-# ─── Variables ────────────────────────────────────────────────────────────────
 vars:
   VISIBILITY: 'public'
   BASE: 'main'
@@ -22,14 +21,12 @@ env:
   GH_TOKEN: '{{.PAT_TOKEN}}'
 
 tasks:
-  # ─── Default ────────────────────────────────────────────────────────────────
   default:
     desc: Show available GitHub CLI automation tasks
     summary: Display the list of available gh-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
-  # ─── Install (auto-detect) ──────────────────────────────────────────────────
   install:
     desc: Install the GitHub CLI on the current operating system
     summary: |
@@ -42,7 +39,6 @@ tasks:
       - task: _install:auto:unix
       - task: _install:auto:windows
 
-  # ─── Upgrade ────────────────────────────────────────────────────────────────
   upgrade:
     desc: Upgrade the GitHub CLI to the latest version on the current OS
     summary: |
@@ -55,7 +51,6 @@ tasks:
       - task: _upgrade:auto:unix
       - task: _upgrade:auto:windows
 
-  # ─── Verification ───────────────────────────────────────────────────────────
   version:
     desc: Show the installed GitHub CLI version
     summary: Print the installed gh version string via `gh --version`.
@@ -105,7 +100,6 @@ tasks:
     cmds:
       - gh help
 
-  # ─── Auth ───────────────────────────────────────────────────────────────────
   auth:login:
     desc: Authenticate with GitHub interactively
     summary: |
@@ -177,7 +171,6 @@ tasks:
     cmds:
       - gh auth setup-git
 
-  # ─── Repository operations ──────────────────────────────────────────────────
   repo:view:
     desc: View a GitHub repository in the terminal or browser
     summary: |
@@ -296,7 +289,6 @@ tasks:
     cmds:
       - gh repo delete {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}} --yes
 
-  # ─── Pull request operations ─────────────────────────────────────────────────
   pr:list:
     desc: List open pull requests in the current repository
     summary: List open pull requests for the current repository via `gh pr list`.
@@ -424,7 +416,6 @@ tasks:
     cmds:
       - gh pr comment {{.PR_NUMBER}} --body "{{.PR_BODY}}"
 
-  # ─── Issue operations ────────────────────────────────────────────────────────
   issue:list:
     desc: List open issues in the current repository
     summary: List open issues for the current repository via `gh issue list`.
@@ -530,7 +521,6 @@ tasks:
     cmds:
       - gh issue edit {{.ISSUE_NUMBER}} --add-label {{.LABEL}}
 
-  # ─── GitHub Actions workflow operations ─────────────────────────────────────
   workflow:list:
     desc: List GitHub Actions workflows in the current repository
     summary: List all available workflows via `gh workflow list`.
@@ -640,7 +630,6 @@ tasks:
     cmds:
       - gh run cancel {{.RUN_ID}}
 
-  # ─── Release operations ──────────────────────────────────────────────────────
   release:list:
     desc: List releases in the current repository
     summary: |
@@ -779,7 +768,6 @@ tasks:
     cmds:
       - gh release delete {{.TAG}} --yes {{if .OWNER}}--repo {{.OWNER}}/{{.REPO}}{{end}}
 
-  # ─── Secrets ─────────────────────────────────────────────────────────────────
   secret:list:
     desc: List GitHub Actions secrets for the current repository
     summary: |
@@ -827,7 +815,6 @@ tasks:
     cmds:
       - gh secret delete {{.SECRET_NAME}} {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
-  # ─── Variables ───────────────────────────────────────────────────────────────
   variable:list:
     desc: List GitHub Actions variables for the current repository
     summary: |
@@ -875,7 +862,6 @@ tasks:
     cmds:
       - gh variable delete {{.VARIABLE_NAME}} {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
-  # ─── Gists ───────────────────────────────────────────────────────────────────
   gist:list:
     desc: List gists for the authenticated GitHub user
     summary: List all gists belonging to the authenticated user via `gh gist list`.
@@ -927,7 +913,6 @@ tasks:
     cmds:
       - gh gist delete {{.GIST_ID}}
 
-  # ─── GitHub API ──────────────────────────────────────────────────────────────
   api:get:
     desc: Make an authenticated GET request to the GitHub API
     summary: |
@@ -988,7 +973,6 @@ tasks:
     cmds:
       - gh api --method DELETE {{.ENDPOINT}}
 
-  # ─── Extensions ──────────────────────────────────────────────────────────────
   extension:list:
     desc: List installed GitHub CLI extensions
     summary: List all locally installed gh extensions via `gh extension list`.
@@ -1037,7 +1021,6 @@ tasks:
     cmds:
       - gh extension remove {{.EXTENSION}}
 
-  # ─── Config ──────────────────────────────────────────────────────────────────
   config:list:
     desc: List all GitHub CLI configuration values
     summary: Display all current gh configuration settings via `gh config list`.
@@ -1074,7 +1057,6 @@ tasks:
     cmds:
       - gh config set {{.CONFIG_KEY}} {{.CONFIG_VALUE}}
 
-  # ─── SSH keys ────────────────────────────────────────────────────────────────
   ssh-key:list:
     desc: List SSH keys associated with the GitHub account
     summary: List all SSH keys for the authenticated GitHub user via `gh ssh-key list`.
@@ -1114,7 +1096,6 @@ tasks:
     cmds:
       - gh ssh-key delete {{.SSH_KEY_ID}} --yes
 
-  # ─── Aliases ─────────────────────────────────────────────────────────────────
   alias:list:
     desc: List all GitHub CLI command aliases
     summary: List all configured gh command aliases via `gh alias list`.
@@ -1152,7 +1133,6 @@ tasks:
     cmds:
       - gh alias delete {{.ALIAS_NAME}}
 
-  # ─── Projects ────────────────────────────────────────────────────────────────
   project:list:
     desc: List GitHub Projects for a user or organisation
     summary: |
@@ -1192,7 +1172,6 @@ tasks:
     cmds:
       - gh project create --title "{{.PROJECT_TITLE}}" {{if .OWNER}}--owner {{.OWNER}}{{end}}
 
-  # ─── Developer experience ────────────────────────────────────────────────────
   open:
     desc: Open the current repository in the browser
     summary: Open the current repository's GitHub page in the default web browser.
@@ -1250,7 +1229,6 @@ tasks:
     cmds:
       - gh search prs "{{.QUERY}}"
 
-  # ─── Internal: repo clone (cross-platform, PAT_TOKEN HTTPS path) ────────────
   _repo:clone:unix:
     internal: true
     desc: Clone a repository on macOS or Linux
@@ -1285,7 +1263,6 @@ tasks:
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "$target = '{{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}}'; $dest = '{{if ne .CLONE_DIR "."}}{{.CLONE_DIR}}{{end}}'; $args = @($dest) | Where-Object { $_ }; if ($env:GH_PAT) { git clone \"https://$env:GH_PAT@github.com/$target.git\" @args } else { gh repo clone $target @args }"
 
-  # ─── Internal: API mutations (cross-platform DATA pipe) ────────────────────
   _api:post:unix:
     internal: true
     desc: POST to the GitHub API on macOS or Linux by piping DATA via stdin
@@ -1328,7 +1305,6 @@ tasks:
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:GH_DATA | gh api --method PATCH {{.ENDPOINT}} --input -"
 
-  # ─── Internal: alias set (cross-platform quoting) ────────────────────────────
   _alias:set:unix:
     internal: true
     desc: Set a gh alias on macOS or Linux using single-quoted expansion
@@ -1346,7 +1322,6 @@ tasks:
     cmds:
       - gh alias set {{.ALIAS_NAME}} "{{.ALIAS_COMMAND}}"
 
-  # ─── Internal: workflow watch (cross-platform command substitution) ──────────
   _workflow:watch:unix:
     internal: true
     desc: Watch the latest run of a workflow on macOS or Linux
@@ -1364,7 +1339,6 @@ tasks:
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "$runId = (gh run list --workflow {{.WORKFLOW}} --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId; gh run watch $runId"
 
-  # ─── Internal: install ───────────────────────────────────────────────────────
   _install:auto:unix:
     internal: true
     desc: Auto-detect package manager and install gh on macOS or Linux
@@ -1649,7 +1623,6 @@ tasks:
       - brew install gh
       - echo 'gh installed successfully.'
 
-  # ─── Internal: upgrade ───────────────────────────────────────────────────────
   _upgrade:auto:unix:
     internal: true
     desc: Auto-detect package manager and upgrade gh on macOS or Linux
@@ -1779,7 +1752,6 @@ tasks:
       - echo 'Upgrading gh via snap...'
       - sudo snap refresh gh
 
-  # ─── Internal: uninstall ────────────────────────────────────────────────────
   _uninstall:macos:brew:
     internal: true
     desc: Uninstall gh on macOS using Homebrew
@@ -1833,7 +1805,6 @@ tasks:
       - scoop uninstall gh
       - echo gh uninstalled.
 
-  # ─── Internal: verification ──────────────────────────────────────────────────
   _version:unix:
     internal: true
     desc: Show the gh version on macOS or Linux
@@ -1915,7 +1886,6 @@ tasks:
       - |
         powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '=== gh binary ==='; (Get-Command gh).Source; Write-Host ''; Write-Host '=== gh version ==='; gh --version; Write-Host ''; Write-Host '=== gh auth status ==='; try { gh auth status } catch { Write-Host 'Not authenticated. Run: task auth:login' }"
 
-  # ─── Internal: secrets (cross-platform stdin pipe) ───────────────────────────
   _secret:set:unix:
     internal: true
     desc: Set a GitHub Actions secret on macOS or Linux via stdin

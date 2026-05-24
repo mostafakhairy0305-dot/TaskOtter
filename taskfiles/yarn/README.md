@@ -32,6 +32,7 @@ task yarn:node:setup NODE_MANAGER=nvm NODE_VERSION=22
 
 | Task | Variables | Description |
 |---|---|---|
+| `add` | Required `PACKAGES`; optional `EXTRA_ARGS` | Add packages as devDependencies with `yarn add -D`. |
 | `node:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Node.js via fnm or nvm. |
 | `manager:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Corepack when needed and enable its shims. |
 | `manager:pin` | Required `PACKAGE_MANAGER_VERSION` | Pin Yarn in `package.json` with Corepack. |
@@ -40,6 +41,7 @@ task yarn:node:setup NODE_MANAGER=nvm NODE_VERSION=22
 | `ci` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `yarn install --immutable` with a required `yarn.lock`. |
 | `run` | Required `SCRIPT`; optional `NODE_MANAGER`, `NODE_VERSION` | Run a script via `yarn run`. |
 | `dev` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `yarn run dev`. |
+| `exec` | Required `BINARY`; optional `ARGS`, `EXTRA_ARGS` | Execute a local project binary via `yarn exec`. |
 | `test` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `yarn test`. |
 | `build` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `yarn run build`. |
 | `lint` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `yarn run lint`. |

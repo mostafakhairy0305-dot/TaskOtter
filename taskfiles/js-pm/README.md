@@ -22,10 +22,14 @@ When `PM` is empty, the helper detects the package manager from lock files:
 
 | PM | Install | Execute |
 |---|---|---|
-| `npm` | `npm install -D <packages>` | `npx --no-install <binary>` |
+| `npm` | `npm install -D <packages>` | `npm exec -- <binary>` |
 | `pnpm` | `pnpm add -D <packages>` | `pnpm exec <binary>` |
 | `yarn` | `yarn add -D <packages>` | `yarn exec <binary>` |
-| `bun` | `bun add -d <packages>` | `bunx <binary>` |
+| `bun` | `bun add -d <packages>` | `bun x <binary>` |
+
+Each PM's `add` and `exec` commands are implemented in the dedicated PM
+taskfiles (`npm`, `yarn`, `pnpm`, `bun`) and called via their `add` and `exec`
+tasks. `js-pm` includes all four as optional dependencies.
 
 Yarn Classic usually supports `yarn exec`; if a pinned Yarn version does not,
 run the equivalent local binary with `yarn <binary> ...`.

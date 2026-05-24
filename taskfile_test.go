@@ -44,7 +44,8 @@ func TestRootToolDefaultsStayNamespaced(t *testing.T) {
 	output := rootDryRun(t, "prettier:check")
 
 	for _, token := range []string{
-		"prettier . --check",
+		`BINARY="prettier"`,
+		". --check",
 		".prettierignore",
 	} {
 		if !strings.Contains(output, token) {
@@ -61,12 +62,12 @@ func TestRootAggregatesForwardCommonOverrides(t *testing.T) {
 	output := rootDryRun(t, "check", "PM=pnpm", "TARGETS=src")
 
 	for _, token := range []string{
-		"pnpm exec eslint",
-		"pnpm exec prettier src --check",
-		"pnpm exec biome check src",
-		"pnpm exec stylelint src",
-		"pnpm exec knip",
-		"pnpm exec depcheck src",
+		`pnpm:exec BINARY="eslint"`,
+		`pnpm:exec BINARY="prettier"`,
+		`pnpm:exec BINARY="biome"`,
+		`pnpm:exec BINARY="stylelint"`,
+		`pnpm:exec BINARY="knip"`,
+		`pnpm:exec BINARY="depcheck"`,
 	} {
 		if !strings.Contains(output, token) {
 			t.Fatalf("root aggregate dry-run missing %q\noutput:\n%s", token, output)

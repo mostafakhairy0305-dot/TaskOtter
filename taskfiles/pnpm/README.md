@@ -10,6 +10,7 @@ missing.
 
 | Task | Variables | Description |
 |---|---|---|
+| `add` | Required `PACKAGES`; optional `EXTRA_ARGS` | Add packages as devDependencies with `pnpm add -D`. |
 | `node:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Node.js via fnm or nvm. |
 | `manager:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Corepack when needed and enable its shims. |
 | `manager:pin` | Required `PACKAGE_MANAGER_VERSION` | Pin pnpm in `package.json` with Corepack. |
@@ -18,6 +19,7 @@ missing.
 | `ci` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `pnpm install --frozen-lockfile` with `pnpm-lock.yaml`. |
 | `run` | Required `SCRIPT`; optional `NODE_MANAGER`, `NODE_VERSION` | Run a script via `pnpm run`. |
 | `dev` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `pnpm run dev`. |
+| `exec` | Required `BINARY`; optional `ARGS`, `EXTRA_ARGS` | Execute a local project binary via `pnpm exec`. |
 | `test` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `pnpm test`. |
 | `build` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `pnpm run build`. |
 | `lint` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `pnpm run lint`. |

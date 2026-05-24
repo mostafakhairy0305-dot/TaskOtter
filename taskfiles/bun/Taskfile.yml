@@ -101,6 +101,55 @@ tasks:
       - task: _upgrade:stable:unix
       - task: _upgrade:stable:windows
 
+  add:
+    desc: Add packages as devDependencies with Bun (PACKAGES=<pkgs>)
+    requires:
+      vars: [PACKAGES]
+    cmds:
+      - task: _bun:unix
+        vars:
+          ARGS: 'add -d {{.PACKAGES}} {{.EXTRA_ARGS}}'
+      - task: _bun:windows
+        vars:
+          ARGS: 'add -d {{.PACKAGES}} {{.EXTRA_ARGS}}'
+
+  exec:
+    desc: Execute a local project binary via bunx (BINARY=<name>)
+    requires:
+      vars: [BINARY]
+    cmds:
+      - task: _bun:unix
+        vars:
+          ARGS: 'x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+      - task: _bun:windows
+        vars:
+          ARGS: 'x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+
+  _bun:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: '{{.USER_WORKING_DIR}}'
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars: [ARGS]
+    preconditions:
+      - sh: test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1
+        msg: Bun is not installed. Run task bun:install first.
+    cmds:
+      - bash -lc '{{.BUN_LOAD}}; bun {{.ARGS}}'
+
+  _bun:windows:
+    internal: true
+    platforms: [windows]
+    dir: '{{.USER_WORKING_DIR}}'
+    requires:
+      vars: [ARGS]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+        msg: Bun is not installed or not in PATH. Run task bun:install first.
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun {{.ARGS}}"
+
   _install:unix:
     internal: true
     desc: Install Bun on macOS or Linux via the official install script

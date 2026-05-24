@@ -50,12 +50,14 @@ This delegates to `task fnm:node:install` or `task nvm:node:install` depending o
 
 | Task | Variables | Description |
 |---|---|---|
+| `add` | Required `PACKAGES`; optional `EXTRA_ARGS` | Add packages as devDependencies with `npm install -D`. |
 | `node:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Node.js and npm via the selected node manager. |
 | `version` | Optional `NODE_MANAGER`, `NODE_VERSION` | Show the active Node.js and npm versions. |
 | `install` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm install` to install all dependencies from `package.json`. |
 | `ci` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm ci` for a clean, reproducible install from `package-lock.json`. |
 | `run` | Required `SCRIPT`; optional `NODE_MANAGER`, `NODE_VERSION` | Run a `package.json` script by name. Example: `SCRIPT=dev`. |
 | `dev` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run dev`. |
+| `exec` | Required `BINARY`; optional `ARGS`, `EXTRA_ARGS` | Execute a local project binary via `npm exec --`. |
 | `test` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm test`. |
 | `build` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run build`. |
 | `lint` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run lint`. |

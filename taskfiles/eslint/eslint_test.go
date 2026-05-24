@@ -33,7 +33,7 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "eslint",
 		[]string{"check", "PM=pnpm", "TARGETS=src test", "--", "--quiet"},
-		"pnpm exec eslint",
+		`pnpm:exec BINARY="eslint"`,
 		"--cache --cache-location .cache/eslint/",
 		"src test",
 		"--quiet",
@@ -41,8 +41,8 @@ func TestRepresentativeDryRuns(t *testing.T) {
 
 	tasktest.AssertDryRunContains(t, "eslint",
 		[]string{"ci", "PM=bun", "CONFIG=eslint.config.js", "CACHE=false"},
-		"bunx eslint",
-		"--config \"eslint.config.js\"",
+		`bun:exec BINARY="eslint"`,
+		"eslint.config.js",
 		"--max-warnings=0",
 	)
 }

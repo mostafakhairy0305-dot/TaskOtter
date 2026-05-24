@@ -2,8 +2,21 @@ version: "3"
 
 silent: true
 
+includes:
+  npm:
+    taskfile: ../npm/Taskfile.yml
+    optional: true
+  yarn:
+    taskfile: ../yarn/Taskfile.yml
+    optional: true
+  pnpm:
+    taskfile: ../pnpm/Taskfile.yml
+    optional: true
+  bun:
+    taskfile: ../bun/Taskfile.yml
+    optional: true
+
 vars:
-  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
   PM: ""
   PACKAGES: ""
   BINARY: ""
@@ -18,34 +31,20 @@ tasks:
     desc: Install JavaScript packages as local devDependencies
     requires:
       vars: [PACKAGES]
+    vars:
+      _PM:
+        sh: |
+          pm="{{.PM}}"
+          if [ -n "$pm" ]; then echo "$pm"; exit; fi
+          if [ -f bun.lock ] || [ -f bun.lockb ]; then echo "bun"
+          elif [ -f pnpm-lock.yaml ]; then echo "pnpm"
+          elif [ -f yarn.lock ]; then echo "yarn"
+          else echo "npm"; fi
     cmds:
       - |
-        if [ -z "{{.PACKAGES}}" ]; then
-          echo "PACKAGES is required."
-          exit 1
-        fi
-
-        pm="{{.PM}}"
-        if [ -z "$pm" ]; then
-          if [ -f bun.lock ] || [ -f bun.lockb ]; then
-            pm="bun"
-          elif [ -f pnpm-lock.yaml ]; then
-            pm="pnpm"
-          elif [ -f yarn.lock ]; then
-            pm="yarn"
-          elif [ -f package-lock.json ]; then
-            pm="npm"
-          else
-            pm="npm"
-          fi
-        fi
-
-        case "$pm" in
-          npm) npm install -D {{.PACKAGES}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          pnpm) pnpm add -D {{.PACKAGES}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          yarn) yarn add -D {{.PACKAGES}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          bun) bun add -d {{.PACKAGES}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "$pm" >&2; exit 1 ;;
+        case "{{._PM}}" in
+          npm|pnpm|yarn|bun) task {{._PM}}:add PACKAGES="{{.PACKAGES}}" EXTRA_ARGS="{{.EXTRA_ARGS}}" ;;
+          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "{{._PM}}" >&2; exit 1 ;;
         esac
 
   exec:
@@ -53,34 +52,24 @@ tasks:
     desc: Execute a local JavaScript project binary with the selected package manager
     requires:
       vars: [BINARY]
+    vars:
+      _PM:
+        sh: |
+          pm="{{.PM}}"
+          if [ -n "$pm" ]; then echo "$pm"; exit; fi
+          if [ -f bun.lock ] || [ -f bun.lockb ]; then echo "bun"
+          elif [ -f pnpm-lock.yaml ]; then echo "pnpm"
+          elif [ -f yarn.lock ]; then echo "yarn"
+          else echo "npm"; fi
     cmds:
       - |
-        if [ -z "{{.BINARY}}" ]; then
-          echo "BINARY is required."
-          exit 1
+        if [ ! -f "node_modules/.bin/{{.BINARY}}" ]; then
+          task install PACKAGES="{{.BINARY}}" PM="{{._PM}}"
         fi
-
-        pm="{{.PM}}"
-        if [ -z "$pm" ]; then
-          if [ -f bun.lock ] || [ -f bun.lockb ]; then
-            pm="bun"
-          elif [ -f pnpm-lock.yaml ]; then
-            pm="pnpm"
-          elif [ -f yarn.lock ]; then
-            pm="yarn"
-          elif [ -f package-lock.json ]; then
-            pm="npm"
-          else
-            pm="npm"
-          fi
-        fi
-
-        case "$pm" in
-          npm) npx --no-install {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          pnpm) pnpm exec {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          yarn) yarn exec {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          bun) bunx {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "$pm" >&2; exit 1 ;;
+      - |
+        case "{{._PM}}" in
+          npm|pnpm|yarn|bun) task {{._PM}}:exec BINARY="{{.BINARY}}" ARGS="{{.ARGS}}" EXTRA_ARGS="{{.EXTRA_ARGS}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}" ;;
+          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "{{._PM}}" >&2; exit 1 ;;
         esac
 
   exec:ignore:
@@ -88,40 +77,17 @@ tasks:
     desc: Execute a local JavaScript project binary and include an ignore file when present
     requires:
       vars: [BINARY]
-    cmds:
-      - |
-        if [ -z "{{.BINARY}}" ]; then
-          echo "BINARY is required."
-          exit 1
-        fi
-
-        pm="{{.PM}}"
-        if [ -z "$pm" ]; then
-          if [ -f bun.lock ] || [ -f bun.lockb ]; then
-            pm="bun"
-          elif [ -f pnpm-lock.yaml ]; then
-            pm="pnpm"
-          elif [ -f yarn.lock ]; then
-            pm="yarn"
-          elif [ -f package-lock.json ]; then
-            pm="npm"
-          else
-            pm="npm"
+    vars:
+      _IGNORE_ARGS:
+        sh: |
+          if [ -n "{{.IGNORE_PATH}}" ] && [ -f "{{.IGNORE_PATH}}" ]; then
+            echo "{{.IGNORE_FLAG}} {{.IGNORE_PATH}}"
           fi
-        fi
-
-        ignore_args=""
-        if [ -n "{{.IGNORE_PATH}}" ] && [ -f "{{.IGNORE_PATH}}" ]; then
-          ignore_args="{{.IGNORE_FLAG}} {{.IGNORE_PATH}}"
-        fi
-
-        case "$pm" in
-          npm) npx --no-install {{.BINARY}} {{.ARGS}} $ignore_args {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          pnpm) pnpm exec {{.BINARY}} {{.ARGS}} $ignore_args {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          yarn) yarn exec {{.BINARY}} {{.ARGS}} $ignore_args {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          bun) bunx {{.BINARY}} {{.ARGS}} $ignore_args {{.EXTRA_ARGS}} {{.CLI_ARGS}} ;;
-          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "$pm" >&2; exit 1 ;;
-        esac
-
-# Yarn Classic usually supports `yarn exec`; if your pinned Yarn does not,
-# run the equivalent local binary with `yarn <binary> ...`.
+    cmds:
+      - task: exec
+        vars:
+          BINARY: "{{.BINARY}}"
+          ARGS: "{{.ARGS}} {{._IGNORE_ARGS}}"
+          EXTRA_ARGS: "{{.EXTRA_ARGS}}"
+          PM: "{{.PM}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

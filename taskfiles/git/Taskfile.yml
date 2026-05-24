@@ -1,0 +1,471 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  gh: ../gh/Taskfile.yml
+
+vars:
+  BASE: 'main'
+  BODY: ''
+  BRANCH: ''
+  CLONE_DIR: ''
+  COMMIT: ''
+  COMMIT_MSG: ''
+  EMAIL: ''
+  EXTRA_ARGS: ''
+  FILES: '.'
+  MERGE_METHOD: 'merge'
+  MESSAGE: ''
+  NAME: ''
+  NOTES: ''
+  OWNER: ''
+  REMOTE: 'origin'
+  REPO: ''
+  STASH_INDEX: '0'
+  TAG: ''
+  TITLE: ''
+  URL: ''
+
+tasks:
+  default:
+    desc: Show available git automation tasks
+    summary: Display the list of available git-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  auth:setup:
+    desc: Configure git to use the GitHub CLI as a credential helper
+    summary: |
+      Delegate git HTTPS authentication to gh via `gh auth setup-git`.
+      Run this once before using clone, push, or pull over HTTPS.
+      Installs gh automatically if not already present.
+    cmds:
+      - task: gh:auth:setup-git
+
+  init:
+    desc: Initialize a new git repository in the current directory
+    summary: |
+      Run `git init`. Set BRANCH to specify the initial branch name.
+      Example: BRANCH=main
+    cmds:
+      - git init{{if .BRANCH}} --initial-branch={{.BRANCH}}{{end}} {{.EXTRA_ARGS}}
+
+  clone:
+    desc: Clone a GitHub repository using the GitHub CLI
+    summary: |
+      Clone a repository via gh. Requires REPO. Set OWNER for repos owned
+      by another user or organisation. Set CLONE_DIR for the destination.
+      Run `task auth:setup` first to configure git credentials via gh.
+      Example: OWNER=github REPO=cli CLONE_DIR=~/src/gh
+    requires:
+      vars:
+        - REPO
+    deps:
+      - gh:install
+    cmds:
+      - gh repo clone {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}} {{if .CLONE_DIR}}{{.CLONE_DIR}}{{end}} {{.EXTRA_ARGS}}
+
+  status:
+    desc: Show the current working tree status
+    summary: Print the status of staged and unstaged changes via `git status`.
+    cmds:
+      - git status
+
+  add:
+    desc: Stage files for the next commit
+    summary: |
+      Stage files via `git add`. FILES defaults to "." (all changes in the
+      working tree). Pass specific files or globs via FILES.
+      Example: FILES="src/main.ts tests/"
+    cmds:
+      - git add {{.FILES}} {{.EXTRA_ARGS}}
+
+  add:all:
+    desc: Stage all changes including untracked files
+    summary: Stage all changes (modified, deleted, untracked) via `git add --all`.
+    cmds:
+      - git add --all
+
+  commit:
+    desc: Create a commit from staged changes
+    summary: |
+      Commit staged changes. Requires COMMIT_MSG.
+      Example: COMMIT_MSG="feat: add login page"
+    requires:
+      vars:
+        - COMMIT_MSG
+    cmds:
+      - git commit -m "{{.COMMIT_MSG}}" {{.EXTRA_ARGS}}
+
+  commit:amend:
+    desc: Amend the most recent commit
+    summary: |
+      Amend the last commit. Set COMMIT_MSG to update the message, or omit
+      COMMIT_MSG to keep the existing message (--no-edit).
+      Example: COMMIT_MSG="fix: corrected typo"
+    cmds:
+      - git commit --amend {{if .COMMIT_MSG}}-m "{{.COMMIT_MSG}}"{{else}}--no-edit{{end}} {{.EXTRA_ARGS}}
+
+  push:
+    desc: Push commits to the remote repository
+    summary: |
+      Push to the remote. REMOTE defaults to "origin". Set BRANCH to push
+      to a specific remote branch; otherwise pushes HEAD.
+      Example: REMOTE=origin BRANCH=main
+    cmds:
+      - git push {{.REMOTE}} {{if .BRANCH}}{{.BRANCH}}{{else}}HEAD{{end}} {{.EXTRA_ARGS}}
+
+  push:force:
+    desc: Force-push the current branch using --force-with-lease
+    summary: |
+      Force-push using --force-with-lease for safety. REMOTE defaults to "origin".
+      WARNING: This rewrites history on the remote branch.
+    prompt: Force-push will rewrite remote history. Continue?
+    cmds:
+      - git push {{.REMOTE}} {{if .BRANCH}}{{.BRANCH}}{{else}}HEAD{{end}} --force-with-lease {{.EXTRA_ARGS}}
+
+  pull:
+    desc: Pull changes from the remote repository
+    summary: |
+      Fetch and merge changes from the remote. REMOTE defaults to "origin".
+      Set BRANCH to pull a specific branch.
+      Example: REMOTE=origin BRANCH=main
+    cmds:
+      - git pull {{.REMOTE}}{{if .BRANCH}} {{.BRANCH}}{{end}} {{.EXTRA_ARGS}}
+
+  fetch:
+    desc: Fetch branches from the remote without merging
+    summary: |
+      Fetch all branches and prune deleted refs via `git fetch --prune`.
+      REMOTE defaults to "origin".
+      Example: REMOTE=upstream
+    cmds:
+      - git fetch {{.REMOTE}} --prune {{.EXTRA_ARGS}}
+
+  sync:
+    desc: Sync the current branch with its GitHub upstream via the GitHub CLI
+    summary: |
+      Sync the local branch with its GitHub upstream via `gh repo sync`.
+      Set BRANCH to sync a specific branch instead of the current one.
+      Run `task auth:setup` first to configure git credentials via gh.
+      Example: BRANCH=main
+    deps:
+      - gh:install
+    cmds:
+      - gh repo sync {{if .BRANCH}}--branch {{.BRANCH}}{{end}} {{.EXTRA_ARGS}}
+
+  diff:
+    desc: Show unstaged changes in the working tree
+    summary: |
+      Show changes between the working tree and the index via `git diff`.
+      Set FILES to limit to specific paths.
+      Example: FILES=src/
+    cmds:
+      - git diff {{.FILES}} {{.EXTRA_ARGS}}
+
+  diff:staged:
+    desc: Show changes staged for the next commit
+    summary: Show staged changes ready for commit via `git diff --staged`.
+    cmds:
+      - git diff --staged {{.EXTRA_ARGS}}
+
+  log:
+    desc: Show the commit history with author and date
+    summary: |
+      Display commits with short hash, author, date, and message.
+      Example: EXTRA_ARGS="-n 20"
+    cmds:
+      - git log --format="%C(yellow)%h%Creset %C(blue)%ad%Creset %s %C(green)<%an>%Creset" --date=short {{.EXTRA_ARGS}}
+
+  log:graph:
+    desc: Show commit history as an ASCII branch graph
+    summary: Display a compact decorated graph of all branches and commits.
+    cmds:
+      - git log --oneline --graph --decorate --all {{.EXTRA_ARGS}}
+
+  branch:list:
+    desc: List all local and remote branches
+    summary: Show all local and remote branches via `git branch -a`.
+    cmds:
+      - git branch -a {{.EXTRA_ARGS}}
+
+  branch:create:
+    desc: Create and switch to a new branch from current HEAD
+    summary: |
+      Create a new branch at current HEAD and switch to it. Requires BRANCH.
+      Example: BRANCH=feature/my-feature
+    requires:
+      vars:
+        - BRANCH
+    cmds:
+      - git switch -c {{.BRANCH}} {{.EXTRA_ARGS}}
+
+  branch:switch:
+    desc: Switch to an existing branch
+    summary: |
+      Switch to a branch via `git switch`. Requires BRANCH.
+      Example: BRANCH=main
+    requires:
+      vars:
+        - BRANCH
+    cmds:
+      - git switch {{.BRANCH}} {{.EXTRA_ARGS}}
+
+  branch:delete:
+    desc: Delete a local branch
+    summary: |
+      Delete a local branch. Requires BRANCH.
+      WARNING: Unmerged commits on this branch may be lost.
+      Example: BRANCH=feature/old-feature
+    requires:
+      vars:
+        - BRANCH
+    prompt: Delete local branch "{{.BRANCH}}"?
+    cmds:
+      - git branch -d {{.BRANCH}} {{.EXTRA_ARGS}}
+
+  branch:rename:
+    desc: Rename the current branch to a new name
+    summary: |
+      Rename the current branch. Requires BRANCH (the new name).
+      Example: BRANCH=new-name
+    requires:
+      vars:
+        - BRANCH
+    cmds:
+      - git branch -m {{.BRANCH}}
+
+  tag:list:
+    desc: List all tags sorted by version descending
+    summary: List tags sorted by version via `git tag --sort=-v:refname`.
+    cmds:
+      - git tag --sort=-v:refname {{.EXTRA_ARGS}}
+
+  tag:create:
+    desc: Create an annotated tag at HEAD
+    summary: |
+      Create an annotated tag. Requires TAG. Set MESSAGE for the tag
+      annotation; defaults to the tag name.
+      Example: TAG=v1.0.0 MESSAGE="Release v1.0.0"
+    requires:
+      vars:
+        - TAG
+    cmds:
+      - git tag -a {{.TAG}} -m "{{default .TAG .MESSAGE}}" {{.EXTRA_ARGS}}
+
+  tag:push:
+    desc: Push a tag or all tags to the remote
+    summary: |
+      Push TAG to the remote. Omit TAG to push all tags via --tags.
+      Example: TAG=v1.0.0 REMOTE=origin
+    cmds:
+      - git push {{.REMOTE}} {{if .TAG}}{{.TAG}}{{else}}--tags{{end}} {{.EXTRA_ARGS}}
+
+  tag:delete:
+    desc: Delete a tag locally and from the remote
+    summary: |
+      Delete a tag both locally and on the remote. Requires TAG.
+      WARNING: This removes the tag permanently from both local and remote.
+      Example: TAG=v0.1.0 REMOTE=origin
+    requires:
+      vars:
+        - TAG
+    prompt: Delete tag "{{.TAG}}" locally and from remote "{{.REMOTE}}"?
+    cmds:
+      - git tag -d {{.TAG}}
+      - git push {{.REMOTE}} --delete {{.TAG}}
+
+  stash:
+    desc: Stash uncommitted changes in the working tree
+    summary: |
+      Save the working tree and index to a stash entry. Set MESSAGE for
+      a description of the stashed changes.
+      Example: MESSAGE="WIP: refactor auth module"
+    cmds:
+      - git stash push {{if .MESSAGE}}-m "{{.MESSAGE}}"{{end}} {{.EXTRA_ARGS}}
+
+  stash:pop:
+    desc: Apply and remove the latest stash entry
+    summary: |
+      Apply and remove a stash entry. STASH_INDEX defaults to 0 (most recent).
+      Example: STASH_INDEX=1
+    cmds:
+      - git stash pop stash@{{{.STASH_INDEX}}} {{.EXTRA_ARGS}}
+
+  stash:list:
+    desc: List all stash entries
+    summary: Display all stash entries via `git stash list`.
+    cmds:
+      - git stash list
+
+  stash:drop:
+    desc: Discard a stash entry without applying it
+    summary: |
+      Remove a stash entry. STASH_INDEX defaults to 0 (most recent).
+      Example: STASH_INDEX=2
+    cmds:
+      - git stash drop stash@{{{.STASH_INDEX}}} {{.EXTRA_ARGS}}
+
+  reset:soft:
+    desc: Soft-reset HEAD to a commit, preserving staged changes
+    summary: |
+      Move HEAD back without touching the index or working tree. Requires COMMIT.
+      Use to undo commits while keeping changes staged for a new commit.
+      Example: COMMIT=HEAD~1
+    requires:
+      vars:
+        - COMMIT
+    cmds:
+      - git reset --soft {{.COMMIT}} {{.EXTRA_ARGS}}
+
+  reset:hard:
+    desc: Hard-reset HEAD to a commit, discarding all local changes
+    summary: |
+      Move HEAD and discard all staged and unstaged changes. Requires COMMIT.
+      WARNING: All uncommitted changes are permanently lost.
+      Example: COMMIT=HEAD~1
+    requires:
+      vars:
+        - COMMIT
+    prompt: Hard-reset to "{{.COMMIT}}"? All uncommitted changes will be permanently lost.
+    cmds:
+      - git reset --hard {{.COMMIT}} {{.EXTRA_ARGS}}
+
+  clean:
+    desc: Remove untracked files and directories from the working tree
+    summary: |
+      Delete untracked files and directories via `git clean -fd`.
+      WARNING: This permanently removes untracked files.
+    prompt: Permanently remove all untracked files and directories?
+    cmds:
+      - git clean -fd {{.EXTRA_ARGS}}
+
+  config:user:
+    desc: Set the global git user name and email address
+    summary: |
+      Configure the global git identity. Requires NAME and EMAIL.
+      Example: NAME="Ada Lovelace" EMAIL=ada@example.com
+    requires:
+      vars:
+        - NAME
+        - EMAIL
+    cmds:
+      - git config --global user.name "{{.NAME}}"
+      - git config --global user.email "{{.EMAIL}}"
+
+  config:list:
+    desc: List all git configuration values
+    summary: Show all git config values (system + global + local) via `git config --list`.
+    cmds:
+      - git config --list {{.EXTRA_ARGS}}
+
+  remote:list:
+    desc: List all configured remotes and their URLs
+    summary: Show all remotes and their fetch/push URLs via `git remote -v`.
+    cmds:
+      - git remote -v
+
+  remote:add:
+    desc: Add a new remote to the repository
+    summary: |
+      Add a named remote. Requires NAME and URL.
+      Example: NAME=upstream URL=https://github.com/org/repo.git
+    requires:
+      vars:
+        - NAME
+        - URL
+    cmds:
+      - git remote add {{.NAME}} {{.URL}}
+
+  remote:remove:
+    desc: Remove a configured remote from the repository
+    summary: |
+      Remove a remote. Requires NAME.
+      Example: NAME=upstream
+    requires:
+      vars:
+        - NAME
+    cmds:
+      - git remote remove {{.NAME}}
+
+  remote:set-url:
+    desc: Update the URL of a configured remote
+    summary: |
+      Change the URL of a remote. Requires NAME and URL.
+      Example: NAME=origin URL=git@github.com:org/repo.git
+    requires:
+      vars:
+        - NAME
+        - URL
+    cmds:
+      - git remote set-url {{.NAME}} {{.URL}}
+
+  pr:create:
+    desc: Push the current branch and open a pull request on GitHub
+    summary: |
+      Push HEAD to remote, then create a pull request via the GitHub CLI.
+      Requires TITLE. Set BASE for the target branch (default: main).
+      Set BODY for the PR description.
+      Run `task auth:setup` first to configure git credentials via gh.
+      Example: TITLE="feat: new feature" BASE=main
+    requires:
+      vars:
+        - TITLE
+    deps:
+      - gh:install
+    cmds:
+      - git push {{.REMOTE}} {{if .BRANCH}}{{.BRANCH}}{{else}}HEAD{{end}} {{.EXTRA_ARGS}}
+      - >-
+        gh pr create
+        --title "{{.TITLE}}"
+        --base "{{default "main" .BASE}}"
+        {{if .BODY}}--body "{{.BODY}}"{{end}}
+
+  pr:open:
+    desc: Open the current pull request in the browser via the GitHub CLI
+    summary: |
+      Open the pull request for the current branch on GitHub in the browser
+      via `gh pr view --web`. Run `task auth:setup` first if needed.
+    deps:
+      - gh:install
+    cmds:
+      - gh pr view --web
+
+  release:create:
+    desc: Create a git tag and a GitHub release via the GitHub CLI
+    summary: |
+      Create an annotated tag, push it to remote, then create a GitHub release.
+      Requires TAG. Set TITLE for the release title and NOTES for the body.
+      Run `task auth:setup` first to configure git credentials via gh.
+      Example: TAG=v1.0.0 TITLE="v1.0.0" NOTES="Initial release"
+    requires:
+      vars:
+        - TAG
+    deps:
+      - gh:install
+    cmds:
+      - git tag -a {{.TAG}} -m "{{default .TAG .TITLE}}"
+      - git push {{.REMOTE}} {{.TAG}}
+      - >-
+        gh release create {{.TAG}}
+        {{if .TITLE}}--title "{{.TITLE}}"{{end}}
+        {{if .NOTES}}--notes "{{.NOTES}}"{{end}}
+
+  version:
+    desc: Show the installed git version
+    summary: Print the git version string via `git --version`.
+    cmds:
+      - git --version
+
+  help:
+    desc: Show the git built-in help and command list
+    summary: Display the git help overview and list of common commands.
+    cmds:
+      - git help

@@ -32,15 +32,15 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "prettier",
 		[]string{"write", "PM=bun", "--", "--ignore-unknown"},
-		"bunx prettier",
+		`bun:exec BINARY="prettier"`,
 		". --write",
 		"--ignore-unknown",
 	)
 
 	tasktest.AssertDryRunContains(t, "prettier",
 		[]string{"check", "PM=pnpm", "TARGETS=src/**/*.ts", "CONFIG=.prettierrc.json"},
-		"pnpm exec prettier",
+		`pnpm:exec BINARY="prettier"`,
 		"src/**/*.ts --check",
-		"--config \".prettierrc.json\"",
+		".prettierrc.json",
 	)
 }

@@ -14,6 +14,7 @@ import (
 )
 
 var publicTasks = []string{
+	"add",
 	"audit",
 	"audit:fix",
 	"audit:json",
@@ -23,6 +24,7 @@ var publicTasks = []string{
 	"clean",
 	"clean:all",
 	"dev",
+	"exec",
 	"format",
 	"install",
 	"lint",
@@ -75,6 +77,12 @@ func TestTaskCliLoadsAndDryRunsPublicTasks(t *testing.T) {
 		args := []string{"--dry", "--yes", name}
 		if name == "run" {
 			args = append(args, "SCRIPT=build")
+		}
+		if name == "add" {
+			args = append(args, "PACKAGES=prettier")
+		}
+		if name == "exec" {
+			args = append(args, "BINARY=prettier")
 		}
 		if name == "manager:pin" {
 			args = append(args, "PACKAGE_MANAGER_VERSION=latest")

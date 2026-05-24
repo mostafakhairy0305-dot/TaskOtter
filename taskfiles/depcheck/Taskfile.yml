@@ -13,7 +13,6 @@ includes:
     taskfile: ../js-pm/Taskfile.yml
 
 vars:
-  # Leave PM empty to auto-detect from lockfiles; override with PM=npm|pnpm|yarn|bun.
   PM: ""
   PROJECT_PATH: ""
   DEPCHECK_DEFAULT_PROJECT_PATH: "."
