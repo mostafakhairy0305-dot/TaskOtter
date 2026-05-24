@@ -143,6 +143,9 @@ func TestInstallLinuxAptDryRun(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Linux-only test")
 	}
+	if ghAvailable() {
+		t.Skip("gh is already installed; install task would be a no-op")
+	}
 	tasktest.AssertDryRunContains(t, "gh", []string{"install"},
 		"apt-get",
 		"github-cli.list",
@@ -152,6 +155,9 @@ func TestInstallLinuxAptDryRun(t *testing.T) {
 func TestInstallLinuxDnfDryRun(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Linux-only test")
+	}
+	if ghAvailable() {
+		t.Skip("gh is already installed; install task would be a no-op")
 	}
 	tasktest.AssertDryRunContains(t, "gh", []string{"install"},
 		"gh-cli.repo",
