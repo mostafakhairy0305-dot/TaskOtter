@@ -6,9 +6,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestEveryTaskfileDirectoryHasReadmeAndTest(t *testing.T) {
@@ -37,6 +40,46 @@ func TestEveryTaskfileDirectoryHasReadmeAndTest(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("walk taskfiles: %v", err)
+	}
+}
+
+func TestRootIncludesEveryTaskfileModule(t *testing.T) {
+	content, err := os.ReadFile("Taskfile.yml")
+	if err != nil {
+		t.Fatalf("read root Taskfile: %v", err)
+	}
+
+	var root struct {
+		Includes map[string]any `yaml:"includes"`
+	}
+	if err := yaml.Unmarshal(content, &root); err != nil {
+		t.Fatalf("parse root Taskfile: %v", err)
+	}
+
+	var expected []string
+	err = filepath.WalkDir("taskfiles", func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || entry.Name() != "Taskfile.yml" {
+			return nil
+		}
+		expected = append(expected, filepath.Base(filepath.Dir(path)))
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk taskfiles: %v", err)
+	}
+
+	var actual []string
+	for name := range root.Includes {
+		actual = append(actual, name)
+	}
+
+	slices.Sort(expected)
+	slices.Sort(actual)
+	if !slices.Equal(expected, actual) {
+		t.Fatalf("root Taskfile include drift\nexpected: %v\nactual:   %v", expected, actual)
 	}
 }
 

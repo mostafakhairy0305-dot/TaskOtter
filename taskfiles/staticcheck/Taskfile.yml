@@ -1,0 +1,211 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  go:
+    taskfile: ../go/Taskfile.yml
+
+vars:
+  STATICCHECK_VERSION: '2026.1'
+  STATICCHECK_RELEASE_BASE_URL: https://github.com/dominikh/go-tools/releases/download
+  TOOLBIN: '{{.TASKFILE_DIR}}/../../.toolbin'
+  STATICCHECK_INSTALL_DIR: '{{.TOOLBIN}}/staticcheck/{{.STATICCHECK_VERSION}}'
+  STATICCHECK_BIN_UNIX: '{{.STATICCHECK_INSTALL_DIR}}/staticcheck'
+  STATICCHECK_BIN_WINDOWS: '{{.STATICCHECK_INSTALL_DIR}}/staticcheck.exe'
+  TARGETS: './...'
+  EXTRA_ARGS: ''
+
+tasks:
+  default:
+    desc: Show available Staticcheck automation tasks
+    summary: Display the list of available Staticcheck-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    run: once
+    desc: Install Staticcheck into the local toolbin
+    summary: |
+      Download the pinned Staticcheck release for the current platform and
+      install it under TOOLBIN. The installed binary is versioned by
+      STATICCHECK_VERSION so projects can pin upgrades explicitly.
+    cmds:
+      - task: _install:darwin
+      - task: _install:linux
+      - task: _install:windows
+
+  run:
+    run: once
+    desc: Run Staticcheck against Go packages
+    summary: |
+      Run the pinned Staticcheck binary. TARGETS defaults to ./....
+      Pass CLI arguments after -- to override TARGETS and EXTRA_ARGS directly.
+      Ensures both Staticcheck and the Go toolchain are installed first.
+    deps:
+      - install
+      - go:install
+    cmds:
+      - task: _run:unix
+      - task: _run:windows
+
+  version:
+    run: once
+    desc: Print the installed Staticcheck version
+    summary: Print the pinned Staticcheck binary version. Installs Staticcheck first if missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  _install:darwin:
+    internal: true
+    run: once
+    desc: Install Staticcheck on macOS
+    summary: Download and install the pinned Staticcheck macOS archive for the current CPU architecture.
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    vars:
+      STATICCHECK_UNAME_ARCH:
+        sh: uname -m
+      STATICCHECK_ASSET: '{{if or (eq .STATICCHECK_UNAME_ARCH "arm64") (eq .STATICCHECK_UNAME_ARCH "aarch64")}}darwin_arm64{{else if or (eq .STATICCHECK_UNAME_ARCH "x86_64") (eq .STATICCHECK_UNAME_ARCH "amd64")}}darwin_amd64{{else}}{{.STATICCHECK_UNAME_ARCH}}{{end}}'
+      STATICCHECK_ASSET_SUPPORTED: '{{if or (eq .STATICCHECK_ASSET "darwin_arm64") (eq .STATICCHECK_ASSET "darwin_amd64")}}true{{else}}false{{end}}'
+      STATICCHECK_TMP_DIR: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}'
+      STATICCHECK_ARCHIVE: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}.tar.gz'
+    status:
+      - test -x "{{.STATICCHECK_BIN_UNIX}}"
+    preconditions:
+      - sh: '[ "{{.STATICCHECK_ASSET_SUPPORTED}}" = "true" ]'
+        msg: Unsupported macOS architecture {{.STATICCHECK_UNAME_ARCH}}.
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required to download Staticcheck.
+      - sh: command -v tar >/dev/null 2>&1
+        msg: tar is required to extract Staticcheck.
+      - sh: command -v find >/dev/null 2>&1
+        msg: find is required to locate the Staticcheck binary after extraction.
+      - sh: command -v install >/dev/null 2>&1
+        msg: install is required to copy Staticcheck into TOOLBIN.
+    cmds:
+      - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
+        for:
+          - tmp
+          - archive
+      - mkdir -p "{{.STATICCHECK_INSTALL_DIR}}"
+      - mkdir -p "{{.STATICCHECK_TMP_DIR}}"
+      - curl -fsSL "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz" -o "{{.STATICCHECK_ARCHIVE}}"
+      - tar -xzf "{{.STATICCHECK_ARCHIVE}}" -C "{{.STATICCHECK_TMP_DIR}}"
+      - install -m 0755 "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)" "{{.STATICCHECK_BIN_UNIX}}"
+      - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
+        for:
+          - tmp
+          - archive
+
+  _install:linux:
+    internal: true
+    run: once
+    desc: Install Staticcheck on Linux
+    summary: Download and install the pinned Staticcheck Linux archive for the current CPU architecture.
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    vars:
+      STATICCHECK_UNAME_ARCH:
+        sh: uname -m
+      STATICCHECK_ASSET: '{{if or (eq .STATICCHECK_UNAME_ARCH "x86_64") (eq .STATICCHECK_UNAME_ARCH "amd64")}}linux_amd64{{else if or (eq .STATICCHECK_UNAME_ARCH "aarch64") (eq .STATICCHECK_UNAME_ARCH "arm64")}}linux_arm64{{else if or (eq .STATICCHECK_UNAME_ARCH "i386") (eq .STATICCHECK_UNAME_ARCH "i686")}}linux_386{{else if eq .STATICCHECK_UNAME_ARCH "armv7l"}}linux_armv7l{{else if eq .STATICCHECK_UNAME_ARCH "armv6l"}}linux_armv6l{{else if eq .STATICCHECK_UNAME_ARCH "armv5l"}}linux_armv5l{{else}}{{.STATICCHECK_UNAME_ARCH}}{{end}}'
+      STATICCHECK_ASSET_SUPPORTED: '{{if or (eq .STATICCHECK_ASSET "linux_amd64") (eq .STATICCHECK_ASSET "linux_arm64") (eq .STATICCHECK_ASSET "linux_386") (eq .STATICCHECK_ASSET "linux_armv7l") (eq .STATICCHECK_ASSET "linux_armv6l") (eq .STATICCHECK_ASSET "linux_armv5l")}}true{{else}}false{{end}}'
+      STATICCHECK_TMP_DIR: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}'
+      STATICCHECK_ARCHIVE: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}.tar.gz'
+    status:
+      - test -x "{{.STATICCHECK_BIN_UNIX}}"
+    preconditions:
+      - sh: '[ "{{.STATICCHECK_ASSET_SUPPORTED}}" = "true" ]'
+        msg: Unsupported Linux architecture {{.STATICCHECK_UNAME_ARCH}}.
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required to download Staticcheck.
+      - sh: command -v tar >/dev/null 2>&1
+        msg: tar is required to extract Staticcheck.
+      - sh: command -v find >/dev/null 2>&1
+        msg: find is required to locate the Staticcheck binary after extraction.
+      - sh: command -v install >/dev/null 2>&1
+        msg: install is required to copy Staticcheck into TOOLBIN.
+    cmds:
+      - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
+        for:
+          - tmp
+          - archive
+      - mkdir -p "{{.STATICCHECK_INSTALL_DIR}}"
+      - mkdir -p "{{.STATICCHECK_TMP_DIR}}"
+      - curl -fsSL "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz" -o "{{.STATICCHECK_ARCHIVE}}"
+      - tar -xzf "{{.STATICCHECK_ARCHIVE}}" -C "{{.STATICCHECK_TMP_DIR}}"
+      - install -m 0755 "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)" "{{.STATICCHECK_BIN_UNIX}}"
+      - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
+        for:
+          - tmp
+          - archive
+
+  _install:windows:
+    internal: true
+    run: once
+    desc: Install Staticcheck on Windows
+    summary: Download and install the pinned Staticcheck Windows archive for the current CPU architecture.
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.STATICCHECK_BIN_WINDOWS}}') { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64' -or $env:PROCESSOR_ARCHITECTURE -eq 'x86') { exit 0 } else { exit 1 }"
+        msg: Staticcheck archive install supports AMD64 and x86 Windows architectures.
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command tar -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: tar is required to extract Staticcheck on Windows.
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "New-Item -ItemType Directory -Force -Path '{{.STATICCHECK_INSTALL_DIR}}' | Out-Null"
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'), (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "New-Item -ItemType Directory -Force -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}') | Out-Null"
+      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_windows_amd64.tar.gz' -OutFile (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')"
+        if: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { exit 0 } else { exit 1 }"
+      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_windows_386.tar.gz' -OutFile (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')"
+        if: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'x86') { exit 0 } else { exit 1 }"
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "tar -xzf (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -C (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}')"
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item (Get-ChildItem -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}') -Recurse -Filter 'staticcheck.exe' | Select-Object -First 1 -ExpandProperty FullName) '{{.STATICCHECK_BIN_WINDOWS}}' -Force"
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'), (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
+
+  _run:unix:
+    internal: true
+    run: once
+    desc: Run Staticcheck on macOS or Linux
+    summary: Run the pinned Staticcheck binary on macOS or Linux.
+    platforms: [linux, darwin]
+    cmds:
+      - '"{{.STATICCHECK_BIN_UNIX}}" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
+
+  _run:windows:
+    internal: true
+    run: once
+    desc: Run Staticcheck on Windows
+    summary: Run the pinned Staticcheck binary on Windows.
+    platforms: [windows]
+    cmds:
+      - '"{{.STATICCHECK_BIN_WINDOWS}}" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
+
+  _version:unix:
+    internal: true
+    run: once
+    desc: Print Staticcheck version on macOS or Linux
+    summary: Print the pinned Staticcheck binary version on macOS or Linux.
+    platforms: [linux, darwin]
+    cmds:
+      - '"{{.STATICCHECK_BIN_UNIX}}" -version'
+
+  _version:windows:
+    internal: true
+    run: once
+    desc: Print Staticcheck version on Windows
+    summary: Print the pinned Staticcheck binary version on Windows.
+    platforms: [windows]
+    cmds:
+      - '"{{.STATICCHECK_BIN_WINDOWS}}" -version'

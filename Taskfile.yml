@@ -59,12 +59,22 @@ includes:
     taskfile: taskfiles/corepack/Taskfile.yml
   fnm:
     taskfile: taskfiles/fnm/Taskfile.yml
+  gh:
+    taskfile: taskfiles/gh/Taskfile.yml
+  git:
+    taskfile: taskfiles/git/Taskfile.yml
+  go:
+    taskfile: taskfiles/go/Taskfile.yml
+  js-pm:
+    taskfile: taskfiles/js-pm/Taskfile.yml
   npm:
     taskfile: taskfiles/npm/Taskfile.yml
   nvm:
     taskfile: taskfiles/nvm/Taskfile.yml
   pnpm:
     taskfile: taskfiles/pnpm/Taskfile.yml
+  staticcheck:
+    taskfile: taskfiles/staticcheck/Taskfile.yml
   typescript:
     taskfile: taskfiles/typescript/Taskfile.yml
   yarn:
