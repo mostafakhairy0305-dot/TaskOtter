@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -69,6 +71,7 @@ tasks:
           ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}{{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ eslint passed"
 
   fix:
     desc: Lint targets with ESLint and apply fixes
@@ -80,6 +83,7 @@ tasks:
           ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}--fix {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ eslint fixes applied"
 
   ci:
     desc: Run ESLint with zero-warning CI enforcement
@@ -91,6 +95,7 @@ tasks:
           ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}--max-warnings=0 {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ eslint passed"
 
   cache:clean:
     desc: Remove the ESLint cache directory

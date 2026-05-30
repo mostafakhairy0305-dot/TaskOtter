@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -66,6 +68,7 @@ tasks:
           ARGS: 'check {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ biome passed"
 
   check:write:
     desc: Run Biome check and write safe fixes
@@ -77,6 +80,7 @@ tasks:
           ARGS: 'check --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ biome fixes applied"
 
   fix:
     desc: Alias for biome:check:write
@@ -93,6 +97,7 @@ tasks:
           ARGS: 'lint {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ biome passed"
 
   lint:fix:
     desc: Run Biome lint and write fixes
@@ -104,6 +109,7 @@ tasks:
           ARGS: 'lint --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ biome fixes applied"
 
   format:
     desc: Check formatting with Biome
@@ -126,6 +132,7 @@ tasks:
           ARGS: 'format --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ biome fixes applied"
 
   ci:
     desc: Run Biome CI checks
@@ -137,6 +144,7 @@ tasks:
           ARGS: 'ci {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ biome passed"
 
   cache:clean:
     desc: Remove common Biome cache directories if present

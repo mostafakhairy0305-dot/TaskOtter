@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -55,6 +57,7 @@ tasks:
     cmds:
       - task: js:exec
         vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+      - echo "✅ knip passed"
 
   production:
     desc: Run Knip against production dependency usage
@@ -104,6 +107,7 @@ tasks:
     cmds:
       - task: js:exec
         vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--production {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+      - echo "✅ knip passed"
 
   version:
     desc: Show the locally resolved Knip version

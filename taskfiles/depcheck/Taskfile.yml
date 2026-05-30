@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -47,6 +49,7 @@ tasks:
           ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}"
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ depcheck passed"
 
   json:
     desc: Run Depcheck and print JSON output
@@ -87,6 +90,7 @@ tasks:
     summary: Depcheck exits non-zero when unused or missing dependencies are found.
     cmds:
       - task: check
+      - echo "✅ depcheck ci passed"
 
   version:
     desc: Show the locally resolved Depcheck version

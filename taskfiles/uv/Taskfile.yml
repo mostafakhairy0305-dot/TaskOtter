@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -197,9 +199,6 @@ tasks:
     set: [errexit, nounset, pipefail]
     requires:
       vars: [ARGS]
-    preconditions:
-      - sh: 'test -f "$HOME/.local/bin/uv" || command -v uv >/dev/null 2>&1'
-        msg: uv is not installed. Run task install first.
     cmds:
       - bash -lc '{{.UV_LOAD}}; uv {{.ARGS}}'
 
@@ -208,9 +207,6 @@ tasks:
     platforms: [windows]
     requires:
       vars: [ARGS]
-    preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
-        msg: uv is not installed. Run task install first.
     cmds:
       - uv {{.ARGS}}
 

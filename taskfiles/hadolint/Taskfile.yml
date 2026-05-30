@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -71,7 +73,7 @@ tasks:
     deps:
       - install
     cmds:
-      - 'hadolint {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}"{{if .DOCKERFILE_OVERRIDE}}{{.DOCKERFILE_OVERRIDE}}{{else}}{{.DOCKERFILE}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}'
+      - 'hadolint {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}"{{if .DOCKERFILE_OVERRIDE}}{{.DOCKERFILE_OVERRIDE}}{{else}}{{.DOCKERFILE}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}} && echo "✅ hadolint passed" || { echo "❌ hadolint failed"; exit 1; }'
 
   version:
     desc: Show the installed hadolint version

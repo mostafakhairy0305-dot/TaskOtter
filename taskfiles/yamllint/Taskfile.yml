@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -75,21 +77,20 @@ tasks:
     deps:
       - install
     cmds:
-      - bash -lc '{{.UV_LOAD}}; yamllint {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - bash -lc '{{.UV_LOAD}}; yamllint {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
 
   lint:fix:
     desc: Auto-fix YAML files with yamlfix (TARGETS=path)
     summary: |
-      Run yamlfix against TARGETS (default .) to automatically fix common
-      YAML style issues. Requires yamlfix to be installed separately via
-      uv tool install yamlfix. Pass EXTRA_ARGS for additional flags.
+      Run yamlfix against YAML files found under TARGETS (default .). Excludes
+      Taskfile.yml files whose Go template syntax is incompatible with yamlfix.
+      Pass EXTRA_ARGS for additional flags. Auto-installs yamlfix if missing.
     deps:
       - install
-    preconditions:
-      - sh: bash -lc '{{.UV_LOAD}}; command -v yamlfix >/dev/null 2>&1' 2>/dev/null || command -v yamlfix >/dev/null 2>&1
-        msg: yamlfix is required for lint:fix. Install it with uv tool install yamlfix.
+      - _install:yamlfix:unix
+      - _install:yamlfix:windows
     cmds:
-      - bash -lc '{{.UV_LOAD}}; yamlfix {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - bash -lc '{{.UV_LOAD}}; _t="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"; [ -d "$_t" ] || _t="."; find "$_t" \( -name "*.yml" -o -name "*.yaml" \) ! -name "Taskfile.yml" ! -name "Taskfile.yaml" -print0 | xargs -0 yamlfix {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   ci:
     desc: Lint YAML files in strict mode for CI (TARGETS=path)
@@ -100,7 +101,7 @@ tasks:
     deps:
       - install
     cmds:
-      - bash -lc '{{.UV_LOAD}}; yamllint --strict {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - bash -lc '{{.UV_LOAD}}; yamllint --strict {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
 
   config:init:
     desc: Create a default .yamllint configuration file
@@ -131,6 +132,31 @@ tasks:
       - echo 'Installing yamllint via uv...'
       - bash -lc '{{.UV_LOAD}}; uv tool install yamllint'
       - echo 'yamllint installed.'
+
+  _install:yamlfix:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - bash -lc '{{.UV_LOAD}}; command -v yamlfix >/dev/null 2>&1'
+    deps:
+      - uv:install
+    cmds:
+      - echo 'Installing yamlfix via uv...'
+      - bash -lc '{{.UV_LOAD}}; uv tool install yamlfix'
+      - echo 'yamlfix installed.'
+
+  _install:yamlfix:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command yamlfix -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    deps:
+      - uv:install
+    cmds:
+      - echo Installing yamlfix via uv...
+      - uv tool install yamlfix
+      - echo yamlfix installed.
 
   _install:windows:
     internal: true

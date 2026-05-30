@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -76,7 +78,7 @@ tasks:
     deps:
       - install
     cmds:
-      - bash -lc '{{.UV_LOAD}}; sqlfluff lint {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - bash -lc '{{.UV_LOAD}}; sqlfluff lint {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} && echo "✅ sqlfluff passed" || { echo "❌ sqlfluff failed"; exit 1; }'
 
   fix:
     desc: Auto-fix SQL files with sqlfluff (TARGETS=path)
@@ -87,7 +89,7 @@ tasks:
     deps:
       - install
     cmds:
-      - bash -lc '{{.UV_LOAD}}; sqlfluff fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - bash -lc '{{.UV_LOAD}}; sqlfluff fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} && echo "✅ sqlfluff fixes applied"'
 
   parse:
     desc: Parse SQL files and print the parse tree (TARGETS=path)

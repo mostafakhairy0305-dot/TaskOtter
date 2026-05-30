@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: '3'
 
 includes:
@@ -363,6 +365,7 @@ tasks:
       - task: _tsc:windows
         vars:
           ARGS: '--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+      - echo "✅ tsc passed"
 
   clean:
     desc: Remove the compiled output directory (OUT_DIR=dist)

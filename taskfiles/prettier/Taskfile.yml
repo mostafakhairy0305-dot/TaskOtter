@@ -1,3 +1,5 @@
+---
+# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -61,6 +63,7 @@ tasks:
           IGNORE_PATH: "{{if .IGNORE_PATH_OVERRIDE}}{{.IGNORE_PATH_OVERRIDE}}{{else}}{{if .IGNORE_PATH}}{{.IGNORE_PATH}}{{else}}{{.PRETTIER_DEFAULT_IGNORE_PATH}}{{end}}{{end}}"
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ prettier passed"
 
   write:
     desc: Format files with Prettier
@@ -73,6 +76,7 @@ tasks:
           IGNORE_PATH: "{{if .IGNORE_PATH_OVERRIDE}}{{.IGNORE_PATH_OVERRIDE}}{{else}}{{if .IGNORE_PATH}}{{.IGNORE_PATH}}{{else}}{{.PRETTIER_DEFAULT_IGNORE_PATH}}{{end}}{{end}}"
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
+      - echo "✅ prettier fixes applied"
 
   fix:
     desc: Alias for prettier:write
