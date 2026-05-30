@@ -3,7 +3,7 @@ package biome_test
 import (
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/TaskOtter/taskfiles/internal/tasktest"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
 )
 
 var publicTasks = []string{
@@ -48,5 +48,11 @@ func TestRepresentativeDryRuns(t *testing.T) {
 		`pnpm:exec BINARY="biome"`,
 		"format --write",
 		"--no-errors-on-unmatched",
+	)
+
+	tasktest.AssertDryRunContains(t, "biome",
+		[]string{"config:init", "PM=npm"},
+		`npm:exec BINARY="biome"`,
+		"init",
 	)
 }

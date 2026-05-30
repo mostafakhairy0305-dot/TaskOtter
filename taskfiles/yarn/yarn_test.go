@@ -2,14 +2,12 @@ package yarn_test
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"slices"
-	"strings"
 	"testing"
 
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktestutil"
 	"gopkg.in/yaml.v3"
 )
 
@@ -51,13 +49,12 @@ func TestTaskfileAndReadmePublicApi(t *testing.T) {
 		t.Fatal("Taskfile tasks map is missing")
 	}
 
-	actual := publicTaskNames(tasks)
+	actual := tasktestutil.SimplePublicTaskNames(tasks)
 	if !slices.Equal(publicTasks, actual) {
 		t.Fatalf("public task drift\nexpected: %v\nactual:   %v", publicTasks, actual)
 	}
 
-	readme := mustRead(t, filepath.Join(taskDir(t), "README.md"))
-	readmeTasks := readmePublicTasks(readme)
+	readmeTasks := tasktestutil.ReadmePublicTaskNames(tasktestutil.MustRead(t, filepath.Join(".", "README.md")))
 	if !slices.Equal(publicTasks, readmeTasks) {
 		t.Fatalf("README public task drift\nexpected: %v\nactual:   %v", publicTasks, readmeTasks)
 	}
@@ -65,30 +62,28 @@ func TestTaskfileAndReadmePublicApi(t *testing.T) {
 
 func TestTaskCliLoadsAndDryRunsPublicTasks(t *testing.T) {
 	for _, args := range [][]string{{"--list"}, {"--list-all"}, {"--list-all", "--json"}} {
-		result := task(t, stubEnv(t), args...)
-		if result.err != nil {
-			t.Fatalf("task %v failed:\n%s", args, result.output)
+		result := tasktestutil.RunSimpleTask(t, ".", stubEnv(t), args...)
+		if result.Err != nil {
+			t.Fatalf("task %v failed:\n%s", args, result.Output)
 		}
 	}
 
 	for _, name := range publicTasks {
 		args := []string{"--dry", "--yes", name}
-		if name == "run" {
+		switch name {
+		case "run":
 			args = append(args, "SCRIPT=build")
-		}
-		if name == "add" {
+		case "add":
 			args = append(args, "PACKAGES=prettier")
-		}
-		if name == "exec" {
+		case "exec":
 			args = append(args, "BINARY=prettier")
-		}
-		if name == "manager:pin" {
+		case "manager:pin":
 			args = append(args, "PACKAGE_MANAGER_VERSION=stable")
 		}
 
-		result := task(t, stubEnv(t), args...)
-		if result.err != nil {
-			t.Fatalf("dry run %s failed:\n%s", name, result.output)
+		result := tasktestutil.RunSimpleTask(t, ".", stubEnv(t), args...)
+		if result.Err != nil {
+			t.Fatalf("dry run %s failed:\n%s", name, result.Output)
 		}
 	}
 }
@@ -105,32 +100,16 @@ func TestStubbedYarnFlows(t *testing.T) {
 		{"--yes", "ci"},
 		{"--yes", "run", "SCRIPT=test", "--", "--watch"},
 	} {
-		result := task(t, env, args...)
-		if result.err != nil {
-			t.Fatalf("task %v failed:\n%s", args, result.output)
+		result := tasktestutil.RunSimpleTask(t, ".", env, args...)
+		if result.Err != nil {
+			t.Fatalf("task %v failed:\n%s", args, result.Output)
 		}
 	}
 
-	result := task(t, env, "--yes", "run", "SCRIPT=dev; exit 1")
-	if result.err == nil {
-		t.Fatalf("unsafe SCRIPT unexpectedly succeeded:\n%s", result.output)
+	result := tasktestutil.RunSimpleTask(t, ".", env, "--yes", "run", "SCRIPT=dev; exit 1")
+	if result.Err == nil {
+		t.Fatalf("unsafe SCRIPT unexpectedly succeeded:\n%s", result.Output)
 	}
-}
-
-type taskResult struct {
-	output string
-	err    error
-}
-
-func task(t *testing.T, env []string, args ...string) taskResult {
-	t.Helper()
-
-	cmd := exec.Command("task", args...)
-	cmd.Dir = taskDir(t)
-	cmd.Env = env
-	out, err := cmd.CombinedOutput()
-
-	return taskResult{output: string(out), err: err}
 }
 
 func stubEnv(t *testing.T) []string {
@@ -142,101 +121,23 @@ func stubEnv(t *testing.T) []string {
 		t.Fatalf("create stub bin dir: %v", err)
 	}
 
-	writeStub(t, binDir, "fnm", "#!/usr/bin/env bash\ncase \"$1\" in env) echo '# fnm env stub' ;; use) echo 'Using Node stub' ;; *) exit 0 ;; esac\n")
-	writeStub(t, binDir, "node", "#!/usr/bin/env bash\nif [ \"$1\" = '--version' ]; then echo 'v22.0.0 stub'; fi\n")
-	writeStub(t, binDir, "corepack", "#!/usr/bin/env bash\necho \"corepack $* stub\"\n")
+	tasktestutil.WriteStub(t, binDir, "fnm", "#!/usr/bin/env bash\ncase \"$1\" in env) echo '# fnm env stub' ;; use) echo 'Using Node stub' ;; *) exit 0 ;; esac\n")
+	tasktestutil.WriteStub(t, binDir, "node", "#!/usr/bin/env bash\nif [ \"$1\" = '--version' ]; then echo 'v22.0.0 stub'; fi\n")
+	tasktestutil.WriteStub(t, binDir, "corepack", "#!/usr/bin/env bash\necho \"corepack $* stub\"\n")
 
 	env := os.Environ()
-	env = setEnv(env, "HOME", home)
-	env = setEnv(env, "PATH", binDir+":"+os.Getenv("PATH"))
-	env = setEnv(env, "TASK_ASSUME_YES", "true")
-	env = setEnv(env, "NO_COLOR", "1")
+	env = tasktestutil.SetEnv(env, "HOME", home)
+	env = tasktestutil.SetEnv(env, "PATH", binDir+":"+os.Getenv("PATH"))
+	env = tasktestutil.SetEnv(env, "TASK_ASSUME_YES", "true")
+	env = tasktestutil.SetEnv(env, "NO_COLOR", "1")
 	return env
-}
-
-func writeStub(t *testing.T, dir, name, body string) {
-	t.Helper()
-	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0755); err != nil {
-		t.Fatalf("write %s stub: %v", name, err)
-	}
 }
 
 func loadTaskfile(t *testing.T) yaml.Node {
 	t.Helper()
-
 	var doc yaml.Node
-	if err := yaml.Unmarshal([]byte(mustRead(t, filepath.Join(taskDir(t), "Taskfile.yml"))), &doc); err != nil {
+	if err := yaml.Unmarshal([]byte(tasktestutil.MustRead(t, filepath.Join(".", "Taskfile.yml"))), &doc); err != nil {
 		t.Fatalf("parse Taskfile YAML: %v", err)
 	}
 	return doc
-}
-
-func publicTaskNames(tasks map[string]any) []string {
-	names := []string{}
-	for name, raw := range tasks {
-		if name == "default" || strings.HasPrefix(name, "_") {
-			continue
-		}
-		task, ok := raw.(map[string]any)
-		if ok && task["internal"] == true {
-			continue
-		}
-		names = append(names, name)
-	}
-	slices.Sort(names)
-	return names
-}
-
-func readmePublicTasks(content string) []string {
-	row := regexp.MustCompile("^\\|\\s*`([^`]+)`\\s*\\|")
-	names := []string{}
-	inTable := false
-
-	for _, line := range strings.Split(content, "\n") {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "## Public Tasks" {
-			inTable = true
-			continue
-		}
-		if inTable && strings.HasPrefix(trimmed, "## ") {
-			break
-		}
-		if inTable {
-			if match := row.FindStringSubmatch(trimmed); len(match) == 2 {
-				names = append(names, match[1])
-			}
-		}
-	}
-
-	slices.Sort(names)
-	return names
-}
-
-func mustRead(t *testing.T, path string) string {
-	t.Helper()
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
-	}
-	return string(content)
-}
-
-func taskDir(t *testing.T) string {
-	t.Helper()
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("locate test file")
-	}
-	return filepath.Dir(file)
-}
-
-func setEnv(env []string, key, value string) []string {
-	prefix := key + "="
-	for i, item := range env {
-		if strings.HasPrefix(item, prefix) {
-			env[i] = prefix + value
-			return env
-		}
-	}
-	return append(env, prefix+value)
 }

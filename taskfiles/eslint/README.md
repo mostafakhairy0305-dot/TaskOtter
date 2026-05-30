@@ -12,8 +12,8 @@ CI mode, and keeps package-manager selection consistent with the shared
 | Task | Variables | Description |
 |---|---|---|
 | `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Install `eslint` as a local dev dependency. |
-| `init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Run the ESLint configuration wizard. |
-| `config:init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `init`. |
+| `init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `config:init`. |
+| `config:init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Run the ESLint configuration wizard. Skipped if a recognized config file already exists. |
 | `check` | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `EXTRA_ARGS`, `CLI_ARGS` | Lint targets with cache enabled by default. |
 | `fix` | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `EXTRA_ARGS`, `CLI_ARGS` | Run ESLint with `--fix`. |
 | `ci` | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `EXTRA_ARGS`, `CLI_ARGS` | Run ESLint with `--max-warnings=0`. |

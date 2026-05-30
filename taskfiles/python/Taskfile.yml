@@ -1,0 +1,391 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+vars:
+  VENV: '.venv'
+  REQUIREMENTS: 'requirements.txt'
+  FILE: ''
+  ARGS: ''
+  EXTRA_ARGS: ''
+
+tasks:
+  default:
+    desc: Show available Python automation tasks
+    summary: Display the list of available Python-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Python on the current operating system
+    summary: |
+      Install Python for the current platform if it is not already available.
+      macOS uses Homebrew to install python3.
+      Linux installs python3, python3-pip, and python3-venv via apt or dnf.
+      Windows uses winget to install Python 3.
+    cmds:
+      - task: _install:macos
+      - task: _install:linux
+      - task: _install:windows
+
+  install:undo:
+    desc: Remove Python from the current operating system
+    summary: |
+      Remove Python for the current platform.
+      macOS uses Homebrew to uninstall python3.
+      Linux is not supported: removing system Python on Linux is unsafe and
+      this task exits non-zero on that platform to prevent silent failures.
+      Windows uses winget to uninstall Python 3.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove Python from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:macos
+      - task: _install:undo:linux
+      - task: _install:undo:windows
+
+  upgrade:
+    desc: Upgrade Python to the latest release
+    summary: |
+      Upgrade Python to the latest available release.
+      macOS uses brew upgrade python3.
+      Linux upgrades python3 and pip packages via apt or dnf.
+      Windows uses winget upgrade Python.Python.3.
+    cmds:
+      - task: _upgrade:macos
+      - task: _upgrade:linux
+      - task: _upgrade:windows
+
+  version:
+    desc: Show the installed Python version
+    summary: Print the active Python version. Auto-installs Python if missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  verify:
+    desc: Verify the Python installation and pip availability
+    summary: |
+      Print the active Python and pip versions to confirm both are installed
+      and reachable. Useful for diagnosing setup issues after install.
+      Auto-installs Python if missing.
+    deps:
+      - install
+    cmds:
+      - task: _verify:unix
+      - task: _verify:windows
+
+  venv:
+    desc: Create a Python virtual environment (VENV=path)
+    summary: |
+      Create a virtual environment at the path given by VENV (default .venv)
+      using the python3 -m venv module. Run pip:install afterward to install
+      project dependencies into the new environment.
+    cmds:
+      - task: _venv:unix
+      - task: _venv:windows
+
+  pip:install:
+    desc: Install packages from a requirements file (REQUIREMENTS=path)
+    summary: |
+      Run pip3 install -r REQUIREMENTS (default requirements.txt).
+      Pass EXTRA_ARGS to forward additional flags such as --upgrade or
+      --no-cache-dir. Does not require an active virtual environment.
+    cmds:
+      - task: _pip:install:unix
+      - task: _pip:install:windows
+
+  run:
+    desc: Run a Python script (FILE=path)
+    summary: |
+      Execute FILE with python3 (Unix) or python (Windows).
+      Pass ARGS to forward positional arguments to the script and
+      EXTRA_ARGS for interpreter flags such as -u or -m.
+    requires:
+      vars:
+        - FILE
+    preconditions:
+      - sh: test -n "{{.FILE_OVERRIDE}}{{.FILE}}"
+        msg: FILE is required. Pass FILE=path/to/script.py when running this task.
+    cmds:
+      - task: _run:unix
+      - task: _run:windows
+
+  _install:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v python3 >/dev/null 2>&1
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to install Python on macOS. Install it from https://brew.sh and re-run this task.
+    cmds:
+      - echo 'Installing Python via Homebrew...'
+      - brew update
+      - brew install python3
+      - echo 'Python installed.'
+
+  _install:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v python3 >/dev/null 2>&1
+      - command -v pip3 >/dev/null 2>&1
+      - python3 -c "import venv" >/dev/null 2>&1
+    preconditions:
+      - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
+        msg: sudo is required to install Python when not running as root.
+    cmds:
+      - task: _install:linux:apt
+      - task: _install:linux:dnf
+
+  _install:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v apt-get >/dev/null 2>&1'
+    cmds:
+      - echo 'Installing Python (apt)...'
+      - cmd: apt-get update && apt-get install -y python3 python3-pip python3-venv
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Python installed.'
+
+  _install:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v dnf >/dev/null 2>&1'
+    cmds:
+      - echo 'Installing Python (dnf)...'
+      - cmd: dnf install -y python3 python3-pip
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf install -y python3 python3-pip
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Python installed.'
+
+  _install:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: winget is required to install Python on Windows. Update Windows or install the App Installer package from the Microsoft Store.
+    cmds:
+      - echo Installing Python via winget...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget install --id Python.Python.3 --accept-source-agreements --accept-package-agreements --silent"
+      - echo Python installed. Restart your terminal to use python.
+
+  _install:undo:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v python3 >/dev/null 2>&1 && ! brew list python3 >/dev/null 2>&1'
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to remove Python on macOS.
+    cmds:
+      - echo 'Removing Python via Homebrew...'
+      - brew uninstall --ignore-dependencies python3
+      - echo 'Python removed.'
+
+  _install:undo:linux:
+    internal: true
+    platforms: [linux]
+    cmds:
+      - echo 'Removing system Python on Linux is not supported by this task.'
+      - echo 'Use your distribution package manager directly to remove Python.'
+      - exit 1
+
+  _install:undo:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Removing Python via winget...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget uninstall --id Python.Python.3 --silent"
+      - echo Python removed. Restart your terminal.
+
+  _upgrade:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to upgrade Python on macOS.
+    cmds:
+      - echo 'Upgrading Python via Homebrew...'
+      - brew update
+      - cmd: brew upgrade python3
+        if: brew list python3 >/dev/null 2>&1
+      - cmd: brew install python3
+        if: '! brew list python3 >/dev/null 2>&1'
+      - echo 'Python upgraded.'
+
+  _upgrade:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: Python is not installed. Run task install first.
+      - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
+        msg: sudo is required to upgrade Python when not running as root.
+    cmds:
+      - task: _upgrade:linux:apt
+      - task: _upgrade:linux:dnf
+
+  _upgrade:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v apt-get >/dev/null 2>&1'
+    cmds:
+      - echo 'Upgrading Python (apt)...'
+      - cmd: apt-get update && apt-get install -y --only-upgrade python3 python3-pip python3-venv
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get update && sudo apt-get install -y --only-upgrade python3 python3-pip python3-venv
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Python upgraded.'
+
+  _upgrade:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v dnf >/dev/null 2>&1'
+    cmds:
+      - echo 'Upgrading Python (dnf)...'
+      - cmd: dnf update -y python3 python3-pip
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf update -y python3 python3-pip
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Python upgraded.'
+
+  _upgrade:windows:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - echo Upgrading Python via winget...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget upgrade --id Python.Python.3 --accept-source-agreements --accept-package-agreements --silent"
+      - echo Python upgraded. Restart your terminal if prompted.
+
+  _version:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: Python is not installed or not available in PATH.
+    cmds:
+      - python3 --version
+
+  _version:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: Python is not installed or not available in PATH.
+    cmds:
+      - python --version
+
+  _verify:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: Python is not installed or not available in PATH.
+    cmds:
+      - python3 --version
+      - pip3 --version
+
+  _verify:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: Python is not installed or not available in PATH.
+    cmds:
+      - python --version
+      - pip --version
+
+  _venv:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: Python is not installed. Run task install first.
+    cmds:
+      - echo 'Creating virtual environment at {{.VENV}}...'
+      - python3 -m venv "{{.VENV}}"
+      - echo 'Virtual environment ready.'
+
+  _venv:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: Python is not installed. Run task install first.
+    cmds:
+      - echo Creating virtual environment at {{.VENV}}...
+      - python -m venv "{{.VENV}}"
+      - echo Virtual environment ready.
+
+  _pip:install:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v pip3 >/dev/null 2>&1
+        msg: pip3 is not available. Run task install first.
+    cmds:
+      - pip3 install -r "{{.REQUIREMENTS}}" {{.EXTRA_ARGS}}
+
+  _pip:install:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command pip -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: pip is not available. Run task install first.
+    cmds:
+      - pip install -r "{{.REQUIREMENTS}}" {{.EXTRA_ARGS}}
+
+  _run:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: Python is not installed. Run task install first.
+    cmds:
+      - python3 "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" {{.ARGS}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+
+  _run:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: Python is not installed. Run task install first.
+    cmds:
+      - python "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" {{.ARGS}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}

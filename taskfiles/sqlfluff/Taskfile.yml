@@ -1,0 +1,189 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  uv:
+    taskfile: ../uv/Taskfile.yml
+
+vars:
+  UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
+  TARGETS: '.'
+  CONFIG: ''
+  DIALECT: ''
+  EXTRA_ARGS: ''
+
+tasks:
+  default:
+    desc: Show available sqlfluff automation tasks
+    summary: Display the list of available sqlfluff-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    desc: Install sqlfluff on the current operating system
+    summary: |
+      Install sqlfluff via uv tool install for the current platform.
+      uv manages an isolated environment so sqlfluff never conflicts with
+      project dependencies. Installs uv first if it is not already present.
+    cmds:
+      - task: _install:unix
+      - task: _install:windows
+
+  install:undo:
+    desc: Remove sqlfluff from the current operating system
+    summary: |
+      Remove sqlfluff via uv tool uninstall on all platforms.
+      The uv-managed isolated environment is cleaned up automatically.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove sqlfluff from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:unix
+      - task: _install:undo:windows
+
+  upgrade:
+    desc: Upgrade sqlfluff to the latest release
+    summary: |
+      Upgrade sqlfluff via uv tool upgrade on all platforms.
+      Auto-installs sqlfluff if missing.
+    cmds:
+      - task: _upgrade:unix
+      - task: _upgrade:windows
+
+  version:
+    desc: Show the installed sqlfluff version
+    summary: Print the active sqlfluff version via sqlfluff --version. Auto-installs sqlfluff if missing.
+    deps:
+      - install
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; sqlfluff --version'
+
+  lint:
+    desc: Lint SQL files with sqlfluff (TARGETS=path)
+    summary: |
+      Run sqlfluff lint against TARGETS (default .). Pass CONFIG to use a
+      custom config file via --config, DIALECT to override the SQL dialect,
+      and EXTRA_ARGS for additional flags. Auto-installs sqlfluff if missing.
+    deps:
+      - install
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; sqlfluff lint {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  fix:
+    desc: Auto-fix SQL files with sqlfluff (TARGETS=path)
+    summary: |
+      Run sqlfluff fix against TARGETS (default .) to automatically fix
+      lint violations. Pass CONFIG, DIALECT, and EXTRA_ARGS as needed.
+      Auto-installs sqlfluff if missing.
+    deps:
+      - install
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; sqlfluff fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  parse:
+    desc: Parse SQL files and print the parse tree (TARGETS=path)
+    summary: |
+      Run sqlfluff parse against TARGETS (default .) and print the parse
+      tree. Useful for debugging dialect issues or understanding how sqlfluff
+      interprets a query. Pass CONFIG, DIALECT, and EXTRA_ARGS as needed.
+      Auto-installs sqlfluff if missing.
+    deps:
+      - install
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; sqlfluff parse {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}} {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  config:init:
+    desc: Create a default .sqlfluff configuration file
+    summary: |
+      Write a sensible default .sqlfluff file in the current directory.
+      Sets the dialect to ansi, max line length to 120, and 4-space
+      indentation. Skipped if .sqlfluff already exists.
+    status:
+      - test -f .sqlfluff
+    cmds:
+      - "printf '[sqlfluff]\\n' > .sqlfluff"
+      - "printf 'dialect = ansi\\n' >> .sqlfluff"
+      - "printf 'max_line_length = 120\\n' >> .sqlfluff"
+      - "printf '\\n' >> .sqlfluff"
+      - "printf '[sqlfluff:indentation]\\n' >> .sqlfluff"
+      - "printf 'indent_unit = space\\n' >> .sqlfluff"
+      - "printf 'tab_space_size = 4\\n' >> .sqlfluff"
+      - echo 'Created .sqlfluff with default configuration.'
+
+  _install:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - bash -lc '{{.UV_LOAD}}; command -v sqlfluff >/dev/null 2>&1'
+    deps:
+      - uv:install
+    cmds:
+      - echo 'Installing sqlfluff via uv...'
+      - bash -lc '{{.UV_LOAD}}; uv tool install sqlfluff'
+      - echo 'sqlfluff installed.'
+
+  _install:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command sqlfluff -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    deps:
+      - uv:install
+    cmds:
+      - echo Installing sqlfluff via uv...
+      - uv tool install sqlfluff
+      - echo sqlfluff installed.
+
+  _install:undo:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - bash -lc '{{.UV_LOAD}}; ! command -v sqlfluff >/dev/null 2>&1'
+    cmds:
+      - echo 'Removing sqlfluff...'
+      - bash -lc '{{.UV_LOAD}}; uv tool uninstall sqlfluff'
+      - echo 'sqlfluff removed.'
+
+  _install:undo:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command sqlfluff -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Removing sqlfluff via uv...
+      - uv tool uninstall sqlfluff
+      - echo sqlfluff removed.
+
+  _upgrade:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v sqlfluff >/dev/null 2>&1'
+        msg: sqlfluff is not installed. Run task install first.
+    cmds:
+      - echo 'Upgrading sqlfluff via uv...'
+      - bash -lc '{{.UV_LOAD}}; uv tool upgrade sqlfluff'
+      - echo 'sqlfluff upgraded.'
+
+  _upgrade:windows:
+    internal: true
+    platforms: [windows]
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command sqlfluff -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: sqlfluff is not installed. Run task install first.
+    cmds:
+      - echo Upgrading sqlfluff via uv...
+      - uv tool upgrade sqlfluff
+      - echo sqlfluff upgraded.

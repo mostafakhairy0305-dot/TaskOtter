@@ -1,0 +1,328 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  uv:
+    taskfile: ../uv/Taskfile.yml
+  yamllint:
+    taskfile: ../yamllint/Taskfile.yml
+
+vars:
+  UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
+  PLAYBOOK: ''
+  INVENTORY: ''
+  PATTERN: 'all'
+  TARGETS: '.'
+  FILE: ''
+  REQUIREMENTS: 'requirements.yml'
+  EXTRA_ARGS: ''
+
+tasks:
+  default:
+    desc: Show available Ansible automation tasks
+    summary: Display the list of available Ansible-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Ansible and ansible-lint on the current operating system
+    summary: |
+      Install ansible and ansible-lint via uv tool install on macOS and Linux.
+      Also ensures yamllint is installed as ansible-lint uses it for YAML syntax
+      checking. Ansible does not support Windows as a control node.
+    deps:
+      - uv:install
+      - yamllint:install
+    cmds:
+      - task: _install:unix
+
+  install:undo:
+    desc: Remove Ansible and ansible-lint from the current operating system
+    summary: |
+      Uninstall ansible and ansible-lint via uv tool uninstall on macOS and Linux.
+      yamllint is left in place as it is managed separately.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove Ansible and ansible-lint from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:unix
+
+  upgrade:
+    desc: Upgrade Ansible and ansible-lint to the latest release
+    summary: |
+      Upgrade ansible and ansible-lint via uv tool upgrade on macOS and Linux.
+      Auto-installs if missing.
+    deps:
+      - install
+    cmds:
+      - task: _upgrade:unix
+
+  version:
+    desc: Show the installed Ansible and ansible-lint versions
+    summary: Print ansible --version and ansible-lint --version. Auto-installs if missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+
+  lint:
+    desc: Lint Ansible YAML files with ansible-lint (TARGETS=path)
+    summary: |
+      Run ansible-lint against TARGETS (default .). ansible-lint uses yamllint
+      internally for YAML syntax checking and also enforces Ansible best practices.
+      Pass EXTRA_ARGS for additional flags. Auto-installs if missing.
+    deps:
+      - install
+    cmds:
+      - task: _lint:unix
+
+  syntax:check:
+    desc: Check Ansible playbook syntax (PLAYBOOK=path)
+    summary: |
+      Run ansible-playbook --syntax-check to validate the playbook structure
+      without executing any tasks. Pass INVENTORY to specify the inventory file.
+      Auto-installs if missing.
+    deps:
+      - install
+    requires:
+      vars:
+        - PLAYBOOK
+    preconditions:
+      - sh: test -n "{{.PLAYBOOK_OVERRIDE}}{{.PLAYBOOK}}"
+        msg: PLAYBOOK is required. Pass PLAYBOOK=path/to/playbook.yml when running this task.
+    cmds:
+      - task: _syntax:check:unix
+
+  run:
+    desc: Run an Ansible playbook (PLAYBOOK=path)
+    summary: |
+      Execute PLAYBOOK via ansible-playbook. Pass INVENTORY to specify the
+      inventory file and EXTRA_ARGS for additional flags such as --check,
+      --diff, or --tags. Auto-installs if missing.
+    deps:
+      - install
+    requires:
+      vars:
+        - PLAYBOOK
+    preconditions:
+      - sh: test -n "{{.PLAYBOOK_OVERRIDE}}{{.PLAYBOOK}}"
+        msg: PLAYBOOK is required. Pass PLAYBOOK=path/to/playbook.yml when running this task.
+    cmds:
+      - task: _run:unix
+
+  ping:
+    desc: Test Ansible host connectivity (INVENTORY=path)
+    summary: |
+      Run the Ansible ping module against PATTERN (default all) using the
+      specified INVENTORY. Confirms that Ansible can reach and authenticate
+      to the target hosts. Auto-installs if missing.
+    deps:
+      - install
+    requires:
+      vars:
+        - INVENTORY
+    preconditions:
+      - sh: test -n "{{.INVENTORY_OVERRIDE}}{{.INVENTORY}}"
+        msg: INVENTORY is required. Pass INVENTORY=path/to/inventory when running this task.
+    cmds:
+      - task: _ping:unix
+
+  list:hosts:
+    desc: List Ansible inventory hosts (INVENTORY=path)
+    summary: |
+      Print the hosts matching PATTERN (default all) from INVENTORY without
+      executing any tasks. Useful for verifying inventory content.
+      Auto-installs if missing.
+    deps:
+      - install
+    requires:
+      vars:
+        - INVENTORY
+    preconditions:
+      - sh: test -n "{{.INVENTORY_OVERRIDE}}{{.INVENTORY}}"
+        msg: INVENTORY is required. Pass INVENTORY=path/to/inventory when running this task.
+    cmds:
+      - task: _list:hosts:unix
+
+  galaxy:install:
+    desc: Install Ansible roles and collections (REQUIREMENTS=path)
+    summary: |
+      Run ansible-galaxy install -r REQUIREMENTS (default requirements.yml)
+      to install all declared roles and collections. Pass EXTRA_ARGS for
+      additional flags. Auto-installs if missing.
+    deps:
+      - install
+    cmds:
+      - task: _galaxy:install:unix
+
+  vault:encrypt:
+    desc: Encrypt a file with Ansible Vault (FILE=path)
+    summary: |
+      Run ansible-vault encrypt on FILE. You will be prompted for the vault
+      password. Pass EXTRA_ARGS for additional flags such as --vault-id.
+      Auto-installs if missing.
+    deps:
+      - install
+    requires:
+      vars:
+        - FILE
+    preconditions:
+      - sh: test -n "{{.FILE}}"
+        msg: FILE is required. Pass FILE=path/to/file when running this task.
+    cmds:
+      - task: _vault:unix
+        vars:
+          ARGS: 'encrypt "{{.FILE}}" {{.EXTRA_ARGS}}'
+
+  vault:decrypt:
+    desc: Decrypt a file with Ansible Vault (FILE=path)
+    summary: |
+      Run ansible-vault decrypt on FILE. You will be prompted for the vault
+      password. Pass EXTRA_ARGS for additional flags such as --vault-id.
+      Auto-installs if missing.
+    prompt:
+      - This will decrypt and overwrite FILE with plaintext.
+      - Continue?
+    deps:
+      - install
+    requires:
+      vars:
+        - FILE
+    preconditions:
+      - sh: test -n "{{.FILE}}"
+        msg: FILE is required. Pass FILE=path/to/file when running this task.
+    cmds:
+      - task: _vault:unix
+        vars:
+          ARGS: 'decrypt "{{.FILE}}" {{.EXTRA_ARGS}}'
+
+  _install:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
+      - bash -lc '{{.UV_LOAD}}; command -v ansible-lint >/dev/null 2>&1'
+    cmds:
+      - echo 'Installing Ansible via uv...'
+      - bash -lc '{{.UV_LOAD}}; uv tool install ansible'
+      - bash -lc '{{.UV_LOAD}}; uv tool install ansible-lint'
+      - echo 'Ansible and ansible-lint installed.'
+
+  _install:undo:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - bash -lc '{{.UV_LOAD}}; ! command -v ansible >/dev/null 2>&1'
+      - bash -lc '{{.UV_LOAD}}; ! command -v ansible-lint >/dev/null 2>&1'
+    cmds:
+      - echo 'Removing Ansible...'
+      - bash -lc '{{.UV_LOAD}}; uv tool uninstall ansible'
+      - bash -lc '{{.UV_LOAD}}; uv tool uninstall ansible-lint'
+      - echo 'Ansible and ansible-lint removed.'
+
+  _upgrade:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
+        msg: Ansible is not installed. Run task install first.
+    cmds:
+      - echo 'Upgrading Ansible...'
+      - bash -lc '{{.UV_LOAD}}; uv tool upgrade ansible'
+      - bash -lc '{{.UV_LOAD}}; uv tool upgrade ansible-lint'
+      - echo 'Ansible and ansible-lint upgraded.'
+
+  _version:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
+        msg: Ansible is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible --version'
+      - bash -lc '{{.UV_LOAD}}; ansible-lint --version'
+
+  _lint:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-lint >/dev/null 2>&1'
+        msg: ansible-lint is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible-lint {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  _syntax:check:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-playbook >/dev/null 2>&1'
+        msg: ansible-playbook is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible-playbook --syntax-check "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}" {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  _run:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-playbook >/dev/null 2>&1'
+        msg: ansible-playbook is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible-playbook "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}" {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  _ping:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
+        msg: Ansible is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible "{{.PATTERN}}" -m ping {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  _list:hosts:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
+        msg: Ansible is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible "{{.PATTERN}}" --list-hosts {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  _galaxy:install:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-galaxy >/dev/null 2>&1'
+        msg: ansible-galaxy is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible-galaxy install -r "{{.REQUIREMENTS}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+
+  _vault:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars: [ARGS]
+    preconditions:
+      - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-vault >/dev/null 2>&1'
+        msg: ansible-vault is not installed. Run task install first.
+    cmds:
+      - bash -lc '{{.UV_LOAD}}; ansible-vault {{.ARGS}}'

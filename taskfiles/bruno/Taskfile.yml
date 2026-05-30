@@ -1,0 +1,86 @@
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  js:
+    taskfile: ../js-pm/Taskfile.yml
+
+vars:
+  PM: ""
+  COLLECTION: "."
+  ENV: ""
+  EXTRA_ARGS: ""
+
+tasks:
+  default:
+    desc: Show available Bruno tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install @usebruno/cli as a local devDependency
+    cmds:
+      - task: js:install
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          PACKAGES: "@usebruno/cli"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  run:
+    desc: Run a Bruno collection (COLLECTION=path)
+    summary: |
+      Run all requests in the Bruno collection at COLLECTION (default: current
+      directory). Pass ENV to activate a named Bruno environment, and EXTRA_ARGS
+      for additional bru flags. Pass CLI arguments after -- to override all
+      variables directly.
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: bru
+          ARGS: 'run {{if .COLLECTION_OVERRIDE}}{{.COLLECTION_OVERRIDE}}{{else}}{{.COLLECTION}}{{end}}{{if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"{{else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}}'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  ci:
+    desc: Run Bruno collection in CI mode with --bail (COLLECTION=path)
+    summary: |
+      Run all requests in the Bruno collection and stop immediately on the first
+      failure via --bail. Pass ENV to activate a named Bruno environment.
+      Intended for CI pipelines where a single failure should abort the run.
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: bru
+          ARGS: 'run {{if .COLLECTION_OVERRIDE}}{{.COLLECTION_OVERRIDE}}{{else}}{{.COLLECTION}}{{end}}{{if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"{{else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}} --bail'
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
+
+  version:
+    desc: Show the locally resolved Bruno CLI version
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: bru
+          ARGS: "--version"
+
+  help:
+    desc: Show Bruno CLI help
+    cmds:
+      - task: js:exec
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: bru
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

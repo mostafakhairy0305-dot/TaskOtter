@@ -36,7 +36,17 @@ tasks:
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   init:
-    desc: Create a Biome config file
+    desc: Alias for biome:config:init
+    cmds:
+      - task: config:init
+
+  config:init:
+    desc: Create a biome.json config file in the current directory
+    summary: |
+      Run biome init to generate a biome.json config file with recommended
+      defaults. Skipped if biome.json or biome.jsonc already exists.
+    status:
+      - test -f biome.json || test -f biome.jsonc
     cmds:
       - task: js:exec
         vars:
@@ -45,11 +55,6 @@ tasks:
           ARGS: init
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
-
-  config:init:
-    desc: Alias for biome:init
-    cmds:
-      - task: init
 
   check:
     desc: Run Biome check

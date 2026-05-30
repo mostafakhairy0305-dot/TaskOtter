@@ -11,8 +11,8 @@ shared `js-pm` helper.
 | Task | Variables | Description |
 |---|---|---|
 | `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Install `@biomejs/biome` as a local dev dependency. |
-| `init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Run `biome init`. |
-| `config:init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `init`. |
+| `init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `config:init`. |
+| `config:init` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Run `biome init`. Skipped if `biome.json` or `biome.jsonc` already exists. |
 | `check` | Optional `PM`, `TARGETS`, `CONFIG`, `EXTRA_ARGS`, `CLI_ARGS` | Run `biome check`. |
 | `check:write` | Optional `PM`, `TARGETS`, `CONFIG`, `EXTRA_ARGS`, `CLI_ARGS` | Run `biome check --write`. |
 | `fix` | Optional `PM`, `TARGETS`, `CONFIG`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `check:write`. |
@@ -36,7 +36,7 @@ and `CONFIG` adds `--config-path <path>`.
 
 ```bash
 task biome:install
-task biome:init
+task biome:config:init
 task biome:check
 task biome:check:write
 task biome:lint

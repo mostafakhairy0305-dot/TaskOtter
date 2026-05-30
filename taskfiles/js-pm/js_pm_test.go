@@ -3,7 +3,7 @@ package jspm_test
 import (
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/TaskOtter/taskfiles/internal/tasktest"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
 )
 
 var internalTasks = []string{

@@ -39,18 +39,16 @@ tasks:
 
   config:init:
     desc: Create a starter Prettier config when none exists
+    vars:
+      PRETTIER_CONFIG_PATH: "{{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{if .CONFIG}}{{.CONFIG}}{{else}}.prettierrc.json{{end}}{{end}}"
+    status:
+      - test -f "{{.PRETTIER_CONFIG_PATH}}"
     cmds:
-      - |
-        config_file="{{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{if .CONFIG}}{{.CONFIG}}{{end}}{{end}}"
-        if [ -z "$config_file" ]; then
-          config_file=".prettierrc.json"
-        fi
-        if [ -e "$config_file" ]; then
-          echo "$config_file already exists."
-        else
-          printf '%s\n' '{' '  "singleQuote": true,' '  "semi": true' '}' > "$config_file"
-          echo "Created $config_file."
-        fi
+      - "printf '{\\n' > \"{{.PRETTIER_CONFIG_PATH}}\""
+      - "printf '  \"singleQuote\": true,\\n' >> \"{{.PRETTIER_CONFIG_PATH}}\""
+      - "printf '  \"semi\": true\\n' >> \"{{.PRETTIER_CONFIG_PATH}}\""
+      - "printf '}\\n' >> \"{{.PRETTIER_CONFIG_PATH}}\""
+      - echo 'Created {{.PRETTIER_CONFIG_PATH}}.'
 
   check:
     desc: Check formatting with Prettier

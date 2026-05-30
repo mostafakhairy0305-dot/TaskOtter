@@ -3,7 +3,7 @@ package eslint_test
 import (
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/TaskOtter/taskfiles/internal/tasktest"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
 )
 
 var publicTasks = []string{
@@ -44,5 +44,11 @@ func TestRepresentativeDryRuns(t *testing.T) {
 		`bun:exec BINARY="eslint"`,
 		"eslint.config.js",
 		"--max-warnings=0",
+	)
+
+	tasktest.AssertDryRunContains(t, "eslint",
+		[]string{"config:init", "PM=npm"},
+		`npm:exec BINARY="eslint"`,
+		"--init",
 	)
 }

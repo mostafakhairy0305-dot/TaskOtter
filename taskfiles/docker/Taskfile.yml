@@ -1,0 +1,384 @@
+version: '3'
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+vars:
+  IMAGE: ''
+  FILE: 'Dockerfile'
+  CONTEXT: '.'
+  EXTRA_ARGS: ''
+
+tasks:
+  default:
+    desc: Show available Docker automation tasks
+    summary: Display the list of available Docker-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    desc: Install Docker on the current operating system
+    summary: |
+      Install Docker for the current platform if it is not already available.
+      macOS uses Homebrew Cask to install Docker Desktop.
+      Linux uses the official convenience script from get.docker.com (supports
+      apt and dnf), then automatically adds the current user to the docker group
+      so Docker can be used without sudo after a re-login.
+      Windows uses winget to install Docker Desktop.
+    cmds:
+      - task: _install:macos
+      - task: _install:linux
+      - task: _install:windows
+
+  install:undo:
+    desc: Remove Docker from the current operating system
+    summary: |
+      Remove Docker for the current platform.
+      macOS uses Homebrew Cask to uninstall Docker Desktop.
+      Linux removes docker-ce and related packages via apt or dnf.
+      Windows uses winget to uninstall Docker Desktop.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove Docker from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:macos
+      - task: _install:undo:linux
+      - task: _install:undo:windows
+
+  upgrade:
+    desc: Upgrade Docker to the latest release
+    summary: |
+      Upgrade Docker to the latest available release.
+      macOS uses brew upgrade --cask docker.
+      Linux upgrades docker-ce and related packages via apt or dnf.
+      Windows uses winget upgrade Docker.DockerDesktop.
+    cmds:
+      - task: _upgrade:macos
+      - task: _upgrade:linux
+      - task: _upgrade:windows
+
+  version:
+    desc: Show the installed Docker client and server versions
+    summary: Print the active Docker client and server version via docker version. Auto-installs Docker if missing.
+    deps:
+      - install
+    cmds:
+      - docker version
+
+  verify:
+    desc: Verify Docker installation and daemon connectivity
+    summary: |
+      Confirm Docker is installed and the daemon is reachable by printing
+      version and system info. Useful for diagnosing setup issues after install.
+      Auto-installs Docker if missing.
+    deps:
+      - install
+    cmds:
+      - docker version
+      - docker info
+
+  ps:
+    desc: List running Docker containers
+    summary: Show all currently running containers with their IDs, names, and status.
+    deps:
+      - install
+    cmds:
+      - docker ps
+
+  ps:all:
+    desc: List all Docker containers including stopped ones
+    summary: Show every container — running and stopped — with IDs, names, and status.
+    deps:
+      - install
+    cmds:
+      - docker ps -a
+
+  stop:all:
+    desc: Stop all running Docker containers
+    summary: |
+      Gracefully stop every running container. Skipped automatically when no
+      containers are running. Does not remove containers.
+    deps:
+      - install
+    cmds:
+      - task: _stop:all:unix
+      - task: _stop:all:windows
+
+  prune:
+    desc: Remove stopped containers, dangling images, and unused networks
+    summary: |
+      Run docker system prune -f to remove stopped containers, dangling
+      (untagged) images, and networks not used by any container.
+      Does not remove named volumes or non-dangling images.
+    deps:
+      - install
+    cmds:
+      - docker system prune -f
+
+  prune:all:
+    desc: Full Docker system prune including volumes and all unused images
+    summary: |
+      Run docker system prune -af --volumes to remove all stopped containers,
+      all unused images (not just dangling), unused networks, and all volumes
+      not attached to a running container. This is a destructive, irreversible operation.
+    prompt:
+      - This will remove all unused Docker data including volumes.
+      - Continue?
+    deps:
+      - install
+    cmds:
+      - docker system prune -af --volumes
+
+  images:
+    desc: List local Docker images
+    summary: Show all locally available Docker images with their tags, IDs, and sizes.
+    deps:
+      - install
+    cmds:
+      - docker images
+
+  build:
+    desc: Build a Docker image from a Dockerfile (IMAGE=name:tag)
+    summary: |
+      Build a Docker image tagged IMAGE using the Dockerfile at FILE and
+      build context at CONTEXT. FILE defaults to Dockerfile and CONTEXT
+      defaults to the current directory. Pass EXTRA_ARGS to forward additional
+      flags such as --no-cache or --build-arg to docker build.
+    deps:
+      - install
+    requires:
+      vars:
+        - IMAGE
+    preconditions:
+      - sh: test -n "{{.IMAGE_OVERRIDE}}{{.IMAGE}}"
+        msg: IMAGE is required. Pass IMAGE=name:tag when running this task.
+    cmds:
+      - docker build -f "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" -t "{{if .IMAGE_OVERRIDE}}{{.IMAGE_OVERRIDE}}{{else}}{{.IMAGE}}{{end}}" "{{if .CONTEXT_OVERRIDE}}{{.CONTEXT_OVERRIDE}}{{else}}{{.CONTEXT}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+
+  pull:
+    desc: Pull a Docker image from a registry (IMAGE=name:tag)
+    summary: |
+      Pull the specified IMAGE from its registry. Pass EXTRA_ARGS to forward
+      additional flags to docker pull, for example --platform linux/arm64.
+    deps:
+      - install
+    requires:
+      vars:
+        - IMAGE
+    preconditions:
+      - sh: test -n "{{.IMAGE_OVERRIDE}}{{.IMAGE}}"
+        msg: IMAGE is required. Pass IMAGE=name:tag when running this task.
+    cmds:
+      - docker pull "{{if .IMAGE_OVERRIDE}}{{.IMAGE_OVERRIDE}}{{else}}{{.IMAGE}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+
+  _install:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v docker >/dev/null 2>&1
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to install Docker on macOS. Install it from https://brew.sh and re-run this task.
+    cmds:
+      - echo 'Installing Docker Desktop via Homebrew...'
+      - brew update
+      - brew install --cask docker
+      - echo 'Docker Desktop installed. Open the Docker app to complete initial setup.'
+
+  _install:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v docker >/dev/null 2>&1
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required to download the Docker install script.
+      - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
+        msg: sudo is required to install Docker when not running as root.
+    cmds:
+      - echo 'Installing Docker Engine via the official convenience script...'
+      - curl -fsSL https://get.docker.com -o /tmp/taskotter-get-docker.sh
+      - cmd: sh /tmp/taskotter-get-docker.sh
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo sh /tmp/taskotter-get-docker.sh
+        if: '[ "$(id -u)" -ne 0 ]'
+      - rm -f /tmp/taskotter-get-docker.sh
+      - |
+        if [ "$(id -u)" -ne 0 ] && ! id -nG "$USER" 2>/dev/null | grep -qw docker; then
+          sudo usermod -aG docker "$USER"
+          echo "Added $USER to the docker group. Log out and back in to use Docker without sudo."
+        fi
+      - echo 'Docker Engine installed.'
+
+  _install:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command docker -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: winget is required to install Docker on Windows. Update Windows or install the App Installer package from the Microsoft Store.
+    cmds:
+      - echo Installing Docker Desktop via winget...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget install --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements --silent"
+      - echo Docker Desktop installed. Restart your terminal to use docker.
+
+  _install:undo:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v docker >/dev/null 2>&1 && ! brew list --cask docker >/dev/null 2>&1'
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to remove Docker Desktop on macOS.
+    cmds:
+      - echo 'Removing Docker Desktop via Homebrew...'
+      - brew uninstall --cask docker --force
+      - echo 'Docker Desktop removed.'
+
+  _install:undo:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v docker >/dev/null 2>&1'
+    preconditions:
+      - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
+        msg: sudo is required to remove Docker when not running as root.
+    cmds:
+      - task: _install:undo:linux:apt
+      - task: _install:undo:linux:dnf
+
+  _install:undo:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v apt-get >/dev/null 2>&1'
+    cmds:
+      - echo 'Removing Docker Engine packages (apt)...'
+      - cmd: apt-get remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Docker Engine packages removed.'
+
+  _install:undo:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v dnf >/dev/null 2>&1'
+    cmds:
+      - echo 'Removing Docker Engine packages (dnf)...'
+      - cmd: dnf remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Docker Engine packages removed.'
+
+  _install:undo:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command docker -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Removing Docker Desktop via winget...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget uninstall --id Docker.DockerDesktop --silent"
+      - echo Docker Desktop removed. Restart your terminal.
+
+  _upgrade:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to upgrade Docker on macOS.
+    cmds:
+      - echo 'Upgrading Docker Desktop via Homebrew...'
+      - brew update
+      - cmd: brew upgrade --cask docker
+        if: brew list --cask docker >/dev/null 2>&1
+      - cmd: brew install --cask docker
+        if: '! brew list --cask docker >/dev/null 2>&1'
+      - echo 'Docker Desktop upgraded.'
+
+  _upgrade:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v docker >/dev/null 2>&1
+        msg: Docker is not installed. Run task install first.
+      - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
+        msg: sudo is required to upgrade Docker when not running as root.
+    cmds:
+      - task: _upgrade:linux:apt
+      - task: _upgrade:linux:dnf
+
+  _upgrade:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v apt-get >/dev/null 2>&1'
+    cmds:
+      - echo 'Upgrading Docker Engine (apt)...'
+      - cmd: apt-get update && apt-get install -y --only-upgrade docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get update && sudo apt-get install -y --only-upgrade docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Docker Engine upgraded.'
+
+  _upgrade:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! command -v dnf >/dev/null 2>&1'
+    cmds:
+      - echo 'Upgrading Docker Engine (dnf)...'
+      - cmd: dnf update -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf update -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Docker Engine upgraded.'
+
+  _upgrade:windows:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - echo Upgrading Docker Desktop via winget...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget upgrade --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements --silent"
+      - echo Docker Desktop upgraded. Restart your terminal if prompted.
+
+  _stop:all:unix:
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    cmds:
+      - |
+        ids=$(docker ps -q 2>/dev/null)
+        if [ -n "$ids" ]; then
+          echo "Stopping $(echo "$ids" | wc -l | tr -d ' ') container(s)..."
+          docker stop $ids
+          echo 'All containers stopped.'
+        else
+          echo 'No running containers to stop.'
+        fi
+
+  _stop:all:windows:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$ids = docker ps -q; if ($ids) { Write-Host \"Stopping $($ids.Count) container(s)...\"; docker stop $ids; Write-Host 'All containers stopped.' } else { Write-Host 'No running containers to stop.' }"

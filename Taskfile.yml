@@ -1,6 +1,13 @@
 version: "3"
 
 includes:
+  ansible:
+    taskfile: taskfiles/ansible/Taskfile.yml
+    vars:
+      PLAYBOOK_OVERRIDE: "{{.PLAYBOOK}}"
+      INVENTORY_OVERRIDE: "{{.INVENTORY}}"
+      TARGETS_OVERRIDE: "{{.TARGETS}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   eslint:
     taskfile: taskfiles/eslint/Taskfile.yml
     dir: .
@@ -26,6 +33,14 @@ includes:
       PM_OVERRIDE: "{{.PM}}"
       BIOME_TARGETS_OVERRIDE: "{{.TARGETS}}"
       CONFIG_OVERRIDE: "{{.CONFIG}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  bruno:
+    taskfile: taskfiles/bruno/Taskfile.yml
+    dir: .
+    vars:
+      PM_OVERRIDE: "{{.PM}}"
+      COLLECTION_OVERRIDE: "{{.COLLECTION}}"
+      ENV_OVERRIDE: "{{.ENV}}"
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   stylelint:
     taskfile: taskfiles/stylelint/Taskfile.yml
@@ -57,6 +72,13 @@ includes:
     taskfile: taskfiles/bun/Taskfile.yml
   corepack:
     taskfile: taskfiles/corepack/Taskfile.yml
+  docker:
+    taskfile: taskfiles/docker/Taskfile.yml
+    vars:
+      IMAGE_OVERRIDE: "{{.IMAGE}}"
+      FILE_OVERRIDE: "{{.FILE}}"
+      CONTEXT_OVERRIDE: "{{.CONTEXT}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   fnm:
     taskfile: taskfiles/fnm/Taskfile.yml
   gh:
@@ -65,6 +87,12 @@ includes:
     taskfile: taskfiles/git/Taskfile.yml
   go:
     taskfile: taskfiles/go/Taskfile.yml
+  hadolint:
+    taskfile: taskfiles/hadolint/Taskfile.yml
+    vars:
+      DOCKERFILE_OVERRIDE: "{{.DOCKERFILE}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   js-pm:
     taskfile: taskfiles/js-pm/Taskfile.yml
   npm:
@@ -73,10 +101,35 @@ includes:
     taskfile: taskfiles/nvm/Taskfile.yml
   pnpm:
     taskfile: taskfiles/pnpm/Taskfile.yml
+  python:
+    taskfile: taskfiles/python/Taskfile.yml
+    vars:
+      FILE_OVERRIDE: "{{.FILE}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  sqlfluff:
+    taskfile: taskfiles/sqlfluff/Taskfile.yml
+    vars:
+      TARGETS_OVERRIDE: "{{.TARGETS}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      DIALECT_OVERRIDE: "{{.DIALECT}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   staticcheck:
     taskfile: taskfiles/staticcheck/Taskfile.yml
   typescript:
     taskfile: taskfiles/typescript/Taskfile.yml
+  uv:
+    taskfile: taskfiles/uv/Taskfile.yml
+    vars:
+      PYTHON_VERSION_OVERRIDE: "{{.PYTHON_VERSION}}"
+      FILE_OVERRIDE: "{{.FILE}}"
+      TOOL_OVERRIDE: "{{.TOOL}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  yamllint:
+    taskfile: taskfiles/yamllint/Taskfile.yml
+    vars:
+      TARGETS_OVERRIDE: "{{.TARGETS}}"
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   yarn:
     taskfile: taskfiles/yarn/Taskfile.yml
 

@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/TaskOtter/taskfiles/internal/tasktest"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
 )
 
 // expectedPublicTasks is the canonical list of public gh Taskfile tasks.
