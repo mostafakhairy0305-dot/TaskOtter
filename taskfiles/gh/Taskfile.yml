@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -1263,7 +1262,13 @@ tasks:
     env:
       GH_PAT: '{{.PAT_TOKEN}}'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$target = '{{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}}'; $dest = '{{if ne .CLONE_DIR "."}}{{.CLONE_DIR}}{{end}}'; $args = @($dest) | Where-Object { $_ }; if ($env:GH_PAT) { git clone \"https://$env:GH_PAT@github.com/$target.git\" @args } else { gh repo clone $target @args }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$target = '{{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}}';
+        $dest = '{{if ne .CLONE_DIR "."}}{{.CLONE_DIR}}{{end}}';
+        $args = @($dest) | Where-Object { $_ };
+        if ($env:GH_PAT) { git clone \"https://$env:GH_PAT@github.com/$target.git\" @args }
+        else { gh repo clone $target @args }"
 
   _api:post:unix:
     internal: true
@@ -1284,7 +1289,9 @@ tasks:
     env:
       GH_DATA: '{{.DATA}}'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:GH_DATA | gh api --method POST {{.ENDPOINT}} --input -"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$env:GH_DATA | gh api --method POST {{.ENDPOINT}} --input -"
 
   _api:patch:unix:
     internal: true
@@ -1305,7 +1312,9 @@ tasks:
     env:
       GH_DATA: '{{.DATA}}'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:GH_DATA | gh api --method PATCH {{.ENDPOINT}} --input -"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$env:GH_DATA | gh api --method PATCH {{.ENDPOINT}} --input -"
 
   _alias:set:unix:
     internal: true
@@ -1339,7 +1348,11 @@ tasks:
     summary: Resolve the most recent run ID via PowerShell, then watch it.
     platforms: [windows]
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$runId = (gh run list --workflow {{.WORKFLOW}} --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId; gh run watch $runId"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$runId = (gh run list --workflow {{.WORKFLOW}} --limit 1 --json databaseId
+        | ConvertFrom-Json)[0].databaseId;
+        gh run watch $runId"
 
   _install:auto:unix:
     internal: true
@@ -1374,7 +1387,8 @@ tasks:
             wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg \
               | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
             sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+            _key="signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg"
+            echo "deb [arch=$(dpkg --print-architecture) $_key] https://cli.github.com/packages stable main" \
               | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
             sudo apt-get update
             sudo apt-get install -y gh
@@ -1421,10 +1435,21 @@ tasks:
       using the first one found. Prefers winget, then Chocolatey, then Scoop.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { Write-Host 'winget detected. Installing gh via winget...'; winget install --id GitHub.cli --accept-source-agreements --accept-package-agreements } elseif (Get-Command choco -ErrorAction SilentlyContinue) { Write-Host 'Chocolatey detected. Installing gh via choco...'; choco install gh -y } elseif (Get-Command scoop -ErrorAction SilentlyContinue) { Write-Host 'Scoop detected. Installing gh via scoop...'; scoop install gh } else { Write-Error 'ERROR: No supported package manager detected (winget, choco, scoop). See https://cli.github.com/manual/installation'; exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host 'winget detected. Installing gh via winget...';
+        winget install --id GitHub.cli --accept-source-agreements --accept-package-agreements }
+        elseif (Get-Command choco -ErrorAction SilentlyContinue) {
+        Write-Host 'Chocolatey detected. Installing gh via choco...'; choco install gh -y }
+        elseif (Get-Command scoop -ErrorAction SilentlyContinue) {
+        Write-Host 'Scoop detected. Installing gh via scoop...'; scoop install gh }
+        else { $err = 'ERROR: No supported package manager detected (winget, choco, scoop).' +
+        ' See https://cli.github.com/manual/installation'; Write-Error $err; exit 1 }"
 
   _install:macos:brew:
     internal: true
@@ -1448,9 +1473,13 @@ tasks:
     summary: Run `winget install --id GitHub.cli` on Windows. Skipped if gh is already installed.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "winget is required. Update Windows or install App Installer from the Microsoft Store."
     cmds:
       - echo Installing gh via winget...
@@ -1463,9 +1492,13 @@ tasks:
     summary: Run `choco install gh` on Windows. Skipped if gh is already installed.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command choco -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command choco -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "Chocolatey is required. Install it from https://chocolatey.org"
     cmds:
       - echo Installing gh via Chocolatey...
@@ -1478,9 +1511,13 @@ tasks:
     summary: Run `scoop install gh` on Windows. Skipped if gh is already installed.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "Scoop is required. Install it from https://scoop.sh"
     cmds:
       - echo Installing gh via Scoop...
@@ -1505,9 +1542,14 @@ tasks:
       - sudo apt-get update
       - sudo apt-get install -y wget
       - sudo mkdir -p -m 755 /etc/apt/keyrings
-      - wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+      - >-
+        wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
       - sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-      - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+      - >-
+        _key="signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg";
+        echo "deb [arch=$(dpkg --print-architecture) $_key] https://cli.github.com/packages stable main"
+        | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
       - sudo apt-get update
       - sudo apt-get install -y gh
       - echo 'gh installed successfully.'
@@ -1663,8 +1705,13 @@ tasks:
       version. Prefers winget, then Chocolatey, then Scoop.
     platforms: [windows]
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { winget upgrade --id GitHub.cli --accept-source-agreements --accept-package-agreements } elseif (Get-Command choco -ErrorAction SilentlyContinue) { choco upgrade gh -y } elseif (Get-Command scoop -ErrorAction SilentlyContinue) { scoop update gh } else { Write-Error 'ERROR: No supported package manager detected for upgrade.'; exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget upgrade --id GitHub.cli --accept-source-agreements --accept-package-agreements }
+        elseif (Get-Command choco -ErrorAction SilentlyContinue) { choco upgrade gh -y }
+        elseif (Get-Command scoop -ErrorAction SilentlyContinue) { scoop update gh }
+        else { Write-Error 'ERROR: No supported package manager detected for upgrade.'; exit 1 }"
 
   _upgrade:macos:brew:
     internal: true
@@ -1685,7 +1732,9 @@ tasks:
     summary: Run `winget upgrade --id GitHub.cli` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "winget is required."
     cmds:
       - echo Upgrading gh via winget...
@@ -1697,7 +1746,9 @@ tasks:
     summary: Run `choco upgrade gh` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command choco -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command choco -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "Chocolatey is required."
     cmds:
       - echo Upgrading gh via Chocolatey...
@@ -1709,7 +1760,9 @@ tasks:
     summary: Run `scoop update gh` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "Scoop is required."
     cmds:
       - echo Upgrading gh via Scoop...
@@ -1774,7 +1827,9 @@ tasks:
     summary: Run `winget uninstall --id GitHub.cli` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "winget is required."
     cmds:
       - echo Uninstalling gh via winget...
@@ -1787,7 +1842,9 @@ tasks:
     summary: Run `choco uninstall gh` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command choco -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command choco -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "Chocolatey is required."
     cmds:
       - echo Uninstalling gh via Chocolatey...
@@ -1800,7 +1857,9 @@ tasks:
     summary: Run `scoop uninstall gh` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: "Scoop is required."
     cmds:
       - echo Uninstalling gh via Scoop...
@@ -1885,8 +1944,13 @@ tasks:
       the current authentication status.
     platforms: [windows]
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '=== gh binary ==='; (Get-Command gh).Source; Write-Host ''; Write-Host '=== gh version ==='; gh --version; Write-Host ''; Write-Host '=== gh auth status ==='; try { gh auth status } catch { Write-Host 'Not authenticated. Run: task auth:login' }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Write-Host '=== gh binary ==='; (Get-Command gh).Source;
+        Write-Host ''; Write-Host '=== gh version ==='; gh --version;
+        Write-Host ''; Write-Host '=== gh auth status ===';
+        try { gh auth status }
+        catch { Write-Host 'Not authenticated. Run: task auth:login' }"
 
   _secret:set:unix:
     internal: true
@@ -1899,7 +1963,10 @@ tasks:
     env:
       GH_SECRET_VALUE: '{{.SECRET_VALUE}}'
     cmds:
-      - printf '%s' "$GH_SECRET_VALUE" | gh secret set {{.SECRET_NAME}} --body - {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
+      - >-
+        printf '%s' "$GH_SECRET_VALUE"
+        | gh secret set {{.SECRET_NAME}} --body -
+        {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   _secret:set:windows:
     internal: true
@@ -1911,4 +1978,7 @@ tasks:
     env:
       GH_SECRET_VALUE: '{{.SECRET_VALUE}}'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:GH_SECRET_VALUE | gh secret set {{.SECRET_NAME}} --body - {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$env:GH_SECRET_VALUE | gh secret set {{.SECRET_NAME}} --body -
+        {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}"

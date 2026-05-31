@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -263,7 +262,11 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     cmds:
-      - bash -lc '{{.UV_LOAD}}; ansible-lint {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - >-
+        bash -lc '{{.UV_LOAD}};
+        ansible-lint
+        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _syntax:check:unix:
     internal: true
@@ -273,7 +276,13 @@ tasks:
       - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-playbook >/dev/null 2>&1'
         msg: ansible-playbook is not installed. Run task install first.
     cmds:
-      - bash -lc '{{.UV_LOAD}}; ansible-playbook --syntax-check "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}" {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - >-
+        bash -lc '{{.UV_LOAD}};
+        ansible-playbook --syntax-check
+        "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}"
+        {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}"
+        {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _run:unix:
     internal: true
@@ -283,7 +292,13 @@ tasks:
       - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-playbook >/dev/null 2>&1'
         msg: ansible-playbook is not installed. Run task install first.
     cmds:
-      - bash -lc '{{.UV_LOAD}}; ansible-playbook "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}" {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - >-
+        bash -lc '{{.UV_LOAD}};
+        ansible-playbook
+        "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}"
+        {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}"
+        {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _ping:unix:
     internal: true
@@ -293,7 +308,12 @@ tasks:
       - sh: bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
         msg: Ansible is not installed. Run task install first.
     cmds:
-      - bash -lc '{{.UV_LOAD}}; ansible "{{.PATTERN}}" -m ping {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - >-
+        bash -lc '{{.UV_LOAD}};
+        ansible "{{.PATTERN}}" -m ping
+        {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}"
+        {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _list:hosts:unix:
     internal: true
@@ -303,7 +323,12 @@ tasks:
       - sh: bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
         msg: Ansible is not installed. Run task install first.
     cmds:
-      - bash -lc '{{.UV_LOAD}}; ansible "{{.PATTERN}}" --list-hosts {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}" {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - >-
+        bash -lc '{{.UV_LOAD}};
+        ansible "{{.PATTERN}}" --list-hosts
+        {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}"
+        {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _galaxy:install:unix:
     internal: true
@@ -313,7 +338,10 @@ tasks:
       - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-galaxy >/dev/null 2>&1'
         msg: ansible-galaxy is not installed. Run task install first.
     cmds:
-      - bash -lc '{{.UV_LOAD}}; ansible-galaxy install -r "{{.REQUIREMENTS}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - >-
+        bash -lc '{{.UV_LOAD}};
+        ansible-galaxy install -r "{{.REQUIREMENTS}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _vault:unix:
     internal: true

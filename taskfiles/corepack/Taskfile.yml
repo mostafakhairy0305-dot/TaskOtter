@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -21,8 +20,12 @@ vars:
   FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
   FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
   NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
-  FNM_USE: '{{if .NODE_VERSION}}fnm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then fnm use; fi{{end}}'
-  NVM_USE: '{{if .NODE_VERSION}}nvm use "{{.NODE_VERSION}}"{{else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}'
+  FNM_USE: >-
+    {{if .NODE_VERSION}}fnm use "{{.NODE_VERSION}}"
+    {{- else}}if [ -f .node-version ] || [ -f .nvmrc ]; then fnm use; fi{{end}}
+  NVM_USE: >-
+    {{if .NODE_VERSION}}nvm use "{{.NODE_VERSION}}"
+    {{- else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}
   NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
   NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
   NODE_VERSION: ''
@@ -67,7 +70,9 @@ tasks:
 
   install:
     desc: Install Corepack with npm when missing
-    summary: Ensure the selected Node.js runtime has Corepack available, installing corepack globally through npm when Node.js does not provide it.
+    summary: >-
+      Ensure the selected Node.js runtime has Corepack available,
+      installing corepack globally through npm when Node.js does not provide it.
     cmds:
       - task: _install:unix
       - task: _install:windows
@@ -154,22 +159,36 @@ tasks:
       NODE_MANAGER: '{{.NODE_MANAGER}}'
       NODE_VERSION: '{{.NODE_VERSION}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm' -or '{{.NODE_MANAGER}}' -eq 'nvm') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ('{{.NODE_MANAGER}}' -eq 'fnm' -or '{{.NODE_MANAGER}}' -eq 'nvm') { exit 0 } else { exit 1 }"
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'nvm') { if ($env:NODE_VERSION) { task nvm:node:install \"VERSION=$env:NODE_VERSION\" } else { task nvm:node:install } } else { if ($env:NODE_VERSION) { task fnm:node:install \"VERSION=$env:NODE_VERSION\" } else { task fnm:node:install } }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ('{{.NODE_MANAGER}}' -eq 'nvm') {
+        if ($env:NODE_VERSION) { task nvm:node:install \"VERSION=$env:NODE_VERSION\" }
+        else { task nvm:node:install } }
+        else { if ($env:NODE_VERSION) { task fnm:node:install \"VERSION=$env:NODE_VERSION\" }
+        else { task fnm:node:install } }"
 
   _install:unix:
     internal: true
     platforms: [linux, darwin]
     status:
       - '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
-      - '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+      - >-
+        {{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"
+        {{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1
+        || test -f "$HOME/.local/bin/fnm"{{end}}
       - bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; command -v corepack >/dev/null 2>&1'
     preconditions:
       - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
-      - sh: '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+      - sh: >-
+          {{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"
+          {{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1
+          || test -f "$HOME/.local/bin/fnm"{{end}}
         msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
     cmds:
       - bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; npm install --global "corepack@{{.COREPACK_VERSION}}"'
@@ -181,16 +200,36 @@ tasks:
       NODE_MANAGER: '{{.NODE_MANAGER}}'
       NODE_VERSION: '{{.NODE_VERSION}}'
     status:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $env:NODE_MANAGER = '{{.NODE_MANAGER}}'; $env:NODE_VERSION = '{{.NODE_VERSION}}'; if ($env:NODE_MANAGER -ne 'fnm' -and $env:NODE_MANAGER -ne 'nvm') { exit 1 }; if ($env:NODE_MANAGER -eq 'fnm') { if (-not (Get-Command fnm -ErrorAction SilentlyContinue)) { exit 1 } } else { if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) { exit 1 } }; {{.WINDOWS_NODE_ACTIVATE}}; if (Get-Command corepack -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$ErrorActionPreference = 'Stop';
+        $env:NODE_MANAGER = '{{.NODE_MANAGER}}';
+        $env:NODE_VERSION = '{{.NODE_VERSION}}';
+        if ($env:NODE_MANAGER -ne 'fnm' -and $env:NODE_MANAGER -ne 'nvm') { exit 1 };
+        if ($env:NODE_MANAGER -eq 'fnm') {
+        if (-not (Get-Command fnm -ErrorAction SilentlyContinue)) { exit 1 } }
+        else { if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) { exit 1 } };
+        {{.WINDOWS_NODE_ACTIVATE}};
+        if (Get-Command corepack -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm' -or '{{.NODE_MANAGER}}' -eq 'nvm') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ('{{.NODE_MANAGER}}' -eq 'fnm' -or '{{.NODE_MANAGER}}' -eq 'nvm') { exit 0 } else { exit 1 }"
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm') { if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } } else { if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ('{{.NODE_MANAGER}}' -eq 'fnm') {
+          if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } }
+          else { if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } }"
         msg: '"{{.NODE_MANAGER}}" is not installed or not available in PATH. Run: task node:setup'
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $env:NODE_MANAGER = '{{.NODE_MANAGER}}'; $env:NODE_VERSION = '{{.NODE_VERSION}}'; {{.WINDOWS_NODE_ACTIVATE}}; npm install --global 'corepack@{{.COREPACK_VERSION}}'"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$ErrorActionPreference = 'Stop';
+        $env:NODE_MANAGER = '{{.NODE_MANAGER}}';
+        $env:NODE_VERSION = '{{.NODE_VERSION}}';
+        {{.WINDOWS_NODE_ACTIVATE}};
+        npm install --global 'corepack@{{.COREPACK_VERSION}}'"
 
   _corepack:unix:
     internal: true
@@ -201,11 +240,17 @@ tasks:
     preconditions:
       - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
-      - sh: '{{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"{{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"{{end}}'
+      - sh: >-
+          {{if eq .NODE_MANAGER "nvm"}}test -s "$HOME/.nvm/nvm.sh"
+          {{else}}test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1
+          || test -f "$HOME/.local/bin/fnm"{{end}}
         msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
     cmds:
-      - |
-        bash -c '{{.NODE_LOAD}}; {{.NODE_USE}}; command -v corepack >/dev/null 2>&1 || { echo "{{.COREPACK_UNAVAILABLE_MSG}}"; exit 1; }; corepack {{.ARGS}}'
+      - >-
+        bash -c '{{.NODE_LOAD}}; {{.NODE_USE}};
+        command -v corepack >/dev/null 2>&1 ||
+        { echo "{{.COREPACK_UNAVAILABLE_MSG}}"; exit 1; };
+        corepack {{.ARGS}}'
 
   _corepack:windows:
     internal: true
@@ -216,13 +261,26 @@ tasks:
       NODE_MANAGER: '{{.NODE_MANAGER}}'
       NODE_VERSION: '{{.NODE_VERSION}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm' -or '{{.NODE_MANAGER}}' -eq 'nvm') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ('{{.NODE_MANAGER}}' -eq 'fnm' -or '{{.NODE_MANAGER}}' -eq 'nvm') { exit 0 } else { exit 1 }"
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.NODE_MANAGER}}' -eq 'fnm') { if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } } else { if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ('{{.NODE_MANAGER}}' -eq 'fnm') {
+          if (Get-Command fnm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } }
+          else { if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 } }"
         msg: '"{{.NODE_MANAGER}}" is not installed or not available in PATH. Run: task node:setup'
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $env:NODE_MANAGER = '{{.NODE_MANAGER}}'; $env:NODE_VERSION = '{{.NODE_VERSION}}'; {{.WINDOWS_NODE_ACTIVATE}}; if (-not (Get-Command corepack -ErrorAction SilentlyContinue)) { Write-Error '{{.COREPACK_UNAVAILABLE_MSG}}'; exit 1 }; corepack {{.ARGS}}"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$ErrorActionPreference = 'Stop';
+        $env:NODE_MANAGER = '{{.NODE_MANAGER}}';
+        $env:NODE_VERSION = '{{.NODE_VERSION}}';
+        {{.WINDOWS_NODE_ACTIVATE}};
+        if (-not (Get-Command corepack -ErrorAction SilentlyContinue)) {
+        Write-Error '{{.COREPACK_UNAVAILABLE_MSG}}'; exit 1 };
+        corepack {{.ARGS}}"
 
   _use:unix:
     internal: true
@@ -255,13 +313,21 @@ tasks:
       PACKAGE_MANAGER: '{{.PACKAGE_MANAGER}}'
       VERSION: '{{.VERSION}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:NODE_MANAGER -eq 'fnm' -or $env:NODE_MANAGER -eq 'nvm') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:NODE_MANAGER -eq 'fnm' -or $env:NODE_MANAGER -eq 'nvm') { exit 0 } else { exit 1 }"
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PACKAGE_MANAGER -match '^(npm|pnpm|yarn)$') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PACKAGE_MANAGER -match '^(npm|pnpm|yarn)$') { exit 0 } else { exit 1 }"
         msg: 'PACKAGE_MANAGER must be npm, pnpm, or yarn.'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:VERSION -match '^[A-Za-z0-9.+_-]+$') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:VERSION -match '^[A-Za-z0-9.+_-]+$') { exit 0 } else { exit 1 }"
         msg: 'VERSION contains invalid characters.'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
         msg: 'package.json not found. Run this task from the project root.'
     cmds:
       - task: _corepack:windows

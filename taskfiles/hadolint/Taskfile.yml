@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -73,7 +72,16 @@ tasks:
     deps:
       - install
     cmds:
-      - 'hadolint {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}"{{if .DOCKERFILE_OVERRIDE}}{{.DOCKERFILE_OVERRIDE}}{{else}}{{.DOCKERFILE}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}} && echo "✅ hadolint passed" || { echo "❌ hadolint failed"; exit 1; }'
+      - >-
+        hadolint
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+        {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
+        "{{if .DOCKERFILE_OVERRIDE}}{{.DOCKERFILE_OVERRIDE}}{{else}}{{.DOCKERFILE}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        && echo "✅ hadolint passed" || { echo "❌ hadolint failed"; exit 1; }
 
   version:
     desc: Show the installed hadolint version
@@ -139,9 +147,13 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command hadolint -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command hadolint -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Scoop is required to install hadolint on Windows. Install it from https://scoop.sh and re-run this task.
     cmds:
       - echo Installing hadolint via Scoop...
@@ -207,7 +219,9 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command hadolint -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command hadolint -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing hadolint via Scoop...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop uninstall hadolint"

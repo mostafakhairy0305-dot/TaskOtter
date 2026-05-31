@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -162,7 +161,12 @@ tasks:
       - sh: test -n "{{.IMAGE_OVERRIDE}}{{.IMAGE}}"
         msg: IMAGE is required. Pass IMAGE=name:tag when running this task.
     cmds:
-      - docker build -f "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" -t "{{if .IMAGE_OVERRIDE}}{{.IMAGE_OVERRIDE}}{{else}}{{.IMAGE}}{{end}}" "{{if .CONTEXT_OVERRIDE}}{{.CONTEXT_OVERRIDE}}{{else}}{{.CONTEXT}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+      - >-
+        docker build
+        -f "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}"
+        -t "{{if .IMAGE_OVERRIDE}}{{.IMAGE_OVERRIDE}}{{else}}{{.IMAGE}}{{end}}"
+        "{{if .CONTEXT_OVERRIDE}}{{.CONTEXT_OVERRIDE}}{{else}}{{.CONTEXT}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   pull:
     desc: Pull a Docker image from a registry (IMAGE=name:tag)
@@ -178,7 +182,10 @@ tasks:
       - sh: test -n "{{.IMAGE_OVERRIDE}}{{.IMAGE}}"
         msg: IMAGE is required. Pass IMAGE=name:tag when running this task.
     cmds:
-      - docker pull "{{if .IMAGE_OVERRIDE}}{{.IMAGE_OVERRIDE}}{{else}}{{.IMAGE}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+      - >-
+        docker pull
+        "{{if .IMAGE_OVERRIDE}}{{.IMAGE_OVERRIDE}}{{else}}{{.IMAGE}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   _install:macos:
     internal: true
@@ -225,13 +232,21 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command docker -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command docker -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
-        msg: winget is required to install Docker on Windows. Update Windows or install the App Installer package from the Microsoft Store.
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: >-
+          winget is required to install Docker on Windows.
+          Update Windows or install the App Installer package from the Microsoft Store.
     cmds:
       - echo Installing Docker Desktop via winget...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget install --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements --silent"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "winget install --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements --silent"
       - echo Docker Desktop installed. Restart your terminal to use docker.
 
   _install:undo:macos:
@@ -269,9 +284,13 @@ tasks:
       - '! command -v apt-get >/dev/null 2>&1'
     cmds:
       - echo 'Removing Docker Engine packages (apt)...'
-      - cmd: apt-get remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+      - cmd: >-
+          apt-get remove -y docker-ce docker-ce-cli containerd.io
+          docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
         if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+      - cmd: >-
+          sudo apt-get remove -y docker-ce docker-ce-cli containerd.io
+          docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
         if: '[ "$(id -u)" -ne 0 ]'
       - echo 'Docker Engine packages removed.'
 
@@ -293,7 +312,9 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command docker -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command docker -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing Docker Desktop via winget...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget uninstall --id Docker.DockerDesktop --silent"
@@ -336,9 +357,15 @@ tasks:
       - '! command -v apt-get >/dev/null 2>&1'
     cmds:
       - echo 'Upgrading Docker Engine (apt)...'
-      - cmd: apt-get update && apt-get install -y --only-upgrade docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      - cmd: >-
+          apt-get update &&
+          apt-get install -y --only-upgrade
+          docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo apt-get update && sudo apt-get install -y --only-upgrade docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      - cmd: >-
+          sudo apt-get update &&
+          sudo apt-get install -y --only-upgrade
+          docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         if: '[ "$(id -u)" -ne 0 ]'
       - echo 'Docker Engine upgraded.'
 
@@ -361,7 +388,9 @@ tasks:
     platforms: [windows]
     cmds:
       - echo Upgrading Docker Desktop via winget...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget upgrade --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements --silent"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "winget upgrade --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements --silent"
       - echo Docker Desktop upgraded. Restart your terminal if prompted.
 
   _stop:all:unix:
@@ -383,4 +412,11 @@ tasks:
     internal: true
     platforms: [windows]
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$ids = docker ps -q; if ($ids) { Write-Host \"Stopping $($ids.Count) container(s)...\"; docker stop $ids; Write-Host 'All containers stopped.' } else { Write-Host 'No running containers to stop.' }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$ids = docker ps -q;
+        if ($ids) {
+        Write-Host \"Stopping $($ids.Count) container(s)...\";
+        docker stop $ids;
+        Write-Host 'All containers stopped.'
+        } else { Write-Host 'No running containers to stop.' }"

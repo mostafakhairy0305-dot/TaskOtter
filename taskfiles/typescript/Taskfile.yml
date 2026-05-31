@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 includes:
@@ -421,12 +420,21 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Test-Path 'node_modules\.bin\tsc.cmd') -or (Get-Command tsc -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Test-Path 'node_modules\.bin\tsc.cmd') -or
+          (Get-Command tsc -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
         msg: 'tsc not found. Run: task typescript:install'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.TSCONFIG}}') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Test-Path '{{.TSCONFIG}}') { exit 0 } else { exit 1 }"
         msg: 'TSCONFIG "{{.TSCONFIG}}" not found. Run: task typescript:config:init'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules\.bin\tsc.cmd') { & node_modules\.bin\tsc.cmd --project '{{.TSCONFIG}}' {{.ARGS}} } else { tsc --project '{{.TSCONFIG}}' {{.ARGS}} }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path 'node_modules\.bin\tsc.cmd') { & node_modules\.bin\tsc.cmd
+        --project '{{.TSCONFIG}}' {{.ARGS}} }
+        else { tsc --project '{{.TSCONFIG}}' {{.ARGS}} }"
 
   _tsc:noconfig:
     internal: true
@@ -449,10 +457,16 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Test-Path 'node_modules\.bin\tsc.cmd') -or (Get-Command tsc -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Test-Path 'node_modules\.bin\tsc.cmd') -or
+          (Get-Command tsc -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
         msg: 'tsc not found. Run: task typescript:install'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules\.bin\tsc.cmd') { & node_modules\.bin\tsc.cmd {{.ARGS}} } else { tsc {{.ARGS}} }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path 'node_modules\.bin\tsc.cmd') { & node_modules\.bin\tsc.cmd {{.ARGS}} }
+        else { tsc {{.ARGS}} }"
 
   _tsx:
     internal: true
@@ -477,22 +491,45 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Test-Path 'node_modules\.bin\tsx.cmd') -or (Get-Command tsx -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Test-Path 'node_modules\.bin\tsx.cmd') -or
+          (Get-Command tsx -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
         msg: 'tsx not found. Run: task typescript:install'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.FILE}}') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Test-Path '{{.FILE}}') { exit 0 } else { exit 1 }"
         msg: 'FILE "{{.FILE}}" not found. Set FILE=path/to/your/file.ts'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'node_modules\.bin\tsx.cmd') { & node_modules\.bin\tsx.cmd {{.ARGS}} } else { tsx {{.ARGS}} }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path 'node_modules\.bin\tsx.cmd') { & node_modules\.bin\tsx.cmd {{.ARGS}} }
+        else { tsx {{.ARGS}} }"
 
   _install:windows:
     internal: true
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
         msg: 'package.json not found. Run this task from the Node.js project root.'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path 'pnpm-lock.yaml') { Write-Host 'Detected pnpm-lock.yaml - using pnpm'; pnpm add -D typescript tsx '@types/node' } elseif (Test-Path 'yarn.lock') { Write-Host 'Detected yarn.lock - using yarn'; yarn add -D typescript tsx '@types/node' } elseif ((Test-Path 'bun.lockb') -or (Test-Path 'bun.lock')) { Write-Host 'Detected bun lock file - using bun'; bun add -d typescript tsx '@types/node' } elseif (Test-Path 'package-lock.json') { Write-Host 'Detected package-lock.json - using npm'; npm install -D typescript tsx '@types/node' } else { Write-Host 'No lockfile found - falling back to npm'; npm install -D typescript tsx '@types/node' }; Write-Host 'Done. Run task typescript:version to verify.'"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path 'pnpm-lock.yaml') { Write-Host 'Detected pnpm-lock.yaml - using pnpm';
+        pnpm add -D typescript tsx '@types/node' }
+        elseif (Test-Path 'yarn.lock') { Write-Host 'Detected yarn.lock - using yarn';
+        yarn add -D typescript tsx '@types/node' }
+        elseif ((Test-Path 'bun.lockb') -or (Test-Path 'bun.lock')) {
+        Write-Host 'Detected bun lock file - using bun'; bun add -d typescript tsx '@types/node' }
+        elseif (Test-Path 'package-lock.json') {
+        Write-Host 'Detected package-lock.json - using npm';
+        npm install -D typescript tsx '@types/node' }
+        else { Write-Host 'No lockfile found - falling back to npm';
+        npm install -D typescript tsx '@types/node' };
+        Write-Host 'Done. Run task typescript:version to verify.'"
 
   _version:unix:
     internal: true
@@ -538,11 +575,31 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: 'node is not available. Install Node.js first.'
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '=== tsc (TypeScript Compiler) ==='; if (Test-Path 'node_modules\.bin\tsc.cmd') { & node_modules\.bin\tsc.cmd --version } elseif (Get-Command tsc -ErrorAction SilentlyContinue) { tsc --version } else { Write-Host 'tsc not found. Run task typescript:install' }; Write-Host ''; Write-Host '=== tsx (TypeScript Execute) ==='; if (Test-Path 'node_modules\.bin\tsx.cmd') { & node_modules\.bin\tsx.cmd --version } elseif (Get-Command tsx -ErrorAction SilentlyContinue) { tsx --version } else { Write-Host 'tsx not found. Run task typescript:install' }; Write-Host ''; Write-Host '=== tsserver (TypeScript Server) ==='; if (Test-Path 'node_modules\.bin\tsserver.cmd') { Write-Host ('Binary: ' + (Get-Location).Path + '\node_modules\.bin\tsserver.cmd') } elseif (Get-Command tsserver -ErrorAction SilentlyContinue) { Write-Host ('Binary: ' + (Get-Command tsserver).Source) } else { Write-Host 'tsserver not found. Run task typescript:install' }; Write-Host 'Uses TypeScript Server protocol (stdio-based), not LSP directly.'; Write-Host 'Managed by your editor. Do not start it manually.'"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Write-Host '=== tsc (TypeScript Compiler) ===';
+        if (Test-Path 'node_modules\.bin\tsc.cmd') { & node_modules\.bin\tsc.cmd --version }
+        elseif (Get-Command tsc -ErrorAction SilentlyContinue) { tsc --version }
+        else { Write-Host 'tsc not found. Run task typescript:install' };
+        Write-Host '';
+        Write-Host '=== tsx (TypeScript Execute) ===';
+        if (Test-Path 'node_modules\.bin\tsx.cmd') { & node_modules\.bin\tsx.cmd --version }
+        elseif (Get-Command tsx -ErrorAction SilentlyContinue) { tsx --version }
+        else { Write-Host 'tsx not found. Run task typescript:install' };
+        Write-Host '';
+        Write-Host '=== tsserver (TypeScript Server) ===';
+        if (Test-Path 'node_modules\.bin\tsserver.cmd') {
+        Write-Host ('Binary: ' + (Get-Location).Path + '\node_modules\.bin\tsserver.cmd') }
+        elseif (Get-Command tsserver -ErrorAction SilentlyContinue) {
+        Write-Host ('Binary: ' + (Get-Command tsserver).Source) }
+        else { Write-Host 'tsserver not found. Run task typescript:install' };
+        Write-Host 'Uses TypeScript Server protocol (stdio-based), not LSP directly.';
+        Write-Host 'Managed by your editor. Do not start it manually.'"
 
   _tsserver:info:unix:
     internal: true
@@ -582,8 +639,30 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '=== tsserver (TypeScript Server) ==='; Write-Host ''; if (Test-Path 'node_modules\.bin\tsserver.cmd') { Write-Host ('Binary: ' + (Get-Location).Path + '\node_modules\.bin\tsserver.cmd'); Write-Host 'Source: ships with the typescript package' } elseif (Get-Command tsserver -ErrorAction SilentlyContinue) { Write-Host ('Binary: ' + (Get-Command tsserver).Source + ' (global install)') } else { Write-Host 'tsserver not found. Run task typescript:install' }; Write-Host ''; Write-Host 'tsserver is a long-running stdio process managed by your editor.'; Write-Host 'It provides autocomplete, hover types, go-to-definition, rename,'; Write-Host 'and inline diagnostics. Never start it manually.'; Write-Host ''; Write-Host 'Protocol: TypeScript Server protocol (stdio-based), NOT Language Server'; Write-Host 'Protocol (LSP) directly. Some editors use an LSP adapter such as'; Write-Host 'typescript-language-server (tsls) to wrap tsserver. VS Code talks'; Write-Host 'to tsserver natively via the TypeScript Server protocol.'; Write-Host ''; Write-Host 'VS Code - Command Palette (Ctrl+Shift+P):'; Write-Host '  TypeScript: Restart TS Server'; Write-Host '  TypeScript: Select TypeScript Version'; Write-Host '  TypeScript: Open TS Server Log'; Write-Host '  TypeScript: Go to Project Config'"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Write-Host '=== tsserver (TypeScript Server) ==='; Write-Host '';
+        if (Test-Path 'node_modules\.bin\tsserver.cmd') {
+        Write-Host ('Binary: ' + (Get-Location).Path + '\node_modules\.bin\tsserver.cmd');
+        Write-Host 'Source: ships with the typescript package' }
+        elseif (Get-Command tsserver -ErrorAction SilentlyContinue) {
+        Write-Host ('Binary: ' + (Get-Command tsserver).Source + ' (global install)') }
+        else { Write-Host 'tsserver not found. Run task typescript:install' };
+        Write-Host '';
+        Write-Host 'tsserver is a long-running stdio process managed by your editor.';
+        Write-Host 'It provides autocomplete, hover types, go-to-definition, rename,';
+        Write-Host 'and inline diagnostics. Never start it manually.';
+        Write-Host '';
+        Write-Host 'Protocol: TypeScript Server protocol (stdio-based), NOT Language Server';
+        Write-Host 'Protocol (LSP) directly. Some editors use an LSP adapter such as';
+        Write-Host 'typescript-language-server (tsls) to wrap tsserver. VS Code talks';
+        Write-Host 'to tsserver natively via the TypeScript Server protocol.';
+        Write-Host '';
+        Write-Host 'VS Code - Command Palette (Ctrl+Shift+P):';
+        Write-Host '  TypeScript: Restart TS Server';
+        Write-Host '  TypeScript: Select TypeScript Version';
+        Write-Host '  TypeScript: Open TS Server Log';
+        Write-Host '  TypeScript: Go to Project Config'"
 
   _build:clean:unix:
     internal: true
@@ -604,7 +683,9 @@ tasks:
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - echo Removing {{.OUT_DIR}}...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' }"
       - task: _tsc:windows
         vars:
           ARGS: '--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
@@ -635,8 +716,12 @@ tasks:
       - task: _tsc:windows
         vars:
           ARGS: '--generateTrace {{.TRACE_DIR}} --noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
-      - |
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host ''; Write-Host 'Trace written to {{.TRACE_DIR}}/'; Write-Host 'Analyse with - npx @typescript/analyze-trace {{.TRACE_DIR}}'; Write-Host 'Or load {{.TRACE_DIR}}/trace.json in chrome://tracing'"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Write-Host '';
+        Write-Host 'Trace written to {{.TRACE_DIR}}/';
+        Write-Host 'Analyse with - npx @typescript/analyze-trace {{.TRACE_DIR}}';
+        Write-Host 'Or load {{.TRACE_DIR}}/trace.json in chrome://tracing'"
 
   _start:unix:
     internal: true
@@ -656,9 +741,13 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: 'node is not available. Install Node.js first.'
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.OUTFILE}}') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Test-Path '{{.OUTFILE}}') { exit 0 } else { exit 1 }"
         msg: 'OUTFILE "{{.OUTFILE}}" not found. Run: task typescript:build'
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "node '{{.OUTFILE}}'"
@@ -680,10 +769,14 @@ tasks:
     platforms: [windows]
     dir: '{{.USER_WORKING_DIR}}'
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.OUT_DIR}}') { exit 1 } else { exit 0 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.OUT_DIR}}') { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing {{.OUT_DIR}}...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' }"
       - echo Done.
 
   _clean:all:unix:
@@ -704,4 +797,9 @@ tasks:
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - echo Removing build artifacts...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' }; if (Test-Path 'tsconfig.tsbuildinfo') { Remove-Item -Force 'tsconfig.tsbuildinfo' }; if (Test-Path '.tsc-trace') { Remove-Item -Recurse -Force '.tsc-trace' }; Write-Host Done."
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' };
+        if (Test-Path 'tsconfig.tsbuildinfo') { Remove-Item -Force 'tsconfig.tsbuildinfo' };
+        if (Test-Path '.tsc-trace') { Remove-Item -Recurse -Force '.tsc-trace' };
+        Write-Host Done."

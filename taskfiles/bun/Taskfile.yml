@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -147,10 +146,16 @@ tasks:
     requires:
       vars: [ARGS]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+          (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
         msg: Bun is not installed or not in PATH. Run task bun:install first.
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun {{.ARGS}}"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' }
+        else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun {{.ARGS}}"
 
   _install:unix:
     internal: true
@@ -200,12 +205,25 @@ tasks:
     platforms: [windows]
     status:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.VERSION}}') { exit 1 } else { exit 0 }"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+        (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = [System.Environment]::OSVersion.Version; if ($v.Major -gt 10 -or ($v.Major -eq 10 -and $v.Build -ge 17763)) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$v = [System.Environment]::OSVersion.Version;
+          if ($v.Major -gt 10 -or ($v.Major -eq 10 -and $v.Build -ge 17763)) { exit 0 } else { exit 1 }"
         msg: Bun requires Windows 10 version 1809 (build 17763) or later.
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$v = '{{.VERSION}}'; $tmp = [IO.Path]::Combine($env:TEMP, 'bun-install-' + [System.Guid]::NewGuid().ToString() + '.ps1'); Invoke-WebRequest -Uri '{{.BUN_INSTALL_PS1_URL}}' -OutFile $tmp; try { if ($v) { Write-Host \"Installing Bun v$v on Windows...\"; & $tmp -Version $v } else { Write-Host 'Installing Bun (latest) on Windows...'; & $tmp } } finally { Remove-Item $tmp -ErrorAction SilentlyContinue }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$v = '{{.VERSION}}';
+        $tmp = [IO.Path]::Combine($env:TEMP, 'bun-install-' + [System.Guid]::NewGuid().ToString() + '.ps1');
+        Invoke-WebRequest -Uri '{{.BUN_INSTALL_PS1_URL}}' -OutFile $tmp;
+        try { if ($v) { Write-Host \"Installing Bun v$v on Windows...\"; & $tmp -Version $v }
+        else { Write-Host 'Installing Bun (latest) on Windows...'; & $tmp } }
+        finally { Remove-Item $tmp -ErrorAction SilentlyContinue }"
       - echo 'Bun installed. Restart your terminal to use bun.'
 
   _install:undo:unix:
@@ -220,7 +238,13 @@ tasks:
       - echo 'Removing Bun from "$HOME/.bun"...'
       - rm -rf "$HOME/.bun"
       - echo 'Bun removed.'
-      - bash -c 'found=$(grep -rl "BUN_INSTALL\|\.bun/bin" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc" 2>/dev/null || true); [ -n "$found" ] && echo "Manually remove Bun lines from:" && echo "$found" | sed "s/^/  /" || echo "No Bun references found in shell profile files."'
+      - >-
+        bash -c 'found=$(grep -rl "BUN_INSTALL\|\.bun/bin"
+        "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc"
+        2>/dev/null || true);
+        [ -n "$found" ] && echo "Manually remove Bun lines from:" &&
+        echo "$found" | sed "s/^/  /" ||
+        echo "No Bun references found in shell profile files."'
 
   _install:undo:windows:
     internal: true
@@ -232,10 +256,20 @@ tasks:
       Skipped if the .bun directory is already absent.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\")) { exit 1 } else { exit 0 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+        (Test-Path \"$env:USERPROFILE\.bun\")) { exit 1 } else { exit 0 }"
     cmds:
       - echo Uninstalling Bun on Windows...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bunDir = \"$env:USERPROFILE\.bun\"; $uninstall = \"$bunDir\uninstall.ps1\"; if (Test-Path $uninstall) { Write-Host 'Running Bun uninstall script...'; & $uninstall } elseif (Test-Path $bunDir) { Write-Host \"Removing $bunDir...\"; Remove-Item -Recurse -Force $bunDir; Write-Host 'Bun directory removed.' } else { Write-Host 'Bun is already absent.' }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$bunDir = \"$env:USERPROFILE\.bun\";
+        $uninstall = \"$bunDir\uninstall.ps1\";
+        if (Test-Path $uninstall) { Write-Host 'Running Bun uninstall script...'; & $uninstall }
+        elseif (Test-Path $bunDir) { Write-Host \"Removing $bunDir...\";
+        Remove-Item -Recurse -Force $bunDir; Write-Host 'Bun directory removed.' }
+        else { Write-Host 'Bun is already absent.' }"
       - echo 'Bun removed. Restart your terminal.'
 
   _version:unix:
@@ -258,10 +292,17 @@ tasks:
       Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+          (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
         msg: Bun is not installed or not available. Run task install first.
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun --version; & $bun --revision"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' }
+        else { \"$env:USERPROFILE\.bun\bin\bun.exe\" };
+        & $bun --version; & $bun --revision"
 
   _upgrade:unix:
     internal: true
@@ -284,11 +325,17 @@ tasks:
       Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+          (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
         msg: Bun is not installed or not available in PATH. Run task install first.
     cmds:
       - echo Upgrading Bun to the latest stable release...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' }
+        else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade"
 
   _upgrade:canary:unix:
     internal: true
@@ -311,11 +358,17 @@ tasks:
       Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+          (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
         msg: Bun is not installed or not available in PATH. Run task install first.
     cmds:
       - echo Upgrading Bun to the latest canary build...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --canary"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' }
+        else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --canary"
 
   _upgrade:stable:unix:
     internal: true
@@ -338,8 +391,14 @@ tasks:
       Detects Bun in PATH or at the default install location (~\.bun\bin\bun.exe).
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Command bun -ErrorAction SilentlyContinue) -or (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
+          (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
         msg: Bun is not installed or not available in PATH. Run task install first.
     cmds:
       - echo Switching Bun back to the latest stable release...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' } else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --stable"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$bun = if (Get-Command bun -ErrorAction SilentlyContinue) { 'bun' }
+        else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --stable"

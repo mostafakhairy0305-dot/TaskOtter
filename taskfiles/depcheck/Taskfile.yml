@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -46,8 +45,15 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: depcheck
-          ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
+            {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
+            {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ depcheck passed"
 
@@ -58,8 +64,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: depcheck
-          ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}} --json"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
+            {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
+            {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}
+            --json
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   ignores:
@@ -70,8 +84,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: depcheck
-          ARGS: '{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}} --ignores="{{if .IGNORE_PACKAGES_OVERRIDE}}{{.IGNORE_PACKAGES_OVERRIDE}}{{else}}{{.IGNORE_PACKAGES}}{{end}}"'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
+            {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
+            {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}
+            --ignores="{{if .IGNORE_PACKAGES_OVERRIDE}}{{.IGNORE_PACKAGES_OVERRIDE}}{{else}}{{.IGNORE_PACKAGES}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   skip-missing:
@@ -81,8 +103,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: depcheck
-          ARGS: "{{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}{{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}{{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}} --skip-missing=true"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
+            {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
+            {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.DEPCHECK_DEFAULT_PROJECT_PATH}}{{end}}{{end}}{{end}}{{end}}
+            --skip-missing=true
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   ci:

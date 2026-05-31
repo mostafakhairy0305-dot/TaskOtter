@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -51,7 +50,15 @@ tasks:
       Skipped if a recognized ESLint config file already exists in the
       current directory (eslint.config.js/mjs/cjs or .eslintrc.*).
     status:
-      - test -f eslint.config.js || test -f eslint.config.mjs || test -f eslint.config.cjs || test -f .eslintrc.js || test -f .eslintrc.cjs || test -f .eslintrc.json || test -f .eslintrc.yml || test -f .eslintrc.yaml
+      - >-
+        test -f eslint.config.js ||
+        test -f eslint.config.mjs ||
+        test -f eslint.config.cjs ||
+        test -f .eslintrc.js ||
+        test -f .eslintrc.cjs ||
+        test -f .eslintrc.json ||
+        test -f .eslintrc.yml ||
+        test -f .eslintrc.yaml
     cmds:
       - task: js:exec
         vars:
@@ -68,7 +75,15 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: eslint
-          ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}{{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
+          ARGS: >-
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+            {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}
+            {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}
+            {{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}
+            --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
+            {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ eslint passed"
@@ -80,7 +95,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: eslint
-          ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}--fix {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
+          ARGS: >-
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+            {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}
+            {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}
+            {{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}
+            --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
+            --fix
+            {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ eslint fixes applied"
@@ -92,7 +116,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: eslint
-          ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}--max-warnings=0 {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}'
+          ARGS: >-
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+            {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/eslint/ {{end}}
+            {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}
+            {{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}
+            --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
+            --max-warnings=0
+            {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ eslint passed"

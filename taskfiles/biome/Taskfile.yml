@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -65,8 +64,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'check {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            check
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ biome passed"
 
@@ -77,8 +84,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'check --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            check --write
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ biome fixes applied"
 
@@ -94,8 +109,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'lint {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            lint
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ biome passed"
 
@@ -106,8 +129,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'lint --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            lint --write
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ biome fixes applied"
 
@@ -118,8 +149,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'format {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            format
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   format:write:
@@ -129,8 +168,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'format --write {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            format --write
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ biome fixes applied"
 
@@ -141,8 +188,16 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: biome
-          ARGS: 'ci {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}{{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            ci
+            {{if .CONFIG_OVERRIDE}}--config-path "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config-path "{{.CONFIG}}" {{end}}{{end}}
+            {{if .BIOME_TARGETS_OVERRIDE}}{{.BIOME_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}
+            {{else}}{{.BIOME_DEFAULT_TARGETS}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ biome passed"
 

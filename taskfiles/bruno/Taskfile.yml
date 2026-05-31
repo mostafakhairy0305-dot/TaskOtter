@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -48,7 +47,12 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: bru
-          ARGS: 'run {{if .COLLECTION_OVERRIDE}}{{.COLLECTION_OVERRIDE}}{{else}}{{.COLLECTION}}{{end}}{{if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"{{else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}}'
+          ARGS: >-
+            run
+            {{if .COLLECTION_OVERRIDE}}{{.COLLECTION_OVERRIDE}}
+            {{- else}}{{.COLLECTION}}{{end}}
+            {{- if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"
+            {{- else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}}
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
 
@@ -63,7 +67,13 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: bru
-          ARGS: 'run {{if .COLLECTION_OVERRIDE}}{{.COLLECTION_OVERRIDE}}{{else}}{{.COLLECTION}}{{end}}{{if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"{{else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}} --bail'
+          ARGS: >-
+            run
+            {{if .COLLECTION_OVERRIDE}}{{.COLLECTION_OVERRIDE}}
+            {{- else}}{{.COLLECTION}}{{end}}
+            {{- if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"
+            {{- else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}}
+            --bail
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
           CLI_ARGS: "{{.CLI_ARGS}}"
 

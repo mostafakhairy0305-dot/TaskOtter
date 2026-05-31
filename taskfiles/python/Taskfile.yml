@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -185,13 +184,21 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
-        msg: winget is required to install Python on Windows. Update Windows or install the App Installer package from the Microsoft Store.
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command winget -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: >-
+          winget is required to install Python on Windows.
+          Update Windows or install the App Installer package from the Microsoft Store.
     cmds:
       - echo Installing Python via winget...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget install --id Python.Python.3 --accept-source-agreements --accept-package-agreements --silent"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "winget install --id Python.Python.3 --accept-source-agreements --accept-package-agreements --silent"
       - echo Python installed. Restart your terminal to use python.
 
   _install:undo:macos:
@@ -220,7 +227,9 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command python -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing Python via winget...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget uninstall --id Python.Python.3 --silent"
@@ -288,7 +297,9 @@ tasks:
     platforms: [windows]
     cmds:
       - echo Upgrading Python via winget...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "winget upgrade --id Python.Python.3 --accept-source-agreements --accept-package-agreements --silent"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "winget upgrade --id Python.Python.3 --accept-source-agreements --accept-package-agreements --silent"
       - echo Python upgraded. Restart your terminal if prompted.
 
   _version:unix:
@@ -305,7 +316,9 @@ tasks:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Python is not installed or not available in PATH.
     cmds:
       - python --version
@@ -325,7 +338,9 @@ tasks:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Python is not installed or not available in PATH.
     cmds:
       - python --version
@@ -347,7 +362,9 @@ tasks:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Python is not installed. Run task install first.
     cmds:
       - echo Creating virtual environment at {{.VENV}}...
@@ -368,7 +385,9 @@ tasks:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command pip -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command pip -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: pip is not available. Run task install first.
     cmds:
       - pip install -r "{{.REQUIREMENTS}}" {{.EXTRA_ARGS}}
@@ -381,13 +400,21 @@ tasks:
       - sh: command -v python3 >/dev/null 2>&1
         msg: Python is not installed. Run task install first.
     cmds:
-      - python3 "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" {{.ARGS}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+      - >-
+        python3 "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}"
+        {{.ARGS}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   _run:windows:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Python is not installed. Run task install first.
     cmds:
-      - python "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" {{.ARGS}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+      - >-
+        python "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}"
+        {{.ARGS}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}

@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -63,8 +62,21 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: stylelint
-          ARGS: '{{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}} {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}{{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}{{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}}
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+            {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
+            {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
+            {{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}
+            --cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}
+            {{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}
+            {{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}
+            {{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ stylelint passed"
 
@@ -75,8 +87,22 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: stylelint
-          ARGS: '{{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}} --fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}{{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}{{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}}
+            --fix
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+            {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
+            {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
+            {{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}
+            --cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}
+            {{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}
+            {{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}
+            {{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ stylelint fixes applied"
 
@@ -87,8 +113,22 @@ tasks:
         vars:
           PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
           BINARY: stylelint
-          ARGS: '{{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}{{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}} --max-warnings=0 {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}{{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}{{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}{{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}'
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+          ARGS: >-
+            {{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}
+            {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}}
+            --max-warnings=0
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+            {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
+            {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
+            {{else}}{{if eq .STYLELINT_DEFAULT_CACHE "true"}}
+            --cache --cache-location .cache/stylelint/ {{end}}{{end}}{{end}}
+            {{if .ALLOW_EMPTY_INPUT_OVERRIDE}}{{if eq .ALLOW_EMPTY_INPUT_OVERRIDE "true"}}--allow-empty-input {{end}}
+            {{else}}{{if .ALLOW_EMPTY_INPUT}}{{if eq .ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}
+            {{else}}{{if eq .STYLELINT_DEFAULT_ALLOW_EMPTY_INPUT "true"}}--allow-empty-input {{end}}{{end}}{{end}}
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}
           CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ stylelint passed"
 

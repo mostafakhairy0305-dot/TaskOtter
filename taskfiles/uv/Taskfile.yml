@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -90,10 +89,16 @@ tasks:
     cmds:
       - task: _uv:unix
         vars:
-          ARGS: 'python install {{if .PYTHON_VERSION_OVERRIDE}}{{.PYTHON_VERSION_OVERRIDE}}{{else}}{{.PYTHON_VERSION}}{{end}}'
+          ARGS: >-
+            python install
+            {{if .PYTHON_VERSION_OVERRIDE}}{{.PYTHON_VERSION_OVERRIDE}}
+            {{- else}}{{.PYTHON_VERSION}}{{end}}
       - task: _uv:windows
         vars:
-          ARGS: 'python install {{if .PYTHON_VERSION_OVERRIDE}}{{.PYTHON_VERSION_OVERRIDE}}{{else}}{{.PYTHON_VERSION}}{{end}}'
+          ARGS: >-
+            python install
+            {{if .PYTHON_VERSION_OVERRIDE}}{{.PYTHON_VERSION_OVERRIDE}}
+            {{- else}}{{.PYTHON_VERSION}}{{end}}
 
   venv:
     desc: Create a Python virtual environment with uv (VENV=path)
@@ -143,10 +148,16 @@ tasks:
     cmds:
       - task: _uv:unix
         vars:
-          ARGS: 'run "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" {{.ARGS}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+          ARGS: >-
+            run "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}"
+            {{.ARGS}}
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
       - task: _uv:windows
         vars:
-          ARGS: 'run "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}" {{.ARGS}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+          ARGS: >-
+            run "{{if .FILE_OVERRIDE}}{{.FILE_OVERRIDE}}{{else}}{{.FILE}}{{end}}"
+            {{.ARGS}}
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   tool:install:
     desc: Install a tool into an isolated environment with uv (TOOL=name)
@@ -166,10 +177,16 @@ tasks:
     cmds:
       - task: _uv:unix
         vars:
-          ARGS: 'tool install "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+          ARGS: >-
+            tool install
+            "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}"
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
       - task: _uv:windows
         vars:
-          ARGS: 'tool install "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+          ARGS: >-
+            tool install
+            "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}"
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   tool:upgrade:
     desc: Upgrade an installed uv tool (TOOL=name)
@@ -188,10 +205,16 @@ tasks:
     cmds:
       - task: _uv:unix
         vars:
-          ARGS: 'tool upgrade "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+          ARGS: >-
+            tool upgrade
+            "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}"
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
       - task: _uv:windows
         vars:
-          ARGS: 'tool upgrade "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}" {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+          ARGS: >-
+            tool upgrade
+            "{{if .TOOL_OVERRIDE}}{{.TOOL_OVERRIDE}}{{else}}{{.TOOL}}{{end}}"
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   _uv:unix:
     internal: true
@@ -228,7 +251,9 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     cmds:
       - echo Installing uv via the official PowerShell installer...
       - powershell -ExecutionPolicy ByPass -c "irm {{.UV_INSTALL_URL_WINDOWS}} | iex"
@@ -249,7 +274,9 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing uv...
       - uv self uninstall
@@ -271,7 +298,9 @@ tasks:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: uv is not installed. Run task install first.
     cmds:
       - echo Upgrading uv...
@@ -292,7 +321,9 @@ tasks:
     internal: true
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: uv is not installed. Run task install first.
     cmds:
       - uv --version

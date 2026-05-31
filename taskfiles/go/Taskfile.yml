@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -132,8 +131,19 @@ tasks:
     vars:
       GO_UNAME_ARCH:
         sh: uname -m
-      GO_LINUX_ARCH: '{{if or (eq .GO_UNAME_ARCH "x86_64") (eq .GO_UNAME_ARCH "amd64")}}amd64{{else if or (eq .GO_UNAME_ARCH "aarch64") (eq .GO_UNAME_ARCH "arm64")}}arm64{{else if eq .GO_UNAME_ARCH "armv6l"}}armv6l{{else if or (eq .GO_UNAME_ARCH "i386") (eq .GO_UNAME_ARCH "i686")}}386{{else if eq .GO_UNAME_ARCH "ppc64le"}}ppc64le{{else if eq .GO_UNAME_ARCH "s390x"}}s390x{{else}}{{.GO_UNAME_ARCH}}{{end}}'
-      GO_LINUX_ARCH_SUPPORTED: '{{if or (eq .GO_LINUX_ARCH "amd64") (eq .GO_LINUX_ARCH "arm64") (eq .GO_LINUX_ARCH "armv6l") (eq .GO_LINUX_ARCH "386") (eq .GO_LINUX_ARCH "ppc64le") (eq .GO_LINUX_ARCH "s390x")}}true{{else}}false{{end}}'
+      GO_LINUX_ARCH: >-
+        {{if or (eq .GO_UNAME_ARCH "x86_64") (eq .GO_UNAME_ARCH "amd64")}}amd64
+        {{- else if or (eq .GO_UNAME_ARCH "aarch64") (eq .GO_UNAME_ARCH "arm64")}}arm64
+        {{- else if eq .GO_UNAME_ARCH "armv6l"}}armv6l
+        {{- else if or (eq .GO_UNAME_ARCH "i386") (eq .GO_UNAME_ARCH "i686")}}386
+        {{- else if eq .GO_UNAME_ARCH "ppc64le"}}ppc64le
+        {{- else if eq .GO_UNAME_ARCH "s390x"}}s390x
+        {{- else}}{{.GO_UNAME_ARCH}}{{end}}
+      GO_LINUX_ARCH_SUPPORTED: >-
+        {{if or (eq .GO_LINUX_ARCH "amd64") (eq .GO_LINUX_ARCH "arm64")
+        (eq .GO_LINUX_ARCH "armv6l") (eq .GO_LINUX_ARCH "386")
+        (eq .GO_LINUX_ARCH "ppc64le") (eq .GO_LINUX_ARCH "s390x")}}true
+        {{- else}}false{{end}}
       GO_VERSION_FILE_UNIX: '/tmp/taskotter-go-version.txt'
       GO_TARBALL_FILE_UNIX: '/tmp/taskotter-go-{{.GO_LINUX_ARCH}}.tar.gz'
     status:
@@ -153,7 +163,10 @@ tasks:
     cmds:
       - curl -fsSL "{{.GO_VERSION_URL}}" -o "{{.GO_VERSION_FILE_UNIX}}"
       - echo "Downloading $(sed -n '1p' "{{.GO_VERSION_FILE_UNIX}}").linux-{{.GO_LINUX_ARCH}}.tar.gz..."
-      - curl -fL "{{.GO_DOWNLOAD_BASE_URL}}/$(sed -n '1p' "{{.GO_VERSION_FILE_UNIX}}").linux-{{.GO_LINUX_ARCH}}.tar.gz" -o "{{.GO_TARBALL_FILE_UNIX}}"
+      - >-
+        curl -fL
+        "{{.GO_DOWNLOAD_BASE_URL}}/$(sed -n '1p' "{{.GO_VERSION_FILE_UNIX}}").linux-{{.GO_LINUX_ARCH}}.tar.gz"
+        -o "{{.GO_TARBALL_FILE_UNIX}}"
       - echo "Installing Go to {{.GO_ROOT_UNIX}}..."
       - cmd: rm -rf "{{.GO_ROOT_UNIX}}"
         if: '[ "$(id -u)" -eq 0 ]'
@@ -177,18 +190,47 @@ tasks:
       Skipped when Go is already available unless FORCE is true.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 }; if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 };
+        if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64' -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'
+          -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { exit 0 } else { exit 1 }"
         msg: Go MSI install supports AMD64 and ARM64 Windows architectures.
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "((Invoke-RestMethod -Uri '{{.GO_VERSION_URL}}') -split \"`n\")[0].Trim() | Set-Content -NoNewline -Path (Join-Path $env:TEMP 'taskotter-go-version.txt')"
-      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -Command "$version = (Get-Content -Path (Join-Path $env:TEMP 'taskotter-go-version.txt') -Raw).Trim(); Write-Host \"Downloading $version.windows-amd64.msi...\"; Invoke-WebRequest -Uri \"{{.GO_DOWNLOAD_BASE_URL}}/$version.windows-amd64.msi\" -OutFile (Join-Path $env:TEMP 'taskotter-go.msi')"
-        if: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { exit 0 } else { exit 1 }"
-      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -Command "$version = (Get-Content -Path (Join-Path $env:TEMP 'taskotter-go-version.txt') -Raw).Trim(); Write-Host \"Downloading $version.windows-arm64.msi...\"; Invoke-WebRequest -Uri \"{{.GO_DOWNLOAD_BASE_URL}}/$version.windows-arm64.msi\" -OutFile (Join-Path $env:TEMP 'taskotter-go.msi')"
-        if: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { exit 0 } else { exit 1 }"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process msiexec.exe -Wait -ArgumentList @('/i', (Join-Path $env:TEMP 'taskotter-go.msi'), '/quiet', '/norestart')"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item (Join-Path $env:TEMP 'taskotter-go-version.txt'), (Join-Path $env:TEMP 'taskotter-go.msi') -Force -ErrorAction SilentlyContinue"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "((Invoke-RestMethod -Uri '{{.GO_VERSION_URL}}') -split \"`n\")[0].Trim()
+        | Set-Content -NoNewline -Path (Join-Path $env:TEMP 'taskotter-go-version.txt')"
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$version = (Get-Content -Path (Join-Path $env:TEMP 'taskotter-go-version.txt') -Raw).Trim();
+          Write-Host \"Downloading $version.windows-amd64.msi...\";
+          Invoke-WebRequest -Uri \"{{.GO_DOWNLOAD_BASE_URL}}/$version.windows-amd64.msi\"
+          -OutFile (Join-Path $env:TEMP 'taskotter-go.msi')"
+        if: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { exit 0 } else { exit 1 }"
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$version = (Get-Content -Path (Join-Path $env:TEMP 'taskotter-go-version.txt') -Raw).Trim();
+          Write-Host \"Downloading $version.windows-arm64.msi...\";
+          Invoke-WebRequest -Uri \"{{.GO_DOWNLOAD_BASE_URL}}/$version.windows-arm64.msi\"
+          -OutFile (Join-Path $env:TEMP 'taskotter-go.msi')"
+        if: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Start-Process msiexec.exe -Wait -ArgumentList @('/i',
+        (Join-Path $env:TEMP 'taskotter-go.msi'), '/quiet', '/norestart')"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Remove-Item (Join-Path $env:TEMP 'taskotter-go-version.txt'),
+        (Join-Path $env:TEMP 'taskotter-go.msi') -Force -ErrorAction SilentlyContinue"
 
   _shell:setup:linux:
     internal: true
@@ -225,7 +267,9 @@ tasks:
       vars:
         - GO_PROFILE
     status:
-      - '[ "{{default "false" .FORCE}}" != "true" ] && command -v go >/dev/null 2>&1 || grep -qF "{{.GO_BIN_UNIX}}" "{{.GO_PROFILE}}" 2>/dev/null'
+      - >-
+        [ "{{default "false" .FORCE}}" != "true" ] && command -v go >/dev/null 2>&1
+        || grep -qF "{{.GO_BIN_UNIX}}" "{{.GO_PROFILE}}" 2>/dev/null
     cmds:
       - touch "{{.GO_PROFILE}}"
       - cmd: printf '\n# Go\n' >> "{{.GO_PROFILE}}"
@@ -254,7 +298,9 @@ tasks:
     summary: Print `go version` on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Go is not installed or not available in PATH.
     cmds:
       - go version
@@ -279,7 +325,9 @@ tasks:
     summary: Print the Go binary path resolved by PowerShell on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Go is not installed or not available in PATH.
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Command go).Source"
@@ -308,7 +356,9 @@ tasks:
     summary: Print Go version, GOROOT, and GOPATH on Windows.
     platforms: [windows]
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Go is not installed or not available in PATH.
     cmds:
       - go version

@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 output:
@@ -56,7 +55,14 @@ tasks:
     summary: Knip may report framework-specific false positives; review results before deleting files or dependencies.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '{{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ knip passed"
 
   production:
@@ -64,49 +70,105 @@ tasks:
     summary: Knip may report framework-specific false positives; review results before deleting files or dependencies.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--production {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --production
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   dependencies:
     desc: Report unused production dependencies with Knip
     summary: Review Knip dependency results before removing packages.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--dependencies {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --dependencies
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   dev-dependencies:
     desc: Report unused development dependencies with Knip
     summary: Review Knip dependency results before removing packages.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--devDependencies {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --devDependencies
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   files:
     desc: Report unused files with Knip
     summary: Review Knip file results before deleting files.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--files {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --files
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   exports:
     desc: Report unused exports with Knip
     summary: Review Knip export results before deleting code.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--exports {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --exports
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   fix:
     desc: Run Knip fix mode when supported by the installed version
     summary: Knip fixes can update project files; dependency removals should still be reviewed manually.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--fix {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --fix
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   ci:
     desc: Run Knip production checks for CI
     summary: Knip may report framework-specific false positives; tune configuration before enforcing broadly.
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: '--production {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}" {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}', EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: >-
+            --production
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
       - echo "✅ knip passed"
 
   version:
@@ -119,4 +181,9 @@ tasks:
     desc: Show Knip CLI help
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: "--help", EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}", CLI_ARGS: "{{.CLI_ARGS}}"}
+        vars:
+          PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}"
+          BINARY: knip
+          ARGS: "--help"
+          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"

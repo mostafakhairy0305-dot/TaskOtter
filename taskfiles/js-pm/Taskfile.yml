@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: "3"
 
 silent: true
@@ -70,7 +69,10 @@ tasks:
         fi
       - |
         case "{{._PM}}" in
-          npm|pnpm|yarn|bun) task {{._PM}}:exec BINARY="{{.BINARY}}" ARGS="{{.ARGS}}" EXTRA_ARGS="{{.EXTRA_ARGS}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}" ;;
+          npm|pnpm|yarn|bun) task {{._PM}}:exec \
+            BINARY="{{.BINARY}}" \
+            ARGS="{{.ARGS}}" \
+            EXTRA_ARGS="{{.EXTRA_ARGS}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}" ;;
           *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "{{._PM}}" >&2; exit 1 ;;
         esac
 

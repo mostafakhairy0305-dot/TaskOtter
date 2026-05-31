@@ -1,5 +1,4 @@
 ---
-# yamllint disable rule:line-length
 version: '3'
 
 output:
@@ -78,8 +77,13 @@ tasks:
     vars:
       STATICCHECK_UNAME_ARCH:
         sh: uname -m
-      STATICCHECK_ASSET: '{{if or (eq .STATICCHECK_UNAME_ARCH "arm64") (eq .STATICCHECK_UNAME_ARCH "aarch64")}}darwin_arm64{{else if or (eq .STATICCHECK_UNAME_ARCH "x86_64") (eq .STATICCHECK_UNAME_ARCH "amd64")}}darwin_amd64{{else}}{{.STATICCHECK_UNAME_ARCH}}{{end}}'
-      STATICCHECK_ASSET_SUPPORTED: '{{if or (eq .STATICCHECK_ASSET "darwin_arm64") (eq .STATICCHECK_ASSET "darwin_amd64")}}true{{else}}false{{end}}'
+      STATICCHECK_ASSET: >-
+        {{if or (eq .STATICCHECK_UNAME_ARCH "arm64") (eq .STATICCHECK_UNAME_ARCH "aarch64")}}darwin_arm64
+        {{- else if or (eq .STATICCHECK_UNAME_ARCH "x86_64") (eq .STATICCHECK_UNAME_ARCH "amd64")}}darwin_amd64
+        {{- else}}{{.STATICCHECK_UNAME_ARCH}}{{end}}
+      STATICCHECK_ASSET_SUPPORTED: >-
+        {{if or (eq .STATICCHECK_ASSET "darwin_arm64") (eq .STATICCHECK_ASSET "darwin_amd64")}}true
+        {{- else}}false{{end}}
       STATICCHECK_TMP_DIR: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}'
       STATICCHECK_ARCHIVE: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}.tar.gz'
     status:
@@ -102,9 +106,15 @@ tasks:
           - archive
       - mkdir -p "{{.STATICCHECK_INSTALL_DIR}}"
       - mkdir -p "{{.STATICCHECK_TMP_DIR}}"
-      - curl -fsSL "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz" -o "{{.STATICCHECK_ARCHIVE}}"
+      - >-
+        curl -fsSL
+        "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz"
+        -o "{{.STATICCHECK_ARCHIVE}}"
       - tar -xzf "{{.STATICCHECK_ARCHIVE}}" -C "{{.STATICCHECK_TMP_DIR}}"
-      - install -m 0755 "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)" "{{.STATICCHECK_BIN_UNIX}}"
+      - >-
+        install -m 0755
+        "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)"
+        "{{.STATICCHECK_BIN_UNIX}}"
       - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
         for:
           - tmp
@@ -120,8 +130,19 @@ tasks:
     vars:
       STATICCHECK_UNAME_ARCH:
         sh: uname -m
-      STATICCHECK_ASSET: '{{if or (eq .STATICCHECK_UNAME_ARCH "x86_64") (eq .STATICCHECK_UNAME_ARCH "amd64")}}linux_amd64{{else if or (eq .STATICCHECK_UNAME_ARCH "aarch64") (eq .STATICCHECK_UNAME_ARCH "arm64")}}linux_arm64{{else if or (eq .STATICCHECK_UNAME_ARCH "i386") (eq .STATICCHECK_UNAME_ARCH "i686")}}linux_386{{else if eq .STATICCHECK_UNAME_ARCH "armv7l"}}linux_armv7l{{else if eq .STATICCHECK_UNAME_ARCH "armv6l"}}linux_armv6l{{else if eq .STATICCHECK_UNAME_ARCH "armv5l"}}linux_armv5l{{else}}{{.STATICCHECK_UNAME_ARCH}}{{end}}'
-      STATICCHECK_ASSET_SUPPORTED: '{{if or (eq .STATICCHECK_ASSET "linux_amd64") (eq .STATICCHECK_ASSET "linux_arm64") (eq .STATICCHECK_ASSET "linux_386") (eq .STATICCHECK_ASSET "linux_armv7l") (eq .STATICCHECK_ASSET "linux_armv6l") (eq .STATICCHECK_ASSET "linux_armv5l")}}true{{else}}false{{end}}'
+      STATICCHECK_ASSET: >-
+        {{if or (eq .STATICCHECK_UNAME_ARCH "x86_64") (eq .STATICCHECK_UNAME_ARCH "amd64")}}linux_amd64
+        {{- else if or (eq .STATICCHECK_UNAME_ARCH "aarch64") (eq .STATICCHECK_UNAME_ARCH "arm64")}}linux_arm64
+        {{- else if or (eq .STATICCHECK_UNAME_ARCH "i386") (eq .STATICCHECK_UNAME_ARCH "i686")}}linux_386
+        {{- else if eq .STATICCHECK_UNAME_ARCH "armv7l"}}linux_armv7l
+        {{- else if eq .STATICCHECK_UNAME_ARCH "armv6l"}}linux_armv6l
+        {{- else if eq .STATICCHECK_UNAME_ARCH "armv5l"}}linux_armv5l
+        {{- else}}{{.STATICCHECK_UNAME_ARCH}}{{end}}
+      STATICCHECK_ASSET_SUPPORTED: >-
+        {{if or (eq .STATICCHECK_ASSET "linux_amd64") (eq .STATICCHECK_ASSET "linux_arm64")
+        (eq .STATICCHECK_ASSET "linux_386") (eq .STATICCHECK_ASSET "linux_armv7l")
+        (eq .STATICCHECK_ASSET "linux_armv6l") (eq .STATICCHECK_ASSET "linux_armv5l")}}true
+        {{- else}}false{{end}}
       STATICCHECK_TMP_DIR: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}'
       STATICCHECK_ARCHIVE: '/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}.tar.gz'
     status:
@@ -144,9 +165,15 @@ tasks:
           - archive
       - mkdir -p "{{.STATICCHECK_INSTALL_DIR}}"
       - mkdir -p "{{.STATICCHECK_TMP_DIR}}"
-      - curl -fsSL "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz" -o "{{.STATICCHECK_ARCHIVE}}"
+      - >-
+        curl -fsSL
+        "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz"
+        -o "{{.STATICCHECK_ARCHIVE}}"
       - tar -xzf "{{.STATICCHECK_ARCHIVE}}" -C "{{.STATICCHECK_TMP_DIR}}"
-      - install -m 0755 "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)" "{{.STATICCHECK_BIN_UNIX}}"
+      - >-
+        install -m 0755
+        "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)"
+        "{{.STATICCHECK_BIN_UNIX}}"
       - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
         for:
           - tmp
@@ -159,23 +186,61 @@ tasks:
     summary: Download and install the pinned Staticcheck Windows archive for the current CPU architecture.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '{{.STATICCHECK_BIN_WINDOWS}}') { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.STATICCHECK_BIN_WINDOWS}}') { exit 0 } else { exit 1 }"
     preconditions:
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64' -or $env:PROCESSOR_ARCHITECTURE -eq 'x86') { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'
+          -or $env:PROCESSOR_ARCHITECTURE -eq 'x86') { exit 0 } else { exit 1 }"
         msg: Staticcheck archive install supports AMD64 and x86 Windows architectures.
-      - sh: powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command tar -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command tar -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: tar is required to extract Staticcheck on Windows.
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "New-Item -ItemType Directory -Force -Path '{{.STATICCHECK_INSTALL_DIR}}' | Out-Null"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'), (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "New-Item -ItemType Directory -Force -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}') | Out-Null"
-      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_windows_amd64.tar.gz' -OutFile (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')"
-        if: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { exit 0 } else { exit 1 }"
-      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_windows_386.tar.gz' -OutFile (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')"
-        if: powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'x86') { exit 0 } else { exit 1 }"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "tar -xzf (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -C (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}')"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item (Get-ChildItem -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}') -Recurse -Filter 'staticcheck.exe' | Select-Object -First 1 -ExpandProperty FullName) '{{.STATICCHECK_BIN_WINDOWS}}' -Force"
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'), (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "New-Item -ItemType Directory -Force -Path '{{.STATICCHECK_INSTALL_DIR}}' | Out-Null"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'),
+        (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "New-Item -ItemType Directory -Force
+        -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}') | Out-Null"
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "Invoke-WebRequest
+          -Uri '{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_windows_amd64.tar.gz'
+          -OutFile (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')"
+        if: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { exit 0 } else { exit 1 }"
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "Invoke-WebRequest
+          -Uri '{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_windows_386.tar.gz'
+          -OutFile (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')"
+        if: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if ($env:PROCESSOR_ARCHITECTURE -eq 'x86') { exit 0 } else { exit 1 }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "tar -xzf (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz')
+        -C (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}')"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Copy-Item (Get-ChildItem
+        -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}')
+        -Recurse -Filter 'staticcheck.exe' | Select-Object -First 1 -ExpandProperty FullName)
+        '{{.STATICCHECK_BIN_WINDOWS}}' -Force"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'),
+        (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
 
   _run:unix:
     internal: true
