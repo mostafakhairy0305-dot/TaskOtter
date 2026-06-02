@@ -29,7 +29,7 @@ vars:
   NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
   NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
   NODE_VERSION: ""
-  COREPACK_VERSION: 0.34.0  # override with COREPACK_VERSION=latest
+  COREPACK_VERSION: 0.34.0 # override with COREPACK_VERSION=latest
   COREPACK_UNAVAILABLE_MSG: "corepack is not available. Run the install task for this Corepack Taskfile."
   WINDOWS_NODE_ACTIVATE: |
     if ($env:NODE_MANAGER -eq 'fnm') {
