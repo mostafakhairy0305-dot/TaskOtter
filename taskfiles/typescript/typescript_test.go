@@ -361,7 +361,7 @@ func fakeTypeScriptProject(t *testing.T, env []string) (string, []string) {
 	for _, name := range []string{"tsc", "tsx", "tsserver"} {
 		writeFile(t, filepath.Join(nodeBinDir, name), stubBody, 0755)
 	}
-	for _, name := range []string{"node", "npx", "npm", "pnpm", "yarn", "bun"} {
+	for _, name := range []string{"fnm", "node", "npx", "npm", "pnpm", "yarn", "bun"} {
 		writeFile(t, filepath.Join(binDir, name), stubBody, 0755)
 	}
 	writeFile(t, filepath.Join(envValue(env, "HOME"), ".bun", "bin", "bun"), stubBody, 0755)

@@ -58,8 +58,101 @@ func RootDryRun(t *testing.T, args ...string) string {
 func DryRun(t *testing.T, module string, args ...string) string {
 	t.Helper()
 
+	projectDir, env := setupDryRunEnv(t)
 	allArgs := append([]string{"--taskfile", taskfilePath(t, module), "--dry", "--yes", "--verbose"}, args...)
-	return runTask(t, allArgs...)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "task", allArgs...)
+	cmd.Dir = projectDir
+	cmd.Env = env
+
+	output, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		t.Fatalf("task command timed out: task %s", strings.Join(allArgs, " "))
+	}
+	if err != nil {
+		t.Fatalf("task command failed: task %s\nerror: %v\noutput:\n%s", strings.Join(allArgs, " "), err, string(output))
+	}
+
+	return string(output)
+}
+
+// setupDryRunEnv creates a temporary project directory and isolated environment
+// for dry-run tests. It stubs common JS package managers, node version managers,
+// and linting/formatting tools so that _install-if-missing skips installation
+// and package-manager preconditions pass without real tools being present.
+func setupDryRunEnv(t *testing.T) (projectDir string, env []string) {
+	t.Helper()
+
+	home := t.TempDir()
+	projectDir = t.TempDir()
+	binDir := filepath.Join(projectDir, ".stub-bin")
+
+	for _, dir := range []string{
+		binDir,
+		filepath.Join(home, ".bun", "bin"),
+		filepath.Join(home, ".local", "share", "fnm"),
+	} {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			t.Fatalf("create stub dir %s: %v", dir, err)
+		}
+	}
+
+	const stub = "#!/usr/bin/env bash\nexit 0\n"
+
+	for _, name := range []string{
+		"fnm", "node", "npm", "npx", "pnpm", "yarn", "bun", "corepack",
+		"prettier", "eslint", "biome", "stylelint", "knip", "depcheck", "bru",
+	} {
+		if err := os.WriteFile(filepath.Join(binDir, name), []byte(stub), 0755); err != nil {
+			t.Fatalf("write stub %s: %v", name, err)
+		}
+	}
+
+	// bun:_bun:unix checks: test -f "$HOME/.bun/bin/bun"
+	if err := os.WriteFile(filepath.Join(home, ".bun", "bin", "bun"), []byte(stub), 0755); err != nil {
+		t.Fatalf("write bun file stub: %v", err)
+	}
+	// npm/pnpm/yarn:_*:unix checks FNM_INSTALL_DIR ($HOME/.local/share/fnm/fnm)
+	if err := os.WriteFile(filepath.Join(home, ".local", "share", "fnm", "fnm"), []byte(stub), 0755); err != nil {
+		t.Fatalf("write fnm file stub: %v", err)
+	}
+	// npm/pnpm/yarn:_*:unix checks for package.json in USER_WORKING_DIR
+	if err := os.WriteFile(filepath.Join(projectDir, "package.json"), []byte("{}\n"), 0644); err != nil {
+		t.Fatalf("write package.json: %v", err)
+	}
+
+	env = os.Environ()
+	env = dryRunSetEnv(env, "HOME", home)
+	env = dryRunSetEnv(env, "PATH", binDir+":"+dryRunGetEnv(env, "PATH"))
+	env = dryRunSetEnv(env, "CI", "true")
+	env = dryRunSetEnv(env, "NO_COLOR", "1")
+	env = dryRunSetEnv(env, "TASK_ASSUME_YES", "true")
+
+	return projectDir, env
+}
+
+func dryRunSetEnv(env []string, key, value string) []string {
+	prefix := key + "="
+	for i, item := range env {
+		if strings.HasPrefix(item, prefix) {
+			env[i] = prefix + value
+			return env
+		}
+	}
+	return append(env, prefix+value)
+}
+
+func dryRunGetEnv(env []string, key string) string {
+	prefix := key + "="
+	for _, item := range env {
+		if strings.HasPrefix(item, prefix) {
+			return strings.TrimPrefix(item, prefix)
+		}
+	}
+	return ""
 }
 
 func LoadTaskfile(t *testing.T, module string) Taskfile {

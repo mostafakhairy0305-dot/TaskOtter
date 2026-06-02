@@ -33,14 +33,14 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "stylelint",
 		[]string{"fix", "PM=yarn", "TARGETS=src/**/*.scss", "--", "--formatter", "verbose"},
-		`yarn:exec BINARY="stylelint"`,
+		"js:yarn:exec",
 		"src/**/*.scss --fix",
 		"--formatter verbose",
 	)
 
 	tasktest.AssertDryRunContains(t, "stylelint",
 		[]string{"ci", "PM=pnpm", "CACHE=false", "ALLOW_EMPTY_INPUT=false"},
-		`pnpm:exec BINARY="stylelint"`,
+		"js:pnpm:exec",
 		"--max-warnings=0",
 	)
 }

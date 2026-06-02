@@ -39,14 +39,14 @@ func TestConfigInitDryRun(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "prettier",
 		[]string{"write", "PM=bun", "--", "--ignore-unknown"},
-		`bun:exec BINARY="prettier"`,
+		"js:bun:exec",
 		". --write",
 		"--ignore-unknown",
 	)
 
 	tasktest.AssertDryRunContains(t, "prettier",
 		[]string{"check", "PM=pnpm", "TARGETS=src/**/*.ts", "CONFIG=.prettierrc.json"},
-		`pnpm:exec BINARY="prettier"`,
+		"js:pnpm:exec",
 		"src/**/*.ts --check",
 		".prettierrc.json",
 	)

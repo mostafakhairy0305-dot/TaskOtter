@@ -28,20 +28,20 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "bruno",
 		[]string{"run", "PM=pnpm"},
-		`pnpm:exec BINARY="bru"`,
+		"js:pnpm:exec",
 		`run .`,
 	)
 
 	tasktest.AssertDryRunContains(t, "bruno",
 		[]string{"ci", "PM=npm", "ENV=staging"},
-		`npm:exec BINARY="bru"`,
+		"js:npm:exec",
 		"--bail",
 		"staging",
 	)
 
 	tasktest.AssertDryRunContains(t, "bruno",
 		[]string{"run", "PM=bun", "COLLECTION=./api", "--", "--reporter-json results.json"},
-		`bun:exec BINARY="bru"`,
+		"js:bun:exec",
 		"./api",
 	)
 }

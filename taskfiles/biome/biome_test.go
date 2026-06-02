@@ -37,7 +37,7 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "biome",
 		[]string{"ci", "PM=yarn", "CONFIG=biome.json", "TARGETS=src"},
-		`yarn:exec BINARY="biome"`,
+		"js:yarn:exec",
 		"biome.json",
 		"ci",
 		"src",
@@ -45,14 +45,14 @@ func TestRepresentativeDryRuns(t *testing.T) {
 
 	tasktest.AssertDryRunContains(t, "biome",
 		[]string{"format:write", "PM=pnpm", "--", "--no-errors-on-unmatched"},
-		`pnpm:exec BINARY="biome"`,
+		"js:pnpm:exec",
 		"format --write",
 		"--no-errors-on-unmatched",
 	)
 
 	tasktest.AssertDryRunContains(t, "biome",
 		[]string{"config:init", "PM=npm"},
-		`npm:exec BINARY="biome"`,
+		"js:npm:exec",
 		"init",
 	)
 }

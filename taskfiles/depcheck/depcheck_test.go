@@ -32,14 +32,14 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "depcheck",
 		[]string{"check", "PM=npm", "PROJECT_PATH=packages/app", "--", "--ignores=@types/*,eslint-*"},
-		`npm:exec BINARY="depcheck"`,
+		"js:npm:exec",
 		"packages/app",
 		"--ignores=@types/*,eslint-*",
 	)
 
 	tasktest.AssertDryRunContains(t, "depcheck",
 		[]string{"ignores", "PM=pnpm", "IGNORE_PACKAGES=@types/*,eslint-*"},
-		`pnpm:exec BINARY="depcheck"`,
+		"js:pnpm:exec",
 		"@types/*,eslint-*",
 	)
 }

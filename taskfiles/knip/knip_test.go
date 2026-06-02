@@ -35,13 +35,13 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestRepresentativeDryRuns(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "knip",
 		[]string{"check", "PM=pnpm", "--", "--debug"},
-		`pnpm:exec BINARY="knip"`,
+		"js:pnpm:exec",
 		"--debug",
 	)
 
 	tasktest.AssertDryRunContains(t, "knip",
 		[]string{"production", "PM=bun", "CONFIG=knip.json"},
-		`bun:exec BINARY="knip"`,
+		"js:bun:exec",
 		"--production",
 		"knip.json",
 	)
