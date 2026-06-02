@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -15,10 +15,10 @@ includes:
 
 vars:
   UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
-  TARGETS: '.'
-  CONFIG: ''
-  DIALECT: ''
-  EXTRA_ARGS: ''
+  TARGETS: "."
+  CONFIG: ""
+  DIALECT: ""
+  EXTRA_ARGS: ""
 
 tasks:
   default:

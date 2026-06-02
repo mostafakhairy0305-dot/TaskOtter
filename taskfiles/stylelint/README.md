@@ -8,16 +8,16 @@ and uses `js-pm` for package-manager detection and binary execution.
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Install Stylelint and the standard config as local dev dependencies. |
-| `config:init` | Optional `CONFIG` | Create a starter Stylelint config when one does not exist. |
-| `check` | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `ALLOW_EMPTY_INPUT`, `EXTRA_ARGS`, `CLI_ARGS` | Lint stylesheet targets. |
-| `fix` | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `ALLOW_EMPTY_INPUT`, `EXTRA_ARGS`, `CLI_ARGS` | Run Stylelint with `--fix`. |
-| `ci` | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `ALLOW_EMPTY_INPUT`, `EXTRA_ARGS`, `CLI_ARGS` | Run Stylelint with `--max-warnings=0`. |
-| `cache:clean` | — | Remove `.cache/stylelint`. |
-| `version` | Optional `PM` | Show the resolved Stylelint version. |
-| `help` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Show Stylelint CLI help. |
+| Task          | Variables                                                                                  | Description                                                          |
+| ------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `install`     | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                                                    | Install Stylelint and the standard config as local dev dependencies. |
+| `config:init` | Optional `CONFIG`                                                                          | Create a starter Stylelint config when one does not exist.           |
+| `check`       | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `ALLOW_EMPTY_INPUT`, `EXTRA_ARGS`, `CLI_ARGS` | Lint stylesheet targets.                                             |
+| `fix`         | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `ALLOW_EMPTY_INPUT`, `EXTRA_ARGS`, `CLI_ARGS` | Run Stylelint with `--fix`.                                          |
+| `ci`          | Optional `PM`, `TARGETS`, `CONFIG`, `CACHE`, `ALLOW_EMPTY_INPUT`, `EXTRA_ARGS`, `CLI_ARGS` | Run Stylelint with `--max-warnings=0`.                               |
+| `cache:clean` | —                                                                                          | Remove `.cache/stylelint`.                                           |
+| `version`     | Optional `PM`                                                                              | Show the resolved Stylelint version.                                 |
+| `help`        | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                                                    | Show Stylelint CLI help.                                             |
 
 ## Variables
 

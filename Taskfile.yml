@@ -127,6 +127,7 @@ includes:
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   yamllint:
     taskfile: taskfiles/yamllint/Taskfile.yml
+    dir: .
     vars:
       TARGETS_OVERRIDE: "{{.TARGETS}}"
       CONFIG_OVERRIDE: "{{.CONFIG}}"

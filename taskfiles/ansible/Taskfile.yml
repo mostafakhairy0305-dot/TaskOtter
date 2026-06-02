@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -17,13 +17,13 @@ includes:
 
 vars:
   UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
-  PLAYBOOK: ''
-  INVENTORY: ''
-  PATTERN: 'all'
-  TARGETS: '.'
-  FILE: ''
-  REQUIREMENTS: 'requirements.yml'
-  EXTRA_ARGS: ''
+  PLAYBOOK: ""
+  INVENTORY: ""
+  PATTERN: "all"
+  TARGETS: "."
+  FILE: ""
+  REQUIREMENTS: "requirements.yml"
+  EXTRA_ARGS: ""
 
 tasks:
   default:

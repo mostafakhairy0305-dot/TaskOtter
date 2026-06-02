@@ -8,16 +8,16 @@ execution and package-manager detection.
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Install `prettier` as a local dev dependency. |
-| `config:init` | Optional `CONFIG` | Create a starter Prettier config when one does not exist. |
-| `check` | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Run `prettier --check`. |
-| `write` | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Run `prettier --write`. |
-| `fix` | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `write`. |
-| `ci` | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `check`. |
-| `version` | Optional `PM` | Show the resolved Prettier version. |
-| `help` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Show Prettier CLI help. |
+| Task          | Variables                                                                   | Description                                               |
+| ------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `install`     | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                                     | Install `prettier` as a local dev dependency.             |
+| `config:init` | Optional `CONFIG`                                                           | Create a starter Prettier config when one does not exist. |
+| `check`       | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Run `prettier --check`.                                   |
+| `write`       | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Run `prettier --write`.                                   |
+| `fix`         | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `write`.                                        |
+| `ci`          | Optional `PM`, `TARGETS`, `CONFIG`, `IGNORE_PATH`, `EXTRA_ARGS`, `CLI_ARGS` | Alias for `check`.                                        |
+| `version`     | Optional `PM`                                                               | Show the resolved Prettier version.                       |
+| `help`        | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                                     | Show Prettier CLI help.                                   |
 
 ## Variables
 

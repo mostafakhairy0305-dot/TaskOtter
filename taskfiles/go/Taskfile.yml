@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -10,10 +10,10 @@ output:
 silent: true
 
 vars:
-  INSTALL_DIR_UNIX: '/usr/local'
-  GO_ROOT_UNIX: '{{.INSTALL_DIR_UNIX}}/go'
-  GO_BIN_UNIX: '{{.GO_ROOT_UNIX}}/bin'
-  GO_CMD_UNIX: '{{.GO_BIN_UNIX}}/go'
+  INSTALL_DIR_UNIX: "/usr/local"
+  GO_ROOT_UNIX: "{{.INSTALL_DIR_UNIX}}/go"
+  GO_BIN_UNIX: "{{.GO_ROOT_UNIX}}/bin"
+  GO_CMD_UNIX: "{{.GO_BIN_UNIX}}/go"
   GO_VERSION_URL: https://go.dev/VERSION?m=text
   GO_DOWNLOAD_BASE_URL: https://go.dev/dl
 
@@ -47,13 +47,13 @@ tasks:
       - task: _upgrade:macos:brew
       - task: _install:linux:tarball
         vars:
-          FORCE: 'true'
+          FORCE: "true"
       - task: _install:windows:msi
         vars:
-          FORCE: 'true'
+          FORCE: "true"
       - task: _shell:setup:linux
         vars:
-          FORCE: 'true'
+          FORCE: "true"
 
   version:
     desc: Show the installed Go version
@@ -117,7 +117,7 @@ tasks:
       - cmd: brew upgrade go
         if: brew list go >/dev/null 2>&1
       - cmd: brew install go
-        if: '! brew list go >/dev/null 2>&1'
+        if: "! brew list go >/dev/null 2>&1"
 
   _install:linux:tarball:
     internal: true
@@ -144,8 +144,8 @@ tasks:
         (eq .GO_LINUX_ARCH "armv6l") (eq .GO_LINUX_ARCH "386")
         (eq .GO_LINUX_ARCH "ppc64le") (eq .GO_LINUX_ARCH "s390x")}}true
         {{- else}}false{{end}}
-      GO_VERSION_FILE_UNIX: '/tmp/taskotter-go-version.txt'
-      GO_TARBALL_FILE_UNIX: '/tmp/taskotter-go-{{.GO_LINUX_ARCH}}.tar.gz'
+      GO_VERSION_FILE_UNIX: "/tmp/taskotter-go-version.txt"
+      GO_TARBALL_FILE_UNIX: "/tmp/taskotter-go-{{.GO_LINUX_ARCH}}.tar.gz"
     status:
       - '[ "{{default "false" .FORCE}}" != "true" ]'
       - command -v go >/dev/null 2>&1
@@ -243,18 +243,18 @@ tasks:
     cmds:
       - task: _shell:setup:linux:profile
         vars:
-          FORCE: '{{.FORCE}}'
-          GO_PROFILE: '$HOME/.zshrc'
+          FORCE: "{{.FORCE}}"
+          GO_PROFILE: "$HOME/.zshrc"
         if: '[ "$(basename "${SHELL:-}")" = "zsh" ]'
       - task: _shell:setup:linux:profile
         vars:
-          FORCE: '{{.FORCE}}'
-          GO_PROFILE: '$HOME/.bashrc'
+          FORCE: "{{.FORCE}}"
+          GO_PROFILE: "$HOME/.bashrc"
         if: '[ "$(basename "${SHELL:-}")" = "bash" ]'
       - task: _shell:setup:linux:profile
         vars:
-          FORCE: '{{.FORCE}}'
-          GO_PROFILE: '$HOME/.profile'
+          FORCE: "{{.FORCE}}"
+          GO_PROFILE: "$HOME/.profile"
         if: '[ "$(basename "${SHELL:-}")" != "zsh" ] && [ "$(basename "${SHELL:-}")" != "bash" ]'
 
   _shell:setup:linux:profile:
@@ -290,7 +290,7 @@ tasks:
       - cmd: go version
         if: command -v go >/dev/null 2>&1
       - cmd: '"{{.GO_CMD_UNIX}}" version'
-        if: '! command -v go >/dev/null 2>&1'
+        if: "! command -v go >/dev/null 2>&1"
 
   _version:windows:
     internal: true
@@ -317,7 +317,7 @@ tasks:
       - cmd: command -v go
         if: command -v go >/dev/null 2>&1
       - cmd: printf '%s\n' '{{.GO_CMD_UNIX}}'
-        if: '! command -v go >/dev/null 2>&1'
+        if: "! command -v go >/dev/null 2>&1"
 
   _which:windows:
     internal: true
@@ -344,11 +344,11 @@ tasks:
       - cmd: go version
         if: command -v go >/dev/null 2>&1
       - cmd: '"{{.GO_CMD_UNIX}}" version'
-        if: '! command -v go >/dev/null 2>&1'
+        if: "! command -v go >/dev/null 2>&1"
       - cmd: go env GOROOT GOPATH
         if: command -v go >/dev/null 2>&1
       - cmd: '"{{.GO_CMD_UNIX}}" env GOROOT GOPATH'
-        if: '! command -v go >/dev/null 2>&1'
+        if: "! command -v go >/dev/null 2>&1"
 
   _verify:windows:
     internal: true

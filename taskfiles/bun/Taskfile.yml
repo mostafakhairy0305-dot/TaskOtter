@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -13,7 +13,7 @@ vars:
   BUN_INSTALL_URL: https://bun.com/install
   BUN_INSTALL_PS1_URL: https://bun.sh/install.ps1
   BUN_LOAD: 'export BUN_INSTALL="$HOME/.bun"; export PATH="$BUN_INSTALL/bin:$PATH"'
-  VERSION: ''
+  VERSION: ""
 
 tasks:
   default:
@@ -34,10 +34,10 @@ tasks:
     cmds:
       - task: _install:unix
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
       - task: _install:windows
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
 
   install:undo:
     desc: Remove Bun from the current operating system
@@ -103,33 +103,37 @@ tasks:
       - task: _upgrade:stable:windows
 
   add:
-    desc: Add packages as devDependencies with Bun (PACKAGES=<pkgs>)
+    desc: Install packages globally with Bun (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
+    deps:
+      - install
     cmds:
       - task: _bun:unix
         vars:
-          ARGS: 'add -d {{.PACKAGES}} {{.EXTRA_ARGS}}'
+          ARGS: "add -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
       - task: _bun:windows
         vars:
-          ARGS: 'add -d {{.PACKAGES}} {{.EXTRA_ARGS}}'
+          ARGS: "add -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   exec:
     desc: Execute a local project binary via bunx (BINARY=<name>)
     requires:
       vars: [BINARY]
+    deps:
+      - install
     cmds:
       - task: _bun:unix
         vars:
-          ARGS: 'x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+          ARGS: "x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
       - task: _bun:windows
         vars:
-          ARGS: 'x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+          ARGS: "x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
 
   _bun:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     requires:
       vars: [ARGS]
@@ -142,7 +146,7 @@ tasks:
   _bun:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     requires:
       vars: [ARGS]
     preconditions:

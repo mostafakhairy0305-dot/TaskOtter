@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -19,7 +19,7 @@ includes:
 
 vars:
   NODE_MANAGER: fnm
-  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
+  FNM_INSTALL_DIR: "$HOME/.local/share/fnm"
   FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
   NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
   FNM_USE: >-
@@ -30,7 +30,7 @@ vars:
     {{- else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}
   NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
   NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
-  NODE_VERSION: ''
+  NODE_VERSION: ""
 
 tasks:
   default:
@@ -64,7 +64,7 @@ tasks:
       - task: corepack:use
         vars:
           PACKAGE_MANAGER: yarn
-          VERSION: '{{.PACKAGE_MANAGER_VERSION}}'
+          VERSION: "{{.PACKAGE_MANAGER_VERSION}}"
 
   version:
     desc: Show the active Node.js and Yarn versions
@@ -78,9 +78,9 @@ tasks:
     summary: Install dependencies from package.json using the Yarn version available to the project.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: install}
+        vars: { ARGS: install }
       - task: _yarn:windows
-        vars: {ARGS: install}
+        vars: { ARGS: install }
 
   ci:
     desc: Validate a lockfile-safe Yarn install
@@ -90,28 +90,32 @@ tasks:
       - task: _ci:windows
 
   add:
-    desc: Add packages as devDependencies (PACKAGES=<pkgs>)
+    desc: Install packages globally with Yarn (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
     cmds:
       - task: _yarn:unix
         vars:
-          ARGS: 'add -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+          ARGS: "global add {{.PACKAGES}} {{.EXTRA_ARGS}}"
       - task: _yarn:windows
         vars:
-          ARGS: 'add -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+          ARGS: "global add {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   exec:
-    desc: Execute a local project binary via yarn exec (BINARY=<name>)
+    desc: Execute a global binary via Yarn (BINARY=<name>)
     requires:
       vars: [BINARY]
     cmds:
-      - task: _yarn:unix
+      - task: _exec:unix
         vars:
-          ARGS: 'exec {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
-      - task: _yarn:windows
+          BINARY: "{{.BINARY}}"
+          ARGS: "{{.ARGS}}"
+          EXTRA_ARGS: "{{.EXTRA_ARGS}}"
+      - task: _exec:windows
         vars:
-          ARGS: 'exec {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+          BINARY: "{{.BINARY}}"
+          ARGS: "{{.ARGS}}"
+          EXTRA_ARGS: "{{.EXTRA_ARGS}}"
 
   run:
     desc: Run a package.json script with Yarn
@@ -121,94 +125,94 @@ tasks:
     cmds:
       - task: _run:unix
         vars:
-          SCRIPT: '{{.SCRIPT}}'
-          CLI_ARGS: '{{.CLI_ARGS}}'
+          SCRIPT: "{{.SCRIPT}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
       - task: _run:windows
         vars:
-          SCRIPT: '{{.SCRIPT}}'
-          CLI_ARGS: '{{.CLI_ARGS}}'
+          SCRIPT: "{{.SCRIPT}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   dev:
     desc: Start the development script with Yarn
     summary: Execute the dev script defined in package.json through yarn run dev.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: run dev}
+        vars: { ARGS: run dev }
       - task: _yarn:windows
-        vars: {ARGS: run dev}
+        vars: { ARGS: run dev }
 
   test:
     desc: Run the project test script with Yarn
     summary: Execute the test script defined in package.json through yarn test.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: test}
+        vars: { ARGS: test }
       - task: _yarn:windows
-        vars: {ARGS: test}
+        vars: { ARGS: test }
 
   build:
     desc: Build the project with Yarn
     summary: Execute the build script defined in package.json through yarn run build.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: run build}
+        vars: { ARGS: run build }
       - task: _yarn:windows
-        vars: {ARGS: run build}
+        vars: { ARGS: run build }
 
   lint:
     desc: Lint the project with Yarn
     summary: Execute the lint script defined in package.json through yarn run lint.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: run lint}
+        vars: { ARGS: run lint }
       - task: _yarn:windows
-        vars: {ARGS: run lint}
+        vars: { ARGS: run lint }
 
   format:
     desc: Format source files with Yarn
     summary: Execute the format script defined in package.json through yarn run format.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: run format}
+        vars: { ARGS: run format }
       - task: _yarn:windows
-        vars: {ARGS: run format}
+        vars: { ARGS: run format }
 
   typecheck:
     desc: Type check the project with Yarn
     summary: Execute the typecheck script defined in package.json through yarn run typecheck.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: run typecheck}
+        vars: { ARGS: run typecheck }
       - task: _yarn:windows
-        vars: {ARGS: run typecheck}
+        vars: { ARGS: run typecheck }
 
   update:
     desc: Update dependencies with yarn up
     summary: Run yarn up against all dependency patterns to update project resolutions with modern Yarn.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: "up '*'"}
+        vars: { ARGS: "up '*'" }
       - task: _yarn:windows
-        vars: {ARGS: "up '*'"}
+        vars: { ARGS: "up '*'" }
 
   audit:
     desc: Run a Yarn vulnerability audit
     summary: Run yarn npm audit and propagate vulnerability findings for CI enforcement.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: npm audit}
+        vars: { ARGS: npm audit }
       - task: _yarn:windows
-        vars: {ARGS: npm audit}
+        vars: { ARGS: npm audit }
 
   audit:report:
     desc: Report Yarn audit findings without failing
     summary: Run yarn npm audit for local review while ignoring its vulnerability exit code.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: npm audit}
+        vars: { ARGS: npm audit }
         ignore_error: true
       - task: _yarn:windows
-        vars: {ARGS: npm audit}
+        vars: { ARGS: npm audit }
         ignore_error: true
 
   audit:json:
@@ -216,18 +220,18 @@ tasks:
     summary: Run yarn npm audit --json for tooling and propagate the Yarn audit exit code.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: npm audit --json}
+        vars: { ARGS: npm audit --json }
       - task: _yarn:windows
-        vars: {ARGS: npm audit --json}
+        vars: { ARGS: npm audit --json }
 
   cache:clean:
     desc: Clear the Yarn cache
     summary: Run yarn cache clean to remove Yarn cache entries available to the active project.
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: cache clean}
+        vars: { ARGS: cache clean }
       - task: _yarn:windows
-        vars: {ARGS: cache clean}
+        vars: { ARGS: cache clean }
 
   clean:
     desc: Remove the node_modules directory
@@ -243,7 +247,7 @@ tasks:
     desc: Remove node_modules and yarn.lock
     summary: Delete node_modules and yarn.lock so a later Yarn install regenerates the lockfile.
     prompt:
-      - 'WARNING: This will permanently delete node_modules AND yarn.lock.'
+      - "WARNING: This will permanently delete node_modules AND yarn.lock."
       - Continue?
     cmds:
       - task: _clean:all:unix
@@ -254,7 +258,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     cmds:
       - |
         if [ "{{.NODE_MANAGER}}" = "nvm" ]; then
@@ -267,7 +271,7 @@ tasks:
     internal: true
     platforms: [windows]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -280,12 +284,12 @@ tasks:
   _yarn:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     requires:
       vars: [ARGS]
     env:
-      COREPACK_ENABLE_AUTO_PIN: '1'
+      COREPACK_ENABLE_AUTO_PIN: "1"
     preconditions:
       - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
@@ -295,7 +299,7 @@ tasks:
           || test -f "$HOME/.local/bin/fnm"{{end}}
         msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
       - sh: 'test -f "{{.USER_WORKING_DIR}}/package.json"'
-        msg: 'package.json not found. Run this task from the Yarn project root.'
+        msg: "package.json not found. Run this task from the Yarn project root."
     cmds:
       - >-
         bash -c '{{.NODE_LOAD}}; {{.NODE_USE}};
@@ -306,12 +310,12 @@ tasks:
   _yarn:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     requires:
       vars: [ARGS]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
-      COREPACK_ENABLE_AUTO_PIN: '1'
+      NODE_VERSION: "{{.NODE_VERSION}}"
+      COREPACK_ENABLE_AUTO_PIN: "1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -324,7 +328,7 @@ tasks:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
-        msg: 'package.json not found. Run this task from the Yarn project root.'
+        msg: "package.json not found. Run this task from the Yarn project root."
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -345,10 +349,10 @@ tasks:
     platforms: [linux, darwin]
     preconditions:
       - sh: 'test -f "{{.USER_WORKING_DIR}}/yarn.lock"'
-        msg: 'yarn.lock not found. Yarn CI installs require a lockfile.'
+        msg: "yarn.lock not found. Yarn CI installs require a lockfile."
     cmds:
       - task: _yarn:unix
-        vars: {ARGS: install --immutable}
+        vars: { ARGS: install --immutable }
 
   _ci:windows:
     internal: true
@@ -357,29 +361,29 @@ tasks:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.USER_WORKING_DIR}}\yarn.lock') { exit 0 } else { exit 1 }"
-        msg: 'yarn.lock not found. Yarn CI installs require a lockfile.'
+        msg: "yarn.lock not found. Yarn CI installs require a lockfile."
     cmds:
       - task: _yarn:windows
-        vars: {ARGS: install --immutable}
+        vars: { ARGS: install --immutable }
 
   _run:unix:
     internal: true
     platforms: [linux, darwin]
     env:
-      SCRIPT: '{{.SCRIPT}}'
+      SCRIPT: "{{.SCRIPT}}"
     preconditions:
       - sh: 'printf "%s" "$SCRIPT" | grep -qE "^[A-Za-z0-9:_-]+$"'
         msg: 'SCRIPT "{{.SCRIPT}}" contains invalid characters.'
     cmds:
       - task: _yarn:unix
         vars:
-          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+          ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _run:windows:
     internal: true
     platforms: [windows]
     env:
-      SCRIPT: '{{.SCRIPT}}'
+      SCRIPT: "{{.SCRIPT}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -388,7 +392,7 @@ tasks:
     cmds:
       - task: _yarn:windows
         vars:
-          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+          ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _version:unix:
     internal: true
@@ -412,7 +416,7 @@ tasks:
     internal: true
     platforms: [windows]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -440,15 +444,15 @@ tasks:
   _clean:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
-    status: ['test ! -d node_modules']
+    dir: "{{.USER_WORKING_DIR}}"
+    status: ["test ! -d node_modules"]
     cmds:
       - rm -rf node_modules
 
   _clean:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -456,10 +460,29 @@ tasks:
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Recurse -Force 'node_modules'"
 
+  _exec:unix:
+    internal: true
+    platforms: [linux, darwin]
+    dir: "{{.USER_WORKING_DIR}}"
+    set: [errexit, nounset, pipefail]
+    requires:
+      vars: [BINARY]
+    cmds:
+      - bash -c "{{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
+
+  _exec:windows:
+    internal: true
+    platforms: [windows]
+    dir: "{{.USER_WORKING_DIR}}"
+    requires:
+      vars: [BINARY]
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "& {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
+
   _clean:all:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - rm -rf node_modules
       - rm -f yarn.lock
@@ -467,7 +490,7 @@ tasks:
   _clean:all:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command

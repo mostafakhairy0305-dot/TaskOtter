@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -19,7 +19,7 @@ includes:
 
 vars:
   NODE_MANAGER: fnm
-  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
+  FNM_INSTALL_DIR: "$HOME/.local/share/fnm"
   FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
   NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
   FNM_USE: >-
@@ -30,7 +30,7 @@ vars:
     {{- else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}
   NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
   NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
-  NODE_VERSION: ''
+  NODE_VERSION: ""
 
 tasks:
   default:
@@ -69,7 +69,7 @@ tasks:
       - task: corepack:use
         vars:
           PACKAGE_MANAGER: npm
-          VERSION: '{{.PACKAGE_MANAGER_VERSION}}'
+          VERSION: "{{.PACKAGE_MANAGER_VERSION}}"
 
   version:
     desc: Show the active Node.js and npm versions
@@ -109,16 +109,16 @@ tasks:
       - task: _ci:windows
 
   add:
-    desc: Add packages as devDependencies (PACKAGES=<pkgs>)
+    desc: Install packages globally with npm (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
     cmds:
       - task: _npm:unix
         vars:
-          ARGS: 'install -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+          ARGS: "install -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
       - task: _npm:windows
         vars:
-          ARGS: 'install -D {{.PACKAGES}} {{.EXTRA_ARGS}}'
+          ARGS: "install -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   exec:
     desc: Execute a local project binary via npm exec (BINARY=<name>)
@@ -127,10 +127,10 @@ tasks:
     cmds:
       - task: _npm:unix
         vars:
-          ARGS: 'exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+          ARGS: "exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
       - task: _npm:windows
         vars:
-          ARGS: 'exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}'
+          ARGS: "exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
 
   run:
     desc: Run a package.json script (SCRIPT=<name>)
@@ -147,12 +147,12 @@ tasks:
     cmds:
       - task: _run:unix
         vars:
-          SCRIPT: '{{.SCRIPT}}'
-          CLI_ARGS: '{{.CLI_ARGS}}'
+          SCRIPT: "{{.SCRIPT}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
       - task: _run:windows
         vars:
-          SCRIPT: '{{.SCRIPT}}'
-          CLI_ARGS: '{{.CLI_ARGS}}'
+          SCRIPT: "{{.SCRIPT}}"
+          CLI_ARGS: "{{.CLI_ARGS}}"
 
   dev:
     desc: Start the development server with npm run dev
@@ -393,7 +393,7 @@ tasks:
     aliases:
       - reset:deps
     prompt:
-      - 'WARNING: This will permanently delete node_modules AND package-lock.json.'
+      - "WARNING: This will permanently delete node_modules AND package-lock.json."
       - Regenerating the lockfile may produce a different dependency tree.
       - Continue?
     cmds:
@@ -405,7 +405,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: 'task --list-all 2>/dev/null | grep -q "{{.NODE_MANAGER}}:node:install"'
         msg: >-
@@ -431,7 +431,7 @@ tasks:
     internal: true
     platforms: [windows]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -452,13 +452,13 @@ tasks:
   _npm:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     requires:
       vars:
         - ARGS
     env:
-      COREPACK_ENABLE_AUTO_PIN: '1'
+      COREPACK_ENABLE_AUTO_PIN: "1"
     preconditions:
       - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
@@ -468,7 +468,7 @@ tasks:
           || test -f "$HOME/.local/bin/fnm"{{end}}
         msg: '"{{.NODE_MANAGER}}" is not installed. Run: task node:setup'
       - sh: 'test -f "{{.USER_WORKING_DIR}}/package.json"'
-        msg: 'package.json not found. Run this task from the Node.js project root.'
+        msg: "package.json not found. Run this task from the Node.js project root."
     cmds:
       - >-
         bash -c '{{.NODE_LOAD}}; {{.NODE_USE}};
@@ -479,13 +479,13 @@ tasks:
   _npm:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     requires:
       vars:
         - ARGS
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
-      COREPACK_ENABLE_AUTO_PIN: '1'
+      NODE_VERSION: "{{.NODE_VERSION}}"
+      COREPACK_ENABLE_AUTO_PIN: "1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -498,7 +498,7 @@ tasks:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
-        msg: 'package.json not found. Run this task from the Node.js project root.'
+        msg: "package.json not found. Run this task from the Node.js project root."
     cmds:
       - |
         >-
@@ -521,7 +521,7 @@ tasks:
     set: [errexit, nounset, pipefail]
     preconditions:
       - sh: 'test -f "{{.USER_WORKING_DIR}}/package-lock.json"'
-        msg: 'package-lock.json not found. npm ci requires a lockfile.'
+        msg: "package-lock.json not found. npm ci requires a lockfile."
     cmds:
       - task: _npm:unix
         vars:
@@ -534,7 +534,7 @@ tasks:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.USER_WORKING_DIR}}\package-lock.json') { exit 0 } else { exit 1 }"
-        msg: 'package-lock.json not found. npm ci requires a lockfile.'
+        msg: "package-lock.json not found. npm ci requires a lockfile."
     cmds:
       - task: _npm:windows
         vars:
@@ -548,7 +548,7 @@ tasks:
       vars:
         - SCRIPT
     env:
-      SCRIPT: '{{.SCRIPT}}'
+      SCRIPT: "{{.SCRIPT}}"
     preconditions:
       - sh: 'printf "%s" "$SCRIPT" | grep -qE "^[A-Za-z0-9:_-]+$"'
         msg: >-
@@ -557,7 +557,7 @@ tasks:
     cmds:
       - task: _npm:unix
         vars:
-          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+          ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _run:windows:
     internal: true
@@ -566,7 +566,7 @@ tasks:
       vars:
         - SCRIPT
     env:
-      SCRIPT: '{{.SCRIPT}}'
+      SCRIPT: "{{.SCRIPT}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -577,7 +577,7 @@ tasks:
     cmds:
       - task: _npm:windows
         vars:
-          ARGS: 'run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}'
+          ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _version:unix:
     internal: true
@@ -598,7 +598,7 @@ tasks:
     internal: true
     platforms: [windows]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -624,10 +624,10 @@ tasks:
   _clean:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     status:
-      - 'test ! -d node_modules'
+      - "test ! -d node_modules"
     cmds:
       - echo Removing node_modules...
       - rm -rf node_modules
@@ -636,7 +636,7 @@ tasks:
   _clean:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -649,7 +649,7 @@ tasks:
   _clean:all:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     cmds:
       - echo Removing node_modules and package-lock.json...
@@ -660,7 +660,7 @@ tasks:
   _clean:all:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - echo Removing node_modules and package-lock.json...
       - >-

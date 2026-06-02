@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -13,26 +13,26 @@ includes:
   gh: ../gh/Taskfile.yml
 
 vars:
-  BASE: 'main'
-  BODY: ''
-  BRANCH: ''
-  CLONE_DIR: ''
-  COMMIT: ''
-  COMMIT_MSG: ''
-  EMAIL: ''
-  EXTRA_ARGS: ''
-  FILES: '.'
-  MERGE_METHOD: 'merge'
-  MESSAGE: ''
-  NAME: ''
-  NOTES: ''
-  OWNER: ''
-  REMOTE: 'origin'
-  REPO: ''
-  STASH_INDEX: '0'
-  TAG: ''
-  TITLE: ''
-  URL: ''
+  BASE: "main"
+  BODY: ""
+  BRANCH: ""
+  CLONE_DIR: ""
+  COMMIT: ""
+  COMMIT_MSG: ""
+  EMAIL: ""
+  EXTRA_ARGS: ""
+  FILES: "."
+  MERGE_METHOD: "merge"
+  MESSAGE: ""
+  NAME: ""
+  NOTES: ""
+  OWNER: ""
+  REMOTE: "origin"
+  REPO: ""
+  STASH_INDEX: "0"
+  TAG: ""
+  TITLE: ""
+  URL: ""
 
 tasks:
   default:

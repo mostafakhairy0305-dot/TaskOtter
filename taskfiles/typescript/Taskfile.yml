@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 includes:
   js:
@@ -20,12 +20,11 @@ vars:
   OUT_DIR: dist
   TSCONFIG: tsconfig.json
   PM: ""
-  TSX_FLAGS: ''
-  TSC_FLAGS: ''
+  TSX_FLAGS: ""
+  TSC_FLAGS: ""
   TRACE_DIR: .tsc-trace
 
 tasks:
-
   default:
     desc: List available TypeScript tasks
     summary: Show all TypeScript tasks defined in this Taskfile.
@@ -74,8 +73,8 @@ tasks:
     cmds:
       - task: js:install
         vars:
-          PACKAGES: 'typescript tsx @types/node'
-          PM: '{{.PM}}'
+          PACKAGES: "typescript tsx @types/node"
+          PM: "{{.PM}}"
       - task: _install:windows
 
   run:
@@ -93,10 +92,10 @@ tasks:
     cmds:
       - task: _tsx
         vars:
-          ARGS: '{{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}'
+          ARGS: "{{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
       - task: _tsx:windows
         vars:
-          ARGS: '{{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}'
+          ARGS: "{{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
 
   dev:
     desc: Run a TypeScript file in watch mode with tsx (FILE=src/index.ts)
@@ -112,10 +111,10 @@ tasks:
     cmds:
       - task: _tsx
         vars:
-          ARGS: 'watch {{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}'
+          ARGS: "watch {{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}"
       - task: _tsx:windows
         vars:
-          ARGS: 'watch {{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}'
+          ARGS: "watch {{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}"
 
   typecheck:
     desc: Type-check the project without emitting files (tsc --noEmit)
@@ -131,10 +130,10 @@ tasks:
     cmds:
       - task: _tsc
         vars:
-          ARGS: '--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - task: _tsc:windows
         vars:
-          ARGS: '--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   typecheck:watch:
     desc: Type-check in watch mode — recheck on every file change (tsc --noEmit --watch)
@@ -148,10 +147,10 @@ tasks:
     cmds:
       - task: _tsc
         vars:
-          ARGS: '--noEmit --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmit --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - task: _tsc:windows
         vars:
-          ARGS: '--noEmit --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmit --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   typecheck:files:
     desc: Type-check specific files without a tsconfig (FILES="src/a.ts src/b.ts")
@@ -175,10 +174,10 @@ tasks:
     cmds:
       - task: _tsc:noconfig
         vars:
-          ARGS: '--noEmit {{.TSC_FLAGS}} {{.FILES}}'
+          ARGS: "--noEmit {{.TSC_FLAGS}} {{.FILES}}"
       - task: _tsc:noconfig:windows
         vars:
-          ARGS: '--noEmit {{.TSC_FLAGS}} {{.FILES}}'
+          ARGS: "--noEmit {{.TSC_FLAGS}} {{.FILES}}"
 
   build:
     desc: Compile TypeScript to JavaScript (tsc)
@@ -196,10 +195,10 @@ tasks:
     cmds:
       - task: _tsc
         vars:
-          ARGS: '--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - task: _tsc:windows
         vars:
-          ARGS: '--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   build:watch:
     desc: Compile TypeScript in watch mode — recompile on every file change (tsc --watch)
@@ -214,10 +213,10 @@ tasks:
     cmds:
       - task: _tsc
         vars:
-          ARGS: '--noEmitOnError --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmitOnError --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - task: _tsc:windows
         vars:
-          ARGS: '--noEmitOnError --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmitOnError --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   build:clean:
     desc: Remove the output directory then compile TypeScript (clean build)
@@ -331,10 +330,10 @@ tasks:
     cmds:
       - task: _config:trace:unix
         vars:
-          TRACE_DIR: '{{.TRACE_DIR}}'
+          TRACE_DIR: "{{.TRACE_DIR}}"
       - task: _config:trace:windows
         vars:
-          TRACE_DIR: '{{.TRACE_DIR}}'
+          TRACE_DIR: "{{.TRACE_DIR}}"
 
   start:
     desc: Run the compiled JavaScript with node (OUTFILE=dist/index.js)
@@ -360,10 +359,10 @@ tasks:
     cmds:
       - task: _tsc
         vars:
-          ARGS: '--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - task: _tsc:windows
         vars:
-          ARGS: '--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - echo "✅ tsc passed"
 
   clean:
@@ -375,7 +374,7 @@ tasks:
         task typescript:clean
         task typescript:clean OUT_DIR=build
     prompt:
-      - 'This will delete the {{.OUT_DIR}}/ directory.'
+      - "This will delete the {{.OUT_DIR}}/ directory."
       - Continue?
     cmds:
       - task: _clean:unix
@@ -391,7 +390,7 @@ tasks:
     aliases:
       - reset:build
     prompt:
-      - 'WARNING: This will delete {{.OUT_DIR}}/, tsconfig.tsbuildinfo, and .tsc-trace/.'
+      - "WARNING: This will delete {{.OUT_DIR}}/, tsconfig.tsbuildinfo, and .tsc-trace/."
       - Continue?
     cmds:
       - task: _clean:all:unix
@@ -400,11 +399,11 @@ tasks:
   _tsc:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     preconditions:
       - sh: 'test -f "{{.USER_WORKING_DIR}}/node_modules/.bin/tsc" || command -v tsc >/dev/null 2>&1'
-        msg: 'tsc not found. Run: task typescript:install'
+        msg: "tsc not found. Run: task typescript:install"
       - sh: 'test -f "{{.USER_WORKING_DIR}}/{{.TSCONFIG}}"'
         msg: 'TSCONFIG "{{.TSCONFIG}}" not found. Run: task typescript:config:init'
     cmds:
@@ -418,13 +417,13 @@ tasks:
   _tsc:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if ((Test-Path 'node_modules\.bin\tsc.cmd') -or
           (Get-Command tsc -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
-        msg: 'tsc not found. Run: task typescript:install'
+        msg: "tsc not found. Run: task typescript:install"
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.TSCONFIG}}') { exit 0 } else { exit 1 }"
@@ -439,11 +438,11 @@ tasks:
   _tsc:noconfig:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     preconditions:
       - sh: 'test -f "{{.USER_WORKING_DIR}}/node_modules/.bin/tsc" || command -v tsc >/dev/null 2>&1'
-        msg: 'tsc not found. Run: task typescript:install'
+        msg: "tsc not found. Run: task typescript:install"
     cmds:
       - |
         if [ -f "node_modules/.bin/tsc" ]; then
@@ -455,13 +454,13 @@ tasks:
   _tsc:noconfig:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if ((Test-Path 'node_modules\.bin\tsc.cmd') -or
           (Get-Command tsc -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
-        msg: 'tsc not found. Run: task typescript:install'
+        msg: "tsc not found. Run: task typescript:install"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -471,11 +470,11 @@ tasks:
   _tsx:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     preconditions:
       - sh: 'test -f "{{.USER_WORKING_DIR}}/node_modules/.bin/tsx" || command -v tsx >/dev/null 2>&1'
-        msg: 'tsx not found. Run: task typescript:install'
+        msg: "tsx not found. Run: task typescript:install"
       - sh: 'test -f "{{.USER_WORKING_DIR}}/{{.FILE}}"'
         msg: 'FILE "{{.FILE}}" not found. Set FILE=path/to/your/file.ts'
     cmds:
@@ -489,13 +488,13 @@ tasks:
   _tsx:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if ((Test-Path 'node_modules\.bin\tsx.cmd') -or
           (Get-Command tsx -ErrorAction SilentlyContinue)) { exit 0 } else { exit 1 }"
-        msg: 'tsx not found. Run: task typescript:install'
+        msg: "tsx not found. Run: task typescript:install"
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.FILE}}') { exit 0 } else { exit 1 }"
@@ -509,12 +508,12 @@ tasks:
   _install:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
-        msg: 'package.json not found. Run this task from the Node.js project root.'
+        msg: "package.json not found. Run this task from the Node.js project root."
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -534,11 +533,11 @@ tasks:
   _version:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     preconditions:
       - sh: command -v node >/dev/null 2>&1
-        msg: 'node is not available. Install Node.js first.'
+        msg: "node is not available. Install Node.js first."
     cmds:
       - |
         echo '=== tsc (TypeScript Compiler) ==='
@@ -573,12 +572,12 @@ tasks:
   _version:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
-        msg: 'node is not available. Install Node.js first.'
+        msg: "node is not available. Install Node.js first."
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -604,7 +603,7 @@ tasks:
   _tsserver:info:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     cmds:
       - |
@@ -637,7 +636,7 @@ tasks:
   _tsserver:info:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -667,20 +666,20 @@ tasks:
   _build:clean:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     cmds:
       - echo 'Removing {{.OUT_DIR}}...'
       - rm -rf "{{.OUT_DIR}}"
       - task: _tsc
         vars:
-          ARGS: '--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - echo 'Clean build complete.'
 
   _build:clean:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - echo Removing {{.OUT_DIR}}...
       - >-
@@ -688,19 +687,19 @@ tasks:
         "if (Test-Path '{{.OUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUT_DIR}}' }"
       - task: _tsc:windows
         vars:
-          ARGS: '--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - echo Clean build complete.
 
   _config:trace:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     cmds:
       - echo 'Generating trace to {{.TRACE_DIR}}...'
       - task: _tsc
         vars:
-          ARGS: '--generateTrace {{.TRACE_DIR}} --noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--generateTrace {{.TRACE_DIR}} --noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - |
         echo ''
         echo 'Trace written to {{.TRACE_DIR}}/'
@@ -710,12 +709,12 @@ tasks:
   _config:trace:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - echo Generating trace to {{.TRACE_DIR}}...
       - task: _tsc:windows
         vars:
-          ARGS: '--generateTrace {{.TRACE_DIR}} --noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}'
+          ARGS: "--generateTrace {{.TRACE_DIR}} --noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
         "Write-Host '';
@@ -726,11 +725,11 @@ tasks:
   _start:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     preconditions:
       - sh: command -v node >/dev/null 2>&1
-        msg: 'node is not available. Install Node.js first.'
+        msg: "node is not available. Install Node.js first."
       - sh: 'test -f "{{.USER_WORKING_DIR}}/{{.OUTFILE}}"'
         msg: 'OUTFILE "{{.OUTFILE}}" not found. Run: task typescript:build'
     cmds:
@@ -739,12 +738,12 @@ tasks:
   _start:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Get-Command node -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
-        msg: 'node is not available. Install Node.js first.'
+        msg: "node is not available. Install Node.js first."
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.OUTFILE}}') { exit 0 } else { exit 1 }"
@@ -755,7 +754,7 @@ tasks:
   _clean:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     status:
       - 'test ! -d "{{.USER_WORKING_DIR}}/{{.OUT_DIR}}"'
@@ -767,7 +766,7 @@ tasks:
   _clean:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -782,7 +781,7 @@ tasks:
   _clean:all:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     set: [errexit, nounset, pipefail]
     cmds:
       - echo 'Removing {{.OUT_DIR}}/, tsconfig.tsbuildinfo, and .tsc-trace/...'
@@ -794,7 +793,7 @@ tasks:
   _clean:all:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - echo Removing build artifacts...
       - >-

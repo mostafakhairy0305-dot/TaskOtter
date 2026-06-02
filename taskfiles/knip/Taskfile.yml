@@ -175,7 +175,12 @@ tasks:
     desc: Show the locally resolved Knip version
     cmds:
       - task: js:exec
-        vars: {PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}", BINARY: knip, ARGS: "--version"}
+        vars:
+          {
+            PM: "{{if .PM_OVERRIDE}}{{.PM_OVERRIDE}}{{else}}{{.PM}}{{end}}",
+            BINARY: knip,
+            ARGS: "--version",
+          }
 
   help:
     desc: Show Knip CLI help

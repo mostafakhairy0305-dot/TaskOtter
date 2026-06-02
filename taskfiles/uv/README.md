@@ -38,33 +38,33 @@ task uv:tool:install TOOL=ruff
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install uv on the current OS if missing | none |
-| `install:undo` | Remove uv from the current OS | none |
-| `upgrade` | Upgrade uv to the latest release | none |
-| `version` | Show the installed uv version | none |
-| `python:install` | Install a Python version via uv | `PYTHON_VERSION` |
-| `venv` | Create a virtual environment | `VENV`, `EXTRA_ARGS` |
-| `pip:install` | Install packages from a requirements file | `REQUIREMENTS`, `EXTRA_ARGS` |
-| `run` | Run a script or command via uv | `FILE`, `ARGS`, `EXTRA_ARGS` |
-| `tool:install` | Install a Python tool into an isolated environment | `TOOL`, `EXTRA_ARGS` |
-| `tool:upgrade` | Upgrade an installed uv tool | `TOOL`, `EXTRA_ARGS` |
+| Task             | Description                                        | Key variables                |
+| ---------------- | -------------------------------------------------- | ---------------------------- |
+| `install`        | Install uv on the current OS if missing            | none                         |
+| `install:undo`   | Remove uv from the current OS                      | none                         |
+| `upgrade`        | Upgrade uv to the latest release                   | none                         |
+| `version`        | Show the installed uv version                      | none                         |
+| `python:install` | Install a Python version via uv                    | `PYTHON_VERSION`             |
+| `venv`           | Create a virtual environment                       | `VENV`, `EXTRA_ARGS`         |
+| `pip:install`    | Install packages from a requirements file          | `REQUIREMENTS`, `EXTRA_ARGS` |
+| `run`            | Run a script or command via uv                     | `FILE`, `ARGS`, `EXTRA_ARGS` |
+| `tool:install`   | Install a Python tool into an isolated environment | `TOOL`, `EXTRA_ARGS`         |
+| `tool:upgrade`   | Upgrade an installed uv tool                       | `TOOL`, `EXTRA_ARGS`         |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VENV` | `.venv` | Virtual environment directory for `venv` |
-| `REQUIREMENTS` | `requirements.txt` | Requirements file for `pip:install` |
-| `FILE` | _(empty)_ | Script path; required by `run` |
-| `ARGS` | _(empty)_ | Positional arguments forwarded to the script in `run` |
-| `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to the underlying uv command |
-| `PYTHON_VERSION` | _(empty)_ | Python version to install; required by `python:install` |
-| `TOOL` | _(empty)_ | Tool name; required by `tool:install` and `tool:upgrade` |
-| `UV_INSTALL_URL` | `https://astral.sh/uv/install.sh` | Unix installer URL |
-| `UV_INSTALL_URL_WINDOWS` | `https://astral.sh/uv/install.ps1` | Windows installer URL |
-| `UV_LOAD` | `export PATH="$HOME/.local/bin:$PATH"` | Shell snippet that ensures uv is in PATH |
+| Variable                 | Default                                | Description                                              |
+| ------------------------ | -------------------------------------- | -------------------------------------------------------- |
+| `VENV`                   | `.venv`                                | Virtual environment directory for `venv`                 |
+| `REQUIREMENTS`           | `requirements.txt`                     | Requirements file for `pip:install`                      |
+| `FILE`                   | _(empty)_                              | Script path; required by `run`                           |
+| `ARGS`                   | _(empty)_                              | Positional arguments forwarded to the script in `run`    |
+| `EXTRA_ARGS`             | _(empty)_                              | Extra flags forwarded to the underlying uv command       |
+| `PYTHON_VERSION`         | _(empty)_                              | Python version to install; required by `python:install`  |
+| `TOOL`                   | _(empty)_                              | Tool name; required by `tool:install` and `tool:upgrade` |
+| `UV_INSTALL_URL`         | `https://astral.sh/uv/install.sh`      | Unix installer URL                                       |
+| `UV_INSTALL_URL_WINDOWS` | `https://astral.sh/uv/install.ps1`     | Windows installer URL                                    |
+| `UV_LOAD`                | `export PATH="$HOME/.local/bin:$PATH"` | Shell snippet that ensures uv is in PATH                 |
 
 ## Notes
 

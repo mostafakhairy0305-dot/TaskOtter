@@ -35,25 +35,25 @@ task sqlfluff:fix DIALECT=postgres
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install sqlfluff on the current OS if missing | none |
-| `install:undo` | Remove sqlfluff from the current OS | none |
-| `upgrade` | Upgrade sqlfluff to the latest release | none |
-| `version` | Show the installed sqlfluff version | none |
-| `lint` | Lint SQL files with sqlfluff | `TARGETS`, `CONFIG`, `DIALECT`, `EXTRA_ARGS` |
-| `fix` | Auto-fix SQL lint violations | `TARGETS`, `CONFIG`, `DIALECT`, `EXTRA_ARGS` |
-| `parse` | Print the sqlfluff parse tree for SQL files | `TARGETS`, `CONFIG`, `DIALECT`, `EXTRA_ARGS` |
-| `config:init` | Create a default `.sqlfluff` configuration file | none |
+| Task           | Description                                     | Key variables                                |
+| -------------- | ----------------------------------------------- | -------------------------------------------- |
+| `install`      | Install sqlfluff on the current OS if missing   | none                                         |
+| `install:undo` | Remove sqlfluff from the current OS             | none                                         |
+| `upgrade`      | Upgrade sqlfluff to the latest release          | none                                         |
+| `version`      | Show the installed sqlfluff version             | none                                         |
+| `lint`         | Lint SQL files with sqlfluff                    | `TARGETS`, `CONFIG`, `DIALECT`, `EXTRA_ARGS` |
+| `fix`          | Auto-fix SQL lint violations                    | `TARGETS`, `CONFIG`, `DIALECT`, `EXTRA_ARGS` |
+| `parse`        | Print the sqlfluff parse tree for SQL files     | `TARGETS`, `CONFIG`, `DIALECT`, `EXTRA_ARGS` |
+| `config:init`  | Create a default `.sqlfluff` configuration file | none                                         |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TARGETS` | `.` | Files or directories to lint/fix/parse |
-| `CONFIG` | _(empty)_ | Path to a sqlfluff config file passed via `--config` |
-| `DIALECT` | _(empty)_ | SQL dialect passed via `--dialect` (e.g. `ansi`, `postgres`) |
-| `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to sqlfluff |
+| Variable     | Default   | Description                                                  |
+| ------------ | --------- | ------------------------------------------------------------ |
+| `TARGETS`    | `.`       | Files or directories to lint/fix/parse                       |
+| `CONFIG`     | _(empty)_ | Path to a sqlfluff config file passed via `--config`         |
+| `DIALECT`    | _(empty)_ | SQL dialect passed via `--dialect` (e.g. `ansi`, `postgres`) |
+| `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to sqlfluff                            |
 
 ## Notes
 

@@ -8,16 +8,16 @@ binary execution.
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Install `depcheck` as a local dev dependency. |
-| `check` | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS` | Run Depcheck. |
-| `json` | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS` | Run Depcheck with `--json`. |
-| `ignores` | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `IGNORE_PACKAGES`, `EXTRA_ARGS`, `CLI_ARGS` | Run Depcheck with ignored packages. |
-| `skip-missing` | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS` | Run Depcheck with `--skip-missing=true`. |
-| `ci` | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS` | Run Depcheck and fail on findings. |
-| `version` | Optional `PM` | Show the resolved Depcheck version. |
-| `help` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Show Depcheck CLI help. |
+| Task           | Variables                                                                             | Description                                   |
+| -------------- | ------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `install`      | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                                               | Install `depcheck` as a local dev dependency. |
+| `check`        | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS`                    | Run Depcheck.                                 |
+| `json`         | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS`                    | Run Depcheck with `--json`.                   |
+| `ignores`      | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `IGNORE_PACKAGES`, `EXTRA_ARGS`, `CLI_ARGS` | Run Depcheck with ignored packages.           |
+| `skip-missing` | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS`                    | Run Depcheck with `--skip-missing=true`.      |
+| `ci`           | Optional `PM`, `PROJECT_PATH`, `TARGETS`, `EXTRA_ARGS`, `CLI_ARGS`                    | Run Depcheck and fail on findings.            |
+| `version`      | Optional `PM`                                                                         | Show the resolved Depcheck version.           |
+| `help`         | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                                               | Show Depcheck CLI help.                       |
 
 ## Variables
 

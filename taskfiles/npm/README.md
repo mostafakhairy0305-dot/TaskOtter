@@ -48,34 +48,34 @@ This delegates to `task fnm:node:install` or `task nvm:node:install` depending o
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `add` | Required `PACKAGES`; optional `EXTRA_ARGS` | Add packages as devDependencies with `npm install -D`. |
-| `node:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Node.js and npm via the selected node manager. |
-| `version` | Optional `NODE_MANAGER`, `NODE_VERSION` | Show the active Node.js and npm versions. |
-| `install` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm install` to install all dependencies from `package.json`. |
-| `ci` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm ci` for a clean, reproducible install from `package-lock.json`. |
-| `run` | Required `SCRIPT`; optional `NODE_MANAGER`, `NODE_VERSION` | Run a `package.json` script by name. Example: `SCRIPT=dev`. |
-| `dev` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run dev`. |
-| `exec` | Required `BINARY`; optional `ARGS`, `EXTRA_ARGS` | Execute a local project binary via `npm exec --`. |
-| `test` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm test`. |
-| `build` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run build`. |
-| `lint` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run lint`. |
-| `format` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run format`. |
-| `typecheck` | Optional `NODE_MANAGER`, `NODE_VERSION` | Run `npm run typecheck`. |
-| `manager:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Corepack when needed and enable its shims. |
-| `manager:pin` | Required `PACKAGE_MANAGER_VERSION` | Pin npm in `package.json` with Corepack. |
-| `outdated` | Optional `NODE_MANAGER`, `NODE_VERSION` | List newer package versions without failing the task. |
-| `outdated:strict` | Optional `NODE_MANAGER`, `NODE_VERSION` | List newer package versions and propagate `npm outdated` failures for CI. |
-| `update` | Optional `NODE_MANAGER`, `NODE_VERSION` | Update all packages within declared version ranges. |
-| `audit` | Optional `NODE_MANAGER`, `NODE_VERSION` | Audit vulnerabilities and propagate `npm audit` failures for CI. |
-| `audit:report` | Optional `NODE_MANAGER`, `NODE_VERSION` | Report vulnerabilities without failing the task. |
-| `audit:fix` | Optional `NODE_MANAGER`, `NODE_VERSION` | Auto-fix vulnerabilities where a non-breaking fix exists. |
-| `audit:json` | Optional `NODE_MANAGER`, `NODE_VERSION` | Emit `npm audit --json` output for tooling. |
-| `doctor` | Optional `NODE_MANAGER`, `NODE_VERSION` | Check npm environment health with `npm doctor`. |
-| `cache:clean` | Optional `NODE_MANAGER`, `NODE_VERSION` | Clear the npm cache with `npm cache clean --force`. |
-| `clean` | — | Remove `node_modules`. |
-| `clean:all` | — | Remove `node_modules` and `package-lock.json`. |
+| Task              | Variables                                                  | Description                                                               |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `add`             | Required `PACKAGES`; optional `EXTRA_ARGS`                 | Add packages as devDependencies with `npm install -D`.                    |
+| `node:setup`      | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Install Node.js and npm via the selected node manager.                    |
+| `version`         | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Show the active Node.js and npm versions.                                 |
+| `install`         | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm install` to install all dependencies from `package.json`.        |
+| `ci`              | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm ci` for a clean, reproducible install from `package-lock.json`.  |
+| `run`             | Required `SCRIPT`; optional `NODE_MANAGER`, `NODE_VERSION` | Run a `package.json` script by name. Example: `SCRIPT=dev`.               |
+| `dev`             | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm run dev`.                                                        |
+| `exec`            | Required `BINARY`; optional `ARGS`, `EXTRA_ARGS`           | Execute a local project binary via `npm exec --`.                         |
+| `test`            | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm test`.                                                           |
+| `build`           | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm run build`.                                                      |
+| `lint`            | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm run lint`.                                                       |
+| `format`          | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm run format`.                                                     |
+| `typecheck`       | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Run `npm run typecheck`.                                                  |
+| `manager:setup`   | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Install Corepack when needed and enable its shims.                        |
+| `manager:pin`     | Required `PACKAGE_MANAGER_VERSION`                         | Pin npm in `package.json` with Corepack.                                  |
+| `outdated`        | Optional `NODE_MANAGER`, `NODE_VERSION`                    | List newer package versions without failing the task.                     |
+| `outdated:strict` | Optional `NODE_MANAGER`, `NODE_VERSION`                    | List newer package versions and propagate `npm outdated` failures for CI. |
+| `update`          | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Update all packages within declared version ranges.                       |
+| `audit`           | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Audit vulnerabilities and propagate `npm audit` failures for CI.          |
+| `audit:report`    | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Report vulnerabilities without failing the task.                          |
+| `audit:fix`       | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Auto-fix vulnerabilities where a non-breaking fix exists.                 |
+| `audit:json`      | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Emit `npm audit --json` output for tooling.                               |
+| `doctor`          | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Check npm environment health with `npm doctor`.                           |
+| `cache:clean`     | Optional `NODE_MANAGER`, `NODE_VERSION`                    | Clear the npm cache with `npm cache clean --force`.                       |
+| `clean`           | —                                                          | Remove `node_modules`.                                                    |
+| `clean:all`       | —                                                          | Remove `node_modules` and `package-lock.json`.                            |
 
 ---
 

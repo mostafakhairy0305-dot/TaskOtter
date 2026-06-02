@@ -6,16 +6,16 @@ Corepack itself may need installation on Node.js releases that do not bundle it.
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `node:setup` | Optional `NODE_MANAGER`, `NODE_VERSION` | Install Node.js via fnm or nvm. |
-| `install` | Optional `NODE_MANAGER`, `NODE_VERSION`, `COREPACK_VERSION` | Install Corepack through npm when the active Node runtime lacks it. |
-| `setup` | Optional `NODE_MANAGER`, `NODE_VERSION`, `COREPACK_VERSION` | Install Corepack when needed and enable its shims. |
-| `version` | Optional `NODE_MANAGER`, `NODE_VERSION` | Show the active Corepack version. |
-| `enable` | Optional `NODE_MANAGER`, `NODE_VERSION` | Enable Corepack shims. |
-| `disable` | Optional `NODE_MANAGER`, `NODE_VERSION` | Disable Corepack shims. |
-| `use` | Required `PACKAGE_MANAGER`, `VERSION` | Pin `npm`, `pnpm`, or `yarn` in the current `package.json`. |
-| `cache:clean` | Optional `NODE_MANAGER`, `NODE_VERSION` | Clear cached package manager archives. |
+| Task          | Variables                                                   | Description                                                         |
+| ------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| `node:setup`  | Optional `NODE_MANAGER`, `NODE_VERSION`                     | Install Node.js via fnm or nvm.                                     |
+| `install`     | Optional `NODE_MANAGER`, `NODE_VERSION`, `COREPACK_VERSION` | Install Corepack through npm when the active Node runtime lacks it. |
+| `setup`       | Optional `NODE_MANAGER`, `NODE_VERSION`, `COREPACK_VERSION` | Install Corepack when needed and enable its shims.                  |
+| `version`     | Optional `NODE_MANAGER`, `NODE_VERSION`                     | Show the active Corepack version.                                   |
+| `enable`      | Optional `NODE_MANAGER`, `NODE_VERSION`                     | Enable Corepack shims.                                              |
+| `disable`     | Optional `NODE_MANAGER`, `NODE_VERSION`                     | Disable Corepack shims.                                             |
+| `use`         | Required `PACKAGE_MANAGER`, `VERSION`                       | Pin `npm`, `pnpm`, or `yarn` in the current `package.json`.         |
+| `cache:clean` | Optional `NODE_MANAGER`, `NODE_VERSION`                     | Clear cached package manager archives.                              |
 
 ## Examples
 

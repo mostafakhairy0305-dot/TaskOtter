@@ -1,1 +1,5 @@
-{"name":"taskotter-npm-taskfile-tests","version":"0.0.0","private":true}
+{
+  "name": "taskotter-npm-taskfile-tests",
+  "version": "0.0.0",
+  "private": true
+}

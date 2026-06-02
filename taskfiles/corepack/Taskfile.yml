@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -17,7 +17,7 @@ includes:
 
 vars:
   NODE_MANAGER: fnm
-  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
+  FNM_INSTALL_DIR: "$HOME/.local/share/fnm"
   FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"; eval "$(fnm env --shell bash)"'
   NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
   FNM_USE: >-
@@ -28,9 +28,9 @@ vars:
     {{- else}}if [ -f .node-version ] || [ -f .nvmrc ]; then nvm use; fi{{end}}
   NODE_LOAD: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_LOAD}}{{else}}{{.FNM_LOAD}}{{end}}'
   NODE_USE: '{{if eq .NODE_MANAGER "nvm"}}{{.NVM_USE}}{{else}}{{.FNM_USE}}{{end}}'
-  NODE_VERSION: ''
+  NODE_VERSION: ""
   COREPACK_VERSION: 0.34.0  # override with COREPACK_VERSION=latest
-  COREPACK_UNAVAILABLE_MSG: 'corepack is not available. Run the install task for this Corepack Taskfile.'
+  COREPACK_UNAVAILABLE_MSG: "corepack is not available. Run the install task for this Corepack Taskfile."
   WINDOWS_NODE_ACTIVATE: |
     if ($env:NODE_MANAGER -eq 'fnm') {
       fnm env --shell powershell | Out-String | Invoke-Expression
@@ -89,27 +89,27 @@ tasks:
     summary: Print the Corepack version available through the selected Node.js runtime.
     cmds:
       - task: _corepack:unix
-        vars: {ARGS: --version}
+        vars: { ARGS: --version }
       - task: _corepack:windows
-        vars: {ARGS: --version}
+        vars: { ARGS: --version }
 
   enable:
     desc: Enable Corepack package manager shims
     summary: Run corepack enable so supported package manager shims resolve through Corepack.
     cmds:
       - task: _corepack:unix
-        vars: {ARGS: enable}
+        vars: { ARGS: enable }
       - task: _corepack:windows
-        vars: {ARGS: enable}
+        vars: { ARGS: enable }
 
   disable:
     desc: Disable Corepack package manager shims
     summary: Run corepack disable to remove Corepack package manager shims from the active runtime.
     cmds:
       - task: _corepack:unix
-        vars: {ARGS: disable}
+        vars: { ARGS: disable }
       - task: _corepack:windows
-        vars: {ARGS: disable}
+        vars: { ARGS: disable }
 
   use:
     desc: Pin a package manager version in package.json
@@ -119,28 +119,28 @@ tasks:
     cmds:
       - task: _use:unix
         vars:
-          PACKAGE_MANAGER: '{{.PACKAGE_MANAGER}}'
-          VERSION: '{{.VERSION}}'
+          PACKAGE_MANAGER: "{{.PACKAGE_MANAGER}}"
+          VERSION: "{{.VERSION}}"
       - task: _use:windows
         vars:
-          PACKAGE_MANAGER: '{{.PACKAGE_MANAGER}}'
-          VERSION: '{{.VERSION}}'
+          PACKAGE_MANAGER: "{{.PACKAGE_MANAGER}}"
+          VERSION: "{{.VERSION}}"
 
   cache:clean:
     desc: Clear the Corepack cache
     summary: Run corepack cache clean to remove package manager archives cached by Corepack.
     cmds:
       - task: _corepack:unix
-        vars: {ARGS: cache clean}
+        vars: { ARGS: cache clean }
       - task: _corepack:windows
-        vars: {ARGS: cache clean}
+        vars: { ARGS: cache clean }
 
   _node:setup:unix:
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
@@ -156,8 +156,8 @@ tasks:
     internal: true
     platforms: [windows]
     env:
-      NODE_MANAGER: '{{.NODE_MANAGER}}'
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_MANAGER: "{{.NODE_MANAGER}}"
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -197,8 +197,8 @@ tasks:
     internal: true
     platforms: [windows]
     env:
-      NODE_MANAGER: '{{.NODE_MANAGER}}'
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_MANAGER: "{{.NODE_MANAGER}}"
+      NODE_VERSION: "{{.NODE_VERSION}}"
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -258,8 +258,8 @@ tasks:
     requires:
       vars: [ARGS]
     env:
-      NODE_MANAGER: '{{.NODE_MANAGER}}'
-      NODE_VERSION: '{{.NODE_VERSION}}'
+      NODE_MANAGER: "{{.NODE_MANAGER}}"
+      NODE_VERSION: "{{.NODE_VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -285,33 +285,33 @@ tasks:
   _use:unix:
     internal: true
     platforms: [linux, darwin]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     env:
-      PACKAGE_MANAGER: '{{.PACKAGE_MANAGER}}'
-      VERSION: '{{.VERSION}}'
+      PACKAGE_MANAGER: "{{.PACKAGE_MANAGER}}"
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: '[ "{{.NODE_MANAGER}}" = "fnm" ] || [ "{{.NODE_MANAGER}}" = "nvm" ]'
         msg: 'NODE_MANAGER must be "fnm" or "nvm", got "{{.NODE_MANAGER}}"'
       - sh: 'printf "%s" "$PACKAGE_MANAGER" | grep -qE "^(npm|pnpm|yarn)$"'
-        msg: 'PACKAGE_MANAGER must be npm, pnpm, or yarn.'
+        msg: "PACKAGE_MANAGER must be npm, pnpm, or yarn."
       - sh: 'printf "%s" "$VERSION" | grep -qE "^[A-Za-z0-9.+_-]+$"'
-        msg: 'VERSION contains invalid characters.'
+        msg: "VERSION contains invalid characters."
       - sh: 'test -f "{{.USER_WORKING_DIR}}/package.json"'
-        msg: 'package.json not found. Run this task from the project root.'
+        msg: "package.json not found. Run this task from the project root."
     cmds:
       - task: _corepack:unix
         vars:
-          ARGS: 'use {{.PACKAGE_MANAGER}}@{{.VERSION}}'
+          ARGS: "use {{.PACKAGE_MANAGER}}@{{.VERSION}}"
 
   _use:windows:
     internal: true
     platforms: [windows]
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: "{{.USER_WORKING_DIR}}"
     env:
-      NODE_MANAGER: '{{.NODE_MANAGER}}'
-      NODE_VERSION: '{{.NODE_VERSION}}'
-      PACKAGE_MANAGER: '{{.PACKAGE_MANAGER}}'
-      VERSION: '{{.VERSION}}'
+      NODE_MANAGER: "{{.NODE_MANAGER}}"
+      NODE_VERSION: "{{.NODE_VERSION}}"
+      PACKAGE_MANAGER: "{{.PACKAGE_MANAGER}}"
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -320,16 +320,16 @@ tasks:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if ($env:PACKAGE_MANAGER -match '^(npm|pnpm|yarn)$') { exit 0 } else { exit 1 }"
-        msg: 'PACKAGE_MANAGER must be npm, pnpm, or yarn.'
+        msg: "PACKAGE_MANAGER must be npm, pnpm, or yarn."
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if ($env:VERSION -match '^[A-Za-z0-9.+_-]+$') { exit 0 } else { exit 1 }"
-        msg: 'VERSION contains invalid characters.'
+        msg: "VERSION contains invalid characters."
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "if (Test-Path '{{.USER_WORKING_DIR}}\package.json') { exit 0 } else { exit 1 }"
-        msg: 'package.json not found. Run this task from the project root.'
+        msg: "package.json not found. Run this task from the project root."
     cmds:
       - task: _corepack:windows
         vars:
-          ARGS: 'use {{.PACKAGE_MANAGER}}@{{.VERSION}}'
+          ARGS: "use {{.PACKAGE_MANAGER}}@{{.VERSION}}"

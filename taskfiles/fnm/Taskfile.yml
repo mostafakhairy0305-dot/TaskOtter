@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -11,8 +11,8 @@ silent: true
 
 vars:
   FNM_INSTALL_URL: https://fnm.vercel.app/install
-  FNM_INSTALL_DIR: '$HOME/.local/share/fnm'
-  DEFAULT_NODE_VERSION: '--lts'
+  FNM_INSTALL_DIR: "$HOME/.local/share/fnm"
+  DEFAULT_NODE_VERSION: "--lts"
   FNM_LOAD: 'export PATH="{{.FNM_INSTALL_DIR}}:$HOME/.local/bin:$PATH"'
 
 tasks:
@@ -68,10 +68,10 @@ tasks:
     cmds:
       - task: _node:install:unix
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
       - task: _node:install:windows
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
 
   node:uninstall:
     desc: Uninstall a Node.js version managed by fnm
@@ -90,10 +90,10 @@ tasks:
     cmds:
       - task: _node:uninstall:unix
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
       - task: _node:uninstall:windows
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
 
   node:use:
     desc: Switch to a Node.js version
@@ -103,14 +103,14 @@ tasks:
     deps:
       - task: node:install
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
     cmds:
       - task: _node:use:unix
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
       - task: _node:use:windows
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
 
   ls:
     desc: List Node.js versions installed through fnm
@@ -362,7 +362,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
@@ -381,7 +381,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -401,7 +401,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
@@ -418,7 +418,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -440,7 +440,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
@@ -467,7 +467,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -13,9 +13,9 @@ vars:
   NVM_SH_VERSION: v0.40.1
   NVM_WINDOWS_VERSION: v1.1.12
   NVM_WINDOWS_BASE_URL: https://github.com/coreybutler/nvm-windows/releases/download
-  NVM_WINDOWS_ZIP_URL: '{{.NVM_WINDOWS_BASE_URL}}/{{.NVM_WINDOWS_VERSION}}/nvm-setup.zip'
+  NVM_WINDOWS_ZIP_URL: "{{.NVM_WINDOWS_BASE_URL}}/{{.NVM_WINDOWS_VERSION}}/nvm-setup.zip"
   NVM_SH_INSTALL_URL: https://raw.githubusercontent.com/nvm-sh/nvm/{{.NVM_SH_VERSION}}/install.sh
-  DEFAULT_NODE_VERSION_UNIX: '--lts'
+  DEFAULT_NODE_VERSION_UNIX: "--lts"
   DEFAULT_NODE_VERSION_WINDOWS: lts
   NVM_LOAD: 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"'
 
@@ -72,10 +72,10 @@ tasks:
     cmds:
       - task: _node:install:windows
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION_WINDOWS .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION_WINDOWS .VERSION}}"
       - task: _node:install:unix
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}"
 
   node:uninstall:
     desc: Uninstall a Node.js version managed by NVM
@@ -94,10 +94,10 @@ tasks:
     cmds:
       - task: _node:uninstall:windows
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
       - task: _node:uninstall:unix
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
 
   node:use:
     desc: Switch to a Node.js version
@@ -107,14 +107,14 @@ tasks:
     deps:
       - task: node:install
         vars:
-          VERSION: '{{.VERSION}}'
+          VERSION: "{{.VERSION}}"
     cmds:
       - task: _node:use:windows
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION_WINDOWS .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION_WINDOWS .VERSION}}"
       - task: _node:use:unix
         vars:
-          VERSION: '{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}'
+          VERSION: "{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}"
 
   ls:
     desc: List Node.js versions installed through NVM
@@ -234,7 +234,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -265,7 +265,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -290,7 +290,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -360,7 +360,7 @@ tasks:
       - cmd: curl -o- "{{.NVM_SH_INSTALL_URL}}" | bash
         if: command -v curl >/dev/null 2>&1
       - cmd: wget -qO- "{{.NVM_SH_INSTALL_URL}}" | bash
-        if: '! command -v curl >/dev/null 2>&1 && command -v wget >/dev/null 2>&1'
+        if: "! command -v curl >/dev/null 2>&1 && command -v wget >/dev/null 2>&1"
       - echo 'nvm-sh installed. Restart your shell or run . "$HOME/.nvm/nvm.sh" to load nvm in the current session.'
 
   _install:undo:unix:
@@ -410,7 +410,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     status:
       - >-
         bash -lc 'if [ "{{.VERSION}}" = "--lts" ] || [ "{{.VERSION}}" = "node" ]; then exit 1; fi;
@@ -432,7 +432,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     status:
       - test ! -d "$HOME/.nvm/versions/node/v{{.VERSION}}"
     preconditions:
@@ -454,7 +454,7 @@ tasks:
       vars:
         - VERSION
     env:
-      VERSION: '{{.VERSION}}'
+      VERSION: "{{.VERSION}}"
     preconditions:
       - sh: test -s "$HOME/.nvm/nvm.sh"
         msg: nvm-sh is not installed. Run task install first.

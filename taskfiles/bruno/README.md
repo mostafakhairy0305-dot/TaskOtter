@@ -9,13 +9,13 @@ dev dependency and keeps package-manager selection consistent with the shared
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Install `@usebruno/cli` as a local dev dependency. |
-| `run` | Optional `PM`, `COLLECTION`, `ENV`, `EXTRA_ARGS`, `CLI_ARGS` | Run all requests in the Bruno collection. |
-| `ci` | Optional `PM`, `COLLECTION`, `ENV`, `EXTRA_ARGS`, `CLI_ARGS` | Run collection and stop on the first failure (`--bail`). |
-| `version` | Optional `PM` | Show the locally resolved `bru` version. |
-| `help` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS` | Show Bruno CLI help. |
+| Task      | Variables                                                    | Description                                              |
+| --------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| `install` | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                      | Install `@usebruno/cli` as a local dev dependency.       |
+| `run`     | Optional `PM`, `COLLECTION`, `ENV`, `EXTRA_ARGS`, `CLI_ARGS` | Run all requests in the Bruno collection.                |
+| `ci`      | Optional `PM`, `COLLECTION`, `ENV`, `EXTRA_ARGS`, `CLI_ARGS` | Run collection and stop on the first failure (`--bail`). |
+| `version` | Optional `PM`                                                | Show the locally resolved `bru` version.                 |
+| `help`    | Optional `PM`, `EXTRA_ARGS`, `CLI_ARGS`                      | Show Bruno CLI help.                                     |
 
 ## Variables
 

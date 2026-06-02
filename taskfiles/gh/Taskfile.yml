@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -10,16 +10,16 @@ output:
 silent: true
 
 vars:
-  VISIBILITY: 'public'
-  BASE: 'main'
-  MERGE_METHOD: 'merge'
-  CLONE_DIR: '.'
-  DOWNLOAD_DIR: '.'
-  DATA: '{}'
-  PAT_TOKEN: ''
+  VISIBILITY: "public"
+  BASE: "main"
+  MERGE_METHOD: "merge"
+  CLONE_DIR: "."
+  DOWNLOAD_DIR: "."
+  DATA: "{}"
+  PAT_TOKEN: ""
 
 env:
-  GH_TOKEN: '{{.PAT_TOKEN}}'
+  GH_TOKEN: "{{.PAT_TOKEN}}"
 
 tasks:
   default:
@@ -1240,7 +1240,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      GH_PAT: '{{.PAT_TOKEN}}'
+      GH_PAT: "{{.PAT_TOKEN}}"
     cmds:
       - |
         TARGET="{{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}}"
@@ -1260,7 +1260,7 @@ tasks:
       Falls back to gh repo clone when PAT_TOKEN is absent.
     platforms: [windows]
     env:
-      GH_PAT: '{{.PAT_TOKEN}}'
+      GH_PAT: "{{.PAT_TOKEN}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1277,7 +1277,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      GH_DATA: '{{.DATA}}'
+      GH_DATA: "{{.DATA}}"
     cmds:
       - printf '%s' "$GH_DATA" | gh api --method POST {{.ENDPOINT}} --input -
 
@@ -1287,7 +1287,7 @@ tasks:
     summary: Pipe DATA to gh api --method POST via PowerShell on Windows.
     platforms: [windows]
     env:
-      GH_DATA: '{{.DATA}}'
+      GH_DATA: "{{.DATA}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1300,7 +1300,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      GH_DATA: '{{.DATA}}'
+      GH_DATA: "{{.DATA}}"
     cmds:
       - printf '%s' "$GH_DATA" | gh api --method PATCH {{.ENDPOINT}} --input -
 
@@ -1310,7 +1310,7 @@ tasks:
     summary: Pipe DATA to gh api --method PATCH via PowerShell on Windows.
     platforms: [windows]
     env:
-      GH_DATA: '{{.DATA}}'
+      GH_DATA: "{{.DATA}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1961,7 +1961,7 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     env:
-      GH_SECRET_VALUE: '{{.SECRET_VALUE}}'
+      GH_SECRET_VALUE: "{{.SECRET_VALUE}}"
     cmds:
       - >-
         printf '%s' "$GH_SECRET_VALUE"
@@ -1976,7 +1976,7 @@ tasks:
       process list. Reads SECRET_VALUE from the task environment.
     platforms: [windows]
     env:
-      GH_SECRET_VALUE: '{{.SECRET_VALUE}}'
+      GH_SECRET_VALUE: "{{.SECRET_VALUE}}"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command

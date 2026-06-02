@@ -41,12 +41,14 @@ tasks:
           elif [ -f pnpm-lock.yaml ]; then echo "pnpm"
           elif [ -f yarn.lock ]; then echo "yarn"
           else echo "npm"; fi
+    preconditions:
+      - sh: echo "{{._PM}}" | grep -qE '^(npm|pnpm|yarn|bun)$'
+        msg: 'Unsupported PM="{{._PM}}". Use npm, pnpm, yarn, or bun.'
     cmds:
-      - |
-        case "{{._PM}}" in
-          npm|pnpm|yarn|bun) task {{._PM}}:add PACKAGES="{{.PACKAGES}}" EXTRA_ARGS="{{.EXTRA_ARGS}}" ;;
-          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "{{._PM}}" >&2; exit 1 ;;
-        esac
+      - task: "{{._PM}}:add"
+        vars:
+          PACKAGES: "{{.PACKAGES}}"
+          EXTRA_ARGS: "{{.EXTRA_ARGS}}"
 
   exec:
     internal: true
@@ -62,18 +64,39 @@ tasks:
           elif [ -f pnpm-lock.yaml ]; then echo "pnpm"
           elif [ -f yarn.lock ]; then echo "yarn"
           else echo "npm"; fi
+    preconditions:
+      - sh: echo "{{._PM}}" | grep -qE '^(npm|pnpm|yarn|bun)$'
+        msg: 'Unsupported PM="{{._PM}}". Use npm, pnpm, yarn, or bun.'
     cmds:
-      - |
-        if [ ! -f "node_modules/.bin/{{.BINARY}}" ]; then
-          task install PACKAGES="{{.BINARY}}" PM="{{._PM}}"
-        fi
-      - |
-        case "{{._PM}}" in
-          npm|pnpm|yarn|bun) task {{._PM}}:exec BINARY="{{.BINARY}}" \
-            ARGS="{{.ARGS}}" \
-            EXTRA_ARGS="{{.EXTRA_ARGS}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}" ;;
-          *) printf 'Unsupported PM="%s". Use npm, pnpm, yarn, or bun.\n' "{{._PM}}" >&2; exit 1 ;;
-        esac
+      - task: _install-if-missing
+        vars:
+          BINARY: "{{.BINARY}}"
+          PM: "{{._PM}}"
+      - task: "{{._PM}}:exec"
+        vars:
+          BINARY: "{{.BINARY}}"
+          ARGS: "{{.ARGS}}"
+          EXTRA_ARGS: "{{.EXTRA_ARGS}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+
+  _install-if-missing:
+    internal: true
+    requires:
+      vars: [BINARY]
+    vars:
+      _PM:
+        sh: |
+          pm="{{.PM}}"
+          if [ -n "$pm" ]; then echo "$pm"; exit; fi
+          if [ -f bun.lock ] || [ -f bun.lockb ]; then echo "bun"
+          elif [ -f pnpm-lock.yaml ]; then echo "pnpm"
+          elif [ -f yarn.lock ]; then echo "yarn"
+          else echo "npm"; fi
+    status:
+      - command -v {{.BINARY}} >/dev/null 2>&1
+    cmds:
+      - task: "{{._PM}}:add"
+        vars:
+          PACKAGES: "{{.BINARY}}"
 
   exec:ignore:
     internal: true

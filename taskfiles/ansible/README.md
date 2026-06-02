@@ -39,33 +39,33 @@ task ansible:run PLAYBOOK=site.yml INVENTORY=hosts
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install Ansible and ansible-lint via uv | none |
-| `install:undo` | Remove Ansible and ansible-lint | none |
-| `upgrade` | Upgrade Ansible and ansible-lint to the latest release | none |
-| `version` | Show Ansible and ansible-lint versions | none |
-| `lint` | Lint Ansible YAML files with ansible-lint | `TARGETS`, `EXTRA_ARGS` |
-| `syntax:check` | Check playbook syntax without executing | `PLAYBOOK`, `INVENTORY` |
-| `run` | Run an Ansible playbook | `PLAYBOOK`, `INVENTORY`, `EXTRA_ARGS` |
-| `ping` | Test connectivity to inventory hosts | `INVENTORY`, `PATTERN`, `EXTRA_ARGS` |
-| `list:hosts` | List hosts matching PATTERN from INVENTORY | `INVENTORY`, `PATTERN`, `EXTRA_ARGS` |
-| `galaxy:install` | Install roles and collections from a requirements file | `REQUIREMENTS`, `EXTRA_ARGS` |
-| `vault:encrypt` | Encrypt a file with Ansible Vault | `FILE`, `EXTRA_ARGS` |
-| `vault:decrypt` | Decrypt a file with Ansible Vault | `FILE`, `EXTRA_ARGS` |
+| Task             | Description                                            | Key variables                         |
+| ---------------- | ------------------------------------------------------ | ------------------------------------- |
+| `install`        | Install Ansible and ansible-lint via uv                | none                                  |
+| `install:undo`   | Remove Ansible and ansible-lint                        | none                                  |
+| `upgrade`        | Upgrade Ansible and ansible-lint to the latest release | none                                  |
+| `version`        | Show Ansible and ansible-lint versions                 | none                                  |
+| `lint`           | Lint Ansible YAML files with ansible-lint              | `TARGETS`, `EXTRA_ARGS`               |
+| `syntax:check`   | Check playbook syntax without executing                | `PLAYBOOK`, `INVENTORY`               |
+| `run`            | Run an Ansible playbook                                | `PLAYBOOK`, `INVENTORY`, `EXTRA_ARGS` |
+| `ping`           | Test connectivity to inventory hosts                   | `INVENTORY`, `PATTERN`, `EXTRA_ARGS`  |
+| `list:hosts`     | List hosts matching PATTERN from INVENTORY             | `INVENTORY`, `PATTERN`, `EXTRA_ARGS`  |
+| `galaxy:install` | Install roles and collections from a requirements file | `REQUIREMENTS`, `EXTRA_ARGS`          |
+| `vault:encrypt`  | Encrypt a file with Ansible Vault                      | `FILE`, `EXTRA_ARGS`                  |
+| `vault:decrypt`  | Decrypt a file with Ansible Vault                      | `FILE`, `EXTRA_ARGS`                  |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PLAYBOOK` | _(empty)_ | Playbook path; required by `run` and `syntax:check` |
-| `INVENTORY` | _(empty)_ | Inventory file or directory; required by `ping` and `list:hosts` |
-| `PATTERN` | `all` | Host pattern for `ping` and `list:hosts` |
-| `TARGETS` | `.` | Files or directories to lint with `lint` |
-| `FILE` | _(empty)_ | File path; required by `vault:encrypt` and `vault:decrypt` |
-| `REQUIREMENTS` | `requirements.yml` | Requirements file for `galaxy:install` |
-| `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to the underlying Ansible command |
-| `UV_LOAD` | `export PATH="$HOME/.local/bin:$PATH"` | Shell snippet that ensures uv-managed binaries are in PATH |
+| Variable       | Default                                | Description                                                      |
+| -------------- | -------------------------------------- | ---------------------------------------------------------------- |
+| `PLAYBOOK`     | _(empty)_                              | Playbook path; required by `run` and `syntax:check`              |
+| `INVENTORY`    | _(empty)_                              | Inventory file or directory; required by `ping` and `list:hosts` |
+| `PATTERN`      | `all`                                  | Host pattern for `ping` and `list:hosts`                         |
+| `TARGETS`      | `.`                                    | Files or directories to lint with `lint`                         |
+| `FILE`         | _(empty)_                              | File path; required by `vault:encrypt` and `vault:decrypt`       |
+| `REQUIREMENTS` | `requirements.yml`                     | Requirements file for `galaxy:install`                           |
+| `EXTRA_ARGS`   | _(empty)_                              | Extra flags forwarded to the underlying Ansible command          |
+| `UV_LOAD`      | `export PATH="$HOME/.local/bin:$PATH"` | Shell snippet that ensures uv-managed binaries are in PATH       |
 
 ## Notes
 

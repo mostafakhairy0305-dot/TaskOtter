@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -13,13 +13,13 @@ vars:
   UV_INSTALL_URL: https://astral.sh/uv/install.sh
   UV_INSTALL_URL_WINDOWS: https://astral.sh/uv/install.ps1
   UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
-  VENV: '.venv'
-  REQUIREMENTS: 'requirements.txt'
-  FILE: ''
-  ARGS: ''
-  EXTRA_ARGS: ''
-  PYTHON_VERSION: ''
-  TOOL: ''
+  VENV: ".venv"
+  REQUIREMENTS: "requirements.txt"
+  FILE: ""
+  ARGS: ""
+  EXTRA_ARGS: ""
+  PYTHON_VERSION: ""
+  TOOL: ""
 
 tasks:
   default:

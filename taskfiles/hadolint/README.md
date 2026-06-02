@@ -48,21 +48,21 @@ task hadolint:version
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install hadolint on the current operating system | none |
-| `install:undo` | Remove hadolint from the current operating system | none |
-| `lint` | Lint a Dockerfile with hadolint | `DOCKERFILE`, `CONFIG`, `EXTRA_ARGS` |
-| `upgrade` | Upgrade hadolint to the latest release | none |
-| `version` | Show the installed hadolint version | none |
+| Task           | Description                                       | Key variables                        |
+| -------------- | ------------------------------------------------- | ------------------------------------ |
+| `install`      | Install hadolint on the current operating system  | none                                 |
+| `install:undo` | Remove hadolint from the current operating system | none                                 |
+| `lint`         | Lint a Dockerfile with hadolint                   | `DOCKERFILE`, `CONFIG`, `EXTRA_ARGS` |
+| `upgrade`      | Upgrade hadolint to the latest release            | none                                 |
+| `version`      | Show the installed hadolint version               | none                                 |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DOCKERFILE` | `Dockerfile` | Path to the Dockerfile to lint |
-| `CONFIG` | empty | Path to a hadolint config file passed via `--config` |
-| `EXTRA_ARGS` | empty | Extra arguments appended when CLI_ARGS is not provided |
+| Variable     | Default      | Description                                            |
+| ------------ | ------------ | ------------------------------------------------------ |
+| `DOCKERFILE` | `Dockerfile` | Path to the Dockerfile to lint                         |
+| `CONFIG`     | empty        | Path to a hadolint config file passed via `--config`   |
+| `EXTRA_ARGS` | empty        | Extra arguments appended when CLI_ARGS is not provided |
 
 ## Notes
 

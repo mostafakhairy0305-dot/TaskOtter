@@ -36,26 +36,26 @@ task python:pip:install
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install Python on the current OS if missing | none |
-| `install:undo` | Remove Python from the current OS | none |
-| `upgrade` | Upgrade Python to the latest release | none |
-| `version` | Show the installed Python version | none |
-| `verify` | Show Python and pip versions | none |
-| `venv` | Create a virtual environment | `VENV` |
-| `pip:install` | Install packages from a requirements file | `REQUIREMENTS`, `EXTRA_ARGS` |
-| `run` | Run a Python script | `FILE`, `ARGS`, `EXTRA_ARGS` |
+| Task           | Description                                 | Key variables                |
+| -------------- | ------------------------------------------- | ---------------------------- |
+| `install`      | Install Python on the current OS if missing | none                         |
+| `install:undo` | Remove Python from the current OS           | none                         |
+| `upgrade`      | Upgrade Python to the latest release        | none                         |
+| `version`      | Show the installed Python version           | none                         |
+| `verify`       | Show Python and pip versions                | none                         |
+| `venv`         | Create a virtual environment                | `VENV`                       |
+| `pip:install`  | Install packages from a requirements file   | `REQUIREMENTS`, `EXTRA_ARGS` |
+| `run`          | Run a Python script                         | `FILE`, `ARGS`, `EXTRA_ARGS` |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VENV` | `.venv` | Virtual environment directory used by `venv` |
-| `REQUIREMENTS` | `requirements.txt` | Requirements file used by `pip:install` |
-| `FILE` | _(empty)_ | Script path; required by `run` |
-| `ARGS` | _(empty)_ | Positional arguments forwarded to the script in `run` |
-| `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to `pip install` or the Python interpreter |
+| Variable       | Default            | Description                                                      |
+| -------------- | ------------------ | ---------------------------------------------------------------- |
+| `VENV`         | `.venv`            | Virtual environment directory used by `venv`                     |
+| `REQUIREMENTS` | `requirements.txt` | Requirements file used by `pip:install`                          |
+| `FILE`         | _(empty)_          | Script path; required by `run`                                   |
+| `ARGS`         | _(empty)_          | Positional arguments forwarded to the script in `run`            |
+| `EXTRA_ARGS`   | _(empty)_          | Extra flags forwarded to `pip install` or the Python interpreter |
 
 ## Notes
 

@@ -13,29 +13,29 @@ integrations.
 
 ## Public Tasks
 
-| Task | Variables | Description |
-|---|---|---|
-| `version` | — | Show resolved `tsc`, `tsx`, and `tsserver` information. |
-| `tsserver:info` | — | Show where `tsserver` resolves from and how editors use it. |
-| `install` | Optional `PM` | Install `typescript`, `tsx`, and `@types/node` using lockfile detection. |
-| `run` | Optional `FILE`, `TSX_FLAGS`, `CLI_ARGS` | Execute one TypeScript file once with `tsx`. |
-| `dev` | Optional `FILE`, `TSX_FLAGS` | Run one TypeScript file in `tsx watch` mode. |
-| `typecheck` | Optional `TSCONFIG`, `TSC_FLAGS` | Run `tsc --noEmit` for the full project. |
-| `typecheck:watch` | Optional `TSCONFIG`, `TSC_FLAGS` | Run `tsc --noEmit --watch`. |
-| `typecheck:files` | Required `FILES`; optional `TSC_FLAGS` | Type-check explicit files without loading `tsconfig.json`. |
-| `build` | Optional `TSCONFIG`, `TSC_FLAGS` | Compile the project with `tsc --noEmitOnError`. |
-| `build:watch` | Optional `TSCONFIG`, `TSC_FLAGS` | Compile in watch mode with `tsc --noEmitOnError --watch`. |
-| `build:clean` | Optional `OUT_DIR`, `TSCONFIG`, `TSC_FLAGS` | Remove the output directory and run a fresh compile. |
-| `emit:dts` | Optional `OUT_DIR`, `TSCONFIG`, `TSC_FLAGS` | Emit declaration files only. |
-| `config:show` | Optional `TSCONFIG` | Print the fully resolved TypeScript config. |
-| `config:init` | — | Generate a starter `tsconfig.json` with `tsc --init`. |
-| `config:files` | Optional `TSCONFIG` | List every file included in the compilation. |
-| `config:diagnostics` | Optional `TSCONFIG` | Print compiler performance diagnostics. |
-| `config:trace` | Optional `TRACE_DIR`, `TSCONFIG`, `TSC_FLAGS` | Emit a TypeScript performance trace. |
-| `start` | Optional `OUTFILE` | Run compiled JavaScript with Node.js. |
-| `ci` | Optional `TSCONFIG`, `TSC_FLAGS` | Run the same strict no-emit type-check used by CI. |
-| `clean` | Optional `OUT_DIR` | Remove the compiled output directory. |
-| `clean:all` | Optional `OUT_DIR` | Remove output, incremental build cache, and trace output. |
+| Task                 | Variables                                     | Description                                                              |
+| -------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |
+| `version`            | —                                             | Show resolved `tsc`, `tsx`, and `tsserver` information.                  |
+| `tsserver:info`      | —                                             | Show where `tsserver` resolves from and how editors use it.              |
+| `install`            | Optional `PM`                                 | Install `typescript`, `tsx`, and `@types/node` using lockfile detection. |
+| `run`                | Optional `FILE`, `TSX_FLAGS`, `CLI_ARGS`      | Execute one TypeScript file once with `tsx`.                             |
+| `dev`                | Optional `FILE`, `TSX_FLAGS`                  | Run one TypeScript file in `tsx watch` mode.                             |
+| `typecheck`          | Optional `TSCONFIG`, `TSC_FLAGS`              | Run `tsc --noEmit` for the full project.                                 |
+| `typecheck:watch`    | Optional `TSCONFIG`, `TSC_FLAGS`              | Run `tsc --noEmit --watch`.                                              |
+| `typecheck:files`    | Required `FILES`; optional `TSC_FLAGS`        | Type-check explicit files without loading `tsconfig.json`.               |
+| `build`              | Optional `TSCONFIG`, `TSC_FLAGS`              | Compile the project with `tsc --noEmitOnError`.                          |
+| `build:watch`        | Optional `TSCONFIG`, `TSC_FLAGS`              | Compile in watch mode with `tsc --noEmitOnError --watch`.                |
+| `build:clean`        | Optional `OUT_DIR`, `TSCONFIG`, `TSC_FLAGS`   | Remove the output directory and run a fresh compile.                     |
+| `emit:dts`           | Optional `OUT_DIR`, `TSCONFIG`, `TSC_FLAGS`   | Emit declaration files only.                                             |
+| `config:show`        | Optional `TSCONFIG`                           | Print the fully resolved TypeScript config.                              |
+| `config:init`        | —                                             | Generate a starter `tsconfig.json` with `tsc --init`.                    |
+| `config:files`       | Optional `TSCONFIG`                           | List every file included in the compilation.                             |
+| `config:diagnostics` | Optional `TSCONFIG`                           | Print compiler performance diagnostics.                                  |
+| `config:trace`       | Optional `TRACE_DIR`, `TSCONFIG`, `TSC_FLAGS` | Emit a TypeScript performance trace.                                     |
+| `start`              | Optional `OUTFILE`                            | Run compiled JavaScript with Node.js.                                    |
+| `ci`                 | Optional `TSCONFIG`, `TSC_FLAGS`              | Run the same strict no-emit type-check used by CI.                       |
+| `clean`              | Optional `OUT_DIR`                            | Remove the compiled output directory.                                    |
+| `clean:all`          | Optional `OUT_DIR`                            | Remove output, incremental build cache, and trace output.                |
 
 ## Examples
 

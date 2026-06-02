@@ -37,30 +37,30 @@ task docker:ps
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install Docker on the current OS; Linux also adds the user to the docker group | none |
-| `install:undo` | Remove Docker from the current OS | none |
-| `upgrade` | Upgrade Docker to the latest release | none |
-| `version` | Show Docker client and server versions | none |
-| `verify` | Verify Docker installation and daemon connectivity | none |
-| `ps` | List running containers | none |
-| `ps:all` | List all containers including stopped ones | none |
-| `stop:all` | Stop all running containers | none |
-| `prune` | Remove stopped containers and dangling images | none |
-| `prune:all` | Full system prune including volumes | none |
-| `images` | List local Docker images | none |
-| `build` | Build a Docker image from a Dockerfile | `IMAGE`, `FILE`, `CONTEXT` |
-| `pull` | Pull a Docker image from a registry | `IMAGE` |
+| Task           | Description                                                                    | Key variables              |
+| -------------- | ------------------------------------------------------------------------------ | -------------------------- |
+| `install`      | Install Docker on the current OS; Linux also adds the user to the docker group | none                       |
+| `install:undo` | Remove Docker from the current OS                                              | none                       |
+| `upgrade`      | Upgrade Docker to the latest release                                           | none                       |
+| `version`      | Show Docker client and server versions                                         | none                       |
+| `verify`       | Verify Docker installation and daemon connectivity                             | none                       |
+| `ps`           | List running containers                                                        | none                       |
+| `ps:all`       | List all containers including stopped ones                                     | none                       |
+| `stop:all`     | Stop all running containers                                                    | none                       |
+| `prune`        | Remove stopped containers and dangling images                                  | none                       |
+| `prune:all`    | Full system prune including volumes                                            | none                       |
+| `images`       | List local Docker images                                                       | none                       |
+| `build`        | Build a Docker image from a Dockerfile                                         | `IMAGE`, `FILE`, `CONTEXT` |
+| `pull`         | Pull a Docker image from a registry                                            | `IMAGE`                    |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `IMAGE` | _(empty)_ | Image name and tag used by `build` and `pull` |
-| `FILE` | `Dockerfile` | Dockerfile path used by `build` |
-| `CONTEXT` | `.` | Build context directory used by `build` |
-| `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to `docker build` or `docker pull` |
+| Variable     | Default      | Description                                              |
+| ------------ | ------------ | -------------------------------------------------------- |
+| `IMAGE`      | _(empty)_    | Image name and tag used by `build` and `pull`            |
+| `FILE`       | `Dockerfile` | Dockerfile path used by `build`                          |
+| `CONTEXT`    | `.`          | Build context directory used by `build`                  |
+| `EXTRA_ARGS` | _(empty)_    | Extra flags forwarded to `docker build` or `docker pull` |
 
 ## Notes
 

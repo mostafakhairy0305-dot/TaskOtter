@@ -36,23 +36,23 @@ task yamllint:ci
 
 ## Public Tasks
 
-| Task | Description | Key variables |
-|------|-------------|---------------|
-| `install` | Install yamllint on the current OS if missing | none |
-| `install:undo` | Remove yamllint from the current OS | none |
-| `upgrade` | Upgrade yamllint to the latest release | none |
-| `version` | Show the installed yamllint version | none |
-| `lint` | Lint YAML files | `TARGETS`, `CONFIG`, `EXTRA_ARGS` |
-| `lint:fix` | Auto-fix YAML files with yamlfix | `TARGETS`, `EXTRA_ARGS` |
-| `ci` | Strict lint for CI (fails on warnings) | `TARGETS`, `CONFIG`, `EXTRA_ARGS` |
-| `config:init` | Create a default `.yamllint` configuration file | none |
+| Task           | Description                                     | Key variables                     |
+| -------------- | ----------------------------------------------- | --------------------------------- |
+| `install`      | Install yamllint on the current OS if missing   | none                              |
+| `install:undo` | Remove yamllint from the current OS             | none                              |
+| `upgrade`      | Upgrade yamllint to the latest release          | none                              |
+| `version`      | Show the installed yamllint version             | none                              |
+| `lint`         | Lint YAML files                                 | `TARGETS`, `CONFIG`, `EXTRA_ARGS` |
+| `lint:fix`     | Auto-fix YAML files with yamlfix                | `TARGETS`, `EXTRA_ARGS`           |
+| `ci`           | Strict lint for CI (fails on warnings)          | `TARGETS`, `CONFIG`, `EXTRA_ARGS` |
+| `config:init`  | Create a default `.yamllint` configuration file | none                              |
 
 ## Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TARGETS` | `.` | Files or directories to lint |
-| `CONFIG` | _(empty)_ | Path to a yamllint config file passed via `-c` |
+| Variable     | Default   | Description                                      |
+| ------------ | --------- | ------------------------------------------------ |
+| `TARGETS`    | `.`       | Files or directories to lint                     |
+| `CONFIG`     | _(empty)_ | Path to a yamllint config file passed via `-c`   |
 | `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to `yamllint` or `yamlfix` |
 
 ## Notes
@@ -66,6 +66,7 @@ is available (e.g. Alpine, Arch), pip3 is used automatically as a fallback.
 
 **`lint:fix`** uses [yamlfix](https://github.com/lyz-code/yamlfix), which is a
 separate tool from yamllint. Install it before using `lint:fix`:
+
 ```sh
 pip install yamlfix
 ```

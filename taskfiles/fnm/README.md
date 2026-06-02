@@ -32,27 +32,27 @@ Tasks that only read state (`version`, `ls`, `node:version`) do **not** auto-ins
 
 Installs are **idempotent**: each internal install task has a `status` check that exits early when the target is already installed, so running any task multiple times is safe and only does work when something is actually missing.
 
-| Task | Behavior when fnm is not installed |
-|---|---|
-| `version`, `ls`, `node:version` | Fails with a clear error — run `task install` first |
-| `node:install`, `node:uninstall` | Auto-installs fnm, then runs the Node.js operation |
-| `node:use` | Auto-installs fnm → installs the Node.js version if missing → activates |
+| Task                             | Behavior when fnm is not installed                                      |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `version`, `ls`, `node:version`  | Fails with a clear error — run `task install` first                     |
+| `node:install`, `node:uninstall` | Auto-installs fnm, then runs the Node.js operation                      |
+| `node:use`                       | Auto-installs fnm → installs the Node.js version if missing → activates |
 
 ---
 
 ## Public Tasks
 
-| Task | Aliases | Variables | Description |
-|---|---|---|---|
-| `install` | — | — | Install fnm for the current operating system and configure shell activation. |
-| `install:undo` | `uninstall` | — | Remove fnm from the current operating system. |
-| `version` | — | — | Show the installed fnm version. Fails clearly if fnm is not installed. |
-| `node:install` | `node:uninstall:undo` | Optional `VERSION` | Install a Node.js version. If `VERSION` is omitted, install latest LTS. Accepts full versions (`18.0.0`), major versions (`20`), and aliases (`--lts`, `lts-latest`). Auto-installs fnm if missing. |
-| `node:uninstall` | `node:install:undo` | Required `VERSION` | Uninstall a Node.js version managed by fnm. Accepts the same version formats as `node:install`. Auto-installs fnm if missing. |
-| `node:use` | — | Optional `VERSION` | Install (if needed) and activate a Node.js version. Resolves the version alias to the concrete installed version and sets it as the fnm default for new shells. If `VERSION` is omitted, use latest LTS. Auto-installs fnm and the Node.js version if missing. |
-| `ls` | `list` | — | List Node.js versions installed through fnm. Fails clearly if fnm is not installed. |
-| `node:version` | `node:current`, `node:active` | — | Show the active Node.js and npm versions. Fails clearly if fnm is not installed. |
-| `shell:setup` | — | — | Configure fnm activation in the current user's shell profile. Detects the shell, appends only missing lines (never duplicates). Supports bash, zsh, and fish on Unix and PowerShell on Windows. |
+| Task             | Aliases                       | Variables          | Description                                                                                                                                                                                                                                                    |
+| ---------------- | ----------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `install`        | —                             | —                  | Install fnm for the current operating system and configure shell activation.                                                                                                                                                                                   |
+| `install:undo`   | `uninstall`                   | —                  | Remove fnm from the current operating system.                                                                                                                                                                                                                  |
+| `version`        | —                             | —                  | Show the installed fnm version. Fails clearly if fnm is not installed.                                                                                                                                                                                         |
+| `node:install`   | `node:uninstall:undo`         | Optional `VERSION` | Install a Node.js version. If `VERSION` is omitted, install latest LTS. Accepts full versions (`18.0.0`), major versions (`20`), and aliases (`--lts`, `lts-latest`). Auto-installs fnm if missing.                                                            |
+| `node:uninstall` | `node:install:undo`           | Required `VERSION` | Uninstall a Node.js version managed by fnm. Accepts the same version formats as `node:install`. Auto-installs fnm if missing.                                                                                                                                  |
+| `node:use`       | —                             | Optional `VERSION` | Install (if needed) and activate a Node.js version. Resolves the version alias to the concrete installed version and sets it as the fnm default for new shells. If `VERSION` is omitted, use latest LTS. Auto-installs fnm and the Node.js version if missing. |
+| `ls`             | `list`                        | —                  | List Node.js versions installed through fnm. Fails clearly if fnm is not installed.                                                                                                                                                                            |
+| `node:version`   | `node:current`, `node:active` | —                  | Show the active Node.js and npm versions. Fails clearly if fnm is not installed.                                                                                                                                                                               |
+| `shell:setup`    | —                             | —                  | Configure fnm activation in the current user's shell profile. Detects the shell, appends only missing lines (never duplicates). Supports bash, zsh, and fish on Unix and PowerShell on Windows.                                                                |
 
 ---
 

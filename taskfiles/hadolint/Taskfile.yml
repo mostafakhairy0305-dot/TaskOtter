@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -10,9 +10,9 @@ output:
 silent: true
 
 vars:
-  CONFIG: ''
-  DOCKERFILE: 'Dockerfile'
-  EXTRA_ARGS: ''
+  CONFIG: ""
+  DOCKERFILE: "Dockerfile"
+  EXTRA_ARGS: ""
 
 tasks:
   default:
@@ -120,7 +120,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v apt-get >/dev/null 2>&1'
+      - "! command -v apt-get >/dev/null 2>&1"
     cmds:
       - echo 'Installing hadolint via apt-get...'
       - cmd: apt-get install -y hadolint
@@ -134,7 +134,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v dnf >/dev/null 2>&1'
+      - "! command -v dnf >/dev/null 2>&1"
     cmds:
       - echo 'Installing hadolint via dnf...'
       - cmd: dnf install -y hadolint
@@ -165,7 +165,7 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v hadolint >/dev/null 2>&1'
+      - "! command -v hadolint >/dev/null 2>&1"
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to remove hadolint on macOS.
@@ -179,7 +179,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v hadolint >/dev/null 2>&1'
+      - "! command -v hadolint >/dev/null 2>&1"
     preconditions:
       - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
         msg: sudo is required to remove hadolint when not running as root.
@@ -192,7 +192,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v apt-get >/dev/null 2>&1'
+      - "! command -v apt-get >/dev/null 2>&1"
     cmds:
       - echo 'Removing hadolint via apt-get...'
       - cmd: apt-get remove -y hadolint
@@ -206,7 +206,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v dnf >/dev/null 2>&1'
+      - "! command -v dnf >/dev/null 2>&1"
     cmds:
       - echo 'Removing hadolint via dnf...'
       - cmd: dnf remove -y hadolint
@@ -239,7 +239,7 @@ tasks:
       - cmd: brew upgrade hadolint
         if: brew list hadolint >/dev/null 2>&1
       - cmd: brew install hadolint
-        if: '! brew list hadolint >/dev/null 2>&1'
+        if: "! brew list hadolint >/dev/null 2>&1"
       - echo 'hadolint upgraded.'
 
   _upgrade:linux:
@@ -258,7 +258,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v apt-get >/dev/null 2>&1'
+      - "! command -v apt-get >/dev/null 2>&1"
     cmds:
       - echo 'Upgrading hadolint via apt-get...'
       - cmd: apt-get install -y --only-upgrade hadolint
@@ -272,7 +272,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v dnf >/dev/null 2>&1'
+      - "! command -v dnf >/dev/null 2>&1"
     cmds:
       - echo 'Upgrading hadolint via dnf...'
       - cmd: dnf upgrade -y hadolint

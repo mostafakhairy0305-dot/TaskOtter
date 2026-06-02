@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 
 output:
   group:
@@ -10,10 +10,10 @@ output:
 silent: true
 
 vars:
-  IMAGE: ''
-  FILE: 'Dockerfile'
-  CONTEXT: '.'
-  EXTRA_ARGS: ''
+  IMAGE: ""
+  FILE: "Dockerfile"
+  CONTEXT: "."
+  EXTRA_ARGS: ""
 
 tasks:
   default:
@@ -254,7 +254,7 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v docker >/dev/null 2>&1 && ! brew list --cask docker >/dev/null 2>&1'
+      - "! command -v docker >/dev/null 2>&1 && ! brew list --cask docker >/dev/null 2>&1"
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to remove Docker Desktop on macOS.
@@ -268,7 +268,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v docker >/dev/null 2>&1'
+      - "! command -v docker >/dev/null 2>&1"
     preconditions:
       - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
         msg: sudo is required to remove Docker when not running as root.
@@ -281,7 +281,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v apt-get >/dev/null 2>&1'
+      - "! command -v apt-get >/dev/null 2>&1"
     cmds:
       - echo 'Removing Docker Engine packages (apt)...'
       - cmd: >-
@@ -299,7 +299,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v dnf >/dev/null 2>&1'
+      - "! command -v dnf >/dev/null 2>&1"
     cmds:
       - echo 'Removing Docker Engine packages (dnf)...'
       - cmd: dnf remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -333,7 +333,7 @@ tasks:
       - cmd: brew upgrade --cask docker
         if: brew list --cask docker >/dev/null 2>&1
       - cmd: brew install --cask docker
-        if: '! brew list --cask docker >/dev/null 2>&1'
+        if: "! brew list --cask docker >/dev/null 2>&1"
       - echo 'Docker Desktop upgraded.'
 
   _upgrade:linux:
@@ -354,7 +354,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v apt-get >/dev/null 2>&1'
+      - "! command -v apt-get >/dev/null 2>&1"
     cmds:
       - echo 'Upgrading Docker Engine (apt)...'
       - cmd: >-
@@ -374,7 +374,7 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '! command -v dnf >/dev/null 2>&1'
+      - "! command -v dnf >/dev/null 2>&1"
     cmds:
       - echo 'Upgrading Docker Engine (dnf)...'
       - cmd: dnf update -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
