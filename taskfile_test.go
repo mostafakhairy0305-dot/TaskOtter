@@ -140,16 +140,50 @@ func TestRootVaultSnapshotHonorsVaultFileOverride(t *testing.T) {
 	}
 }
 
-func TestRootVaultListAdvertisesVaultFileOverride(t *testing.T) {
-	output := rootTaskOutput(t, "--list-all")
+func TestRootVaultDescriptionsAdvertiseVaultFileOverride(t *testing.T) {
+	rootContent, err := os.ReadFile("Taskfile.yml")
+	if err != nil {
+		t.Fatalf("read root Taskfile: %v", err)
+	}
 
-	for _, token := range []string{
-		"vault:snapshot:",
-		"vault:restore:",
-		"root VAULT_FILE=path",
-	} {
-		if !strings.Contains(output, token) {
-			t.Fatalf("root task list missing %q\noutput:\n%s", token, output)
+	var root struct {
+		Includes map[string]struct {
+			Vars map[string]string `yaml:"vars"`
+		} `yaml:"includes"`
+	}
+	if err := yaml.Unmarshal(rootContent, &root); err != nil {
+		t.Fatalf("parse root Taskfile: %v", err)
+	}
+
+	vaultInclude, ok := root.Includes["vault"]
+	if !ok {
+		t.Fatal("root Taskfile missing vault include")
+	}
+	if got := vaultInclude.Vars["VAULT_FILE_OVERRIDE"]; got != "{{.VAULT_FILE}}" {
+		t.Fatalf("root vault include should forward VAULT_FILE, got %q", got)
+	}
+
+	vaultContent, err := os.ReadFile(filepath.Join("taskfiles", "vault", "Taskfile.yml"))
+	if err != nil {
+		t.Fatalf("read vault Taskfile: %v", err)
+	}
+
+	var vault struct {
+		Tasks map[string]struct {
+			Desc string `yaml:"desc"`
+		} `yaml:"tasks"`
+	}
+	if err := yaml.Unmarshal(vaultContent, &vault); err != nil {
+		t.Fatalf("parse vault Taskfile: %v", err)
+	}
+
+	for _, name := range []string{"snapshot", "restore"} {
+		task, ok := vault.Tasks[name]
+		if !ok {
+			t.Fatalf("vault Taskfile missing %s task", name)
+		}
+		if !strings.Contains(task.Desc, "root VAULT_FILE=path") {
+			t.Fatalf("vault %s desc should advertise root VAULT_FILE=path, got %q", name, task.Desc)
 		}
 	}
 }
