@@ -9,6 +9,9 @@ output:
 
 silent: true
 
+includes:
+  jq: ../jq/Taskfile.yml
+
 vars:
   VAULT_ADDR: "http://127.0.0.1:8200"
   KEYS_FILE: .vault-init-keys.json
@@ -109,9 +112,9 @@ tasks:
       472 when in recovery mode, and 501 when uninitialized.
       This task only uses curl and jq — it does not require the Vault CLI.
     set: [errexit, nounset, pipefail]
+    deps:
+      - jq:install
     preconditions:
-      - sh: command -v jq >/dev/null 2>&1
-        msg: jq is required to parse Vault health JSON. Install it from https://jqlang.org.
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to query the Vault health endpoint.
     cmds:
@@ -166,13 +169,12 @@ tasks:
       Auto-installs the CLI if missing.
     set: [errexit, nounset, pipefail]
     preconditions:
-      - sh: command -v jq >/dev/null 2>&1
-        msg: jq is required to read unseal keys from KEYS_FILE. Install it from https://jqlang.org.
       - sh: test -f "{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
         msg: >-
           KEYS_FILE not found. Run task init first to generate
           {{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}.
     cmds:
+      - task: jq:install
       - task: install
       - |
         KEYS_FILE="{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
@@ -202,13 +204,12 @@ tasks:
       Auto-installs the CLI if missing.
     set: [errexit, nounset, pipefail]
     preconditions:
-      - sh: command -v jq >/dev/null 2>&1
-        msg: jq is required to read the root token from KEYS_FILE. Install it from https://jqlang.org.
       - sh: test -f "{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
         msg: >-
           KEYS_FILE not found. Run task init first to generate
           {{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}.
     cmds:
+      - task: jq:install
       - task: install
       - |
         KF="{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
@@ -220,9 +221,9 @@ tasks:
       Read the root_token field from KEYS_FILE and print it to stdout. Useful for
       scripting or when you need to pass the root token to another tool.
       KEYS_FILE must exist and contain the JSON produced by the init task.
+    deps:
+      - jq:install
     preconditions:
-      - sh: command -v jq >/dev/null 2>&1
-        msg: jq is required to read the root token from KEYS_FILE. Install it from https://jqlang.org.
       - sh: test -f "{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
         msg: >-
           KEYS_FILE not found. Run task init first to generate

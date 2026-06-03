@@ -9,6 +9,9 @@ output:
 
 silent: true
 
+includes:
+  jq: ../jq/Taskfile.yml
+
 vars:
   VISIBILITY: "public"
   BASE: "main"
@@ -567,6 +570,7 @@ tasks:
         - WORKFLOW
     deps:
       - install
+      - jq:install
     cmds:
       - task: _workflow:watch:unix
       - task: _workflow:watch:windows
@@ -714,6 +718,7 @@ tasks:
       Example: OWNER=hashicorp REPO=terraform DOWNLOAD_DIR=./releases
     deps:
       - install
+      - jq:install
     cmds:
       - task: _release:download:all:unix
       - task: _release:download:all:windows

@@ -88,6 +88,8 @@ includes:
     taskfile: taskfiles/git/Taskfile.yml
   go:
     taskfile: taskfiles/go/Taskfile.yml
+  jq:
+    taskfile: taskfiles/jq/Taskfile.yml
   hadolint:
     taskfile: taskfiles/hadolint/Taskfile.yml
     vars:
