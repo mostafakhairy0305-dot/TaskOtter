@@ -149,12 +149,10 @@ tasks:
           echo "KEYS_FILE already exists: $KF. Move or remove it before running init again." >&2
           exit 1
         fi
-        ( umask 077
-          vault operator init \
-            -key-shares={{if .SHARES_OVERRIDE}}{{.SHARES_OVERRIDE}}{{else}}{{.SHARES}}{{end}} \
-            -key-threshold={{if .THRESHOLD_OVERRIDE}}{{.THRESHOLD_OVERRIDE}}{{else}}{{.THRESHOLD}}{{end}} \
-            -format=json > "$TMP"
-        )
+        vault operator init \
+          -key-shares={{if .SHARES_OVERRIDE}}{{.SHARES_OVERRIDE}}{{else}}{{.SHARES}}{{end}} \
+          -key-threshold={{if .THRESHOLD_OVERRIDE}}{{.THRESHOLD_OVERRIDE}}{{else}}{{.THRESHOLD}}{{end}} \
+          -format=json > "$TMP"
         chmod 600 "$TMP"
         mv "$TMP" "$KF"
         trap - EXIT
@@ -213,7 +211,7 @@ tasks:
       - task: install
       - |
         KF="{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
-        jq -r '.root_token' "$KF" | vault login -method=token -no-print
+        jq -r '.root_token' "$KF" | vault login -method=token -no-print -
 
   root-token:
     desc: Print the saved Vault root token (KEYS_FILE=path)
