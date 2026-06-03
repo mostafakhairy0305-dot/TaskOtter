@@ -118,7 +118,50 @@ func TestRootAggregatesForwardCommonOverrides(t *testing.T) {
 	}
 }
 
+func TestRootVaultSnapshotHonorsSnapshotFileOverride(t *testing.T) {
+	output := rootDryRun(t, "vault:snapshot", "SNAPSHOT_FILE=custom.snap")
+
+	if !strings.Contains(output, `vault operator raft snapshot save "custom.snap"`) {
+		t.Fatalf("root vault snapshot did not use SNAPSHOT_FILE override\noutput:\n%s", output)
+	}
+	if strings.Contains(output, `vault operator raft snapshot save "src/index.ts"`) {
+		t.Fatalf("root vault snapshot picked up the TypeScript FILE default\noutput:\n%s", output)
+	}
+	if strings.Contains(output, `vault operator raft snapshot save "Dockerfile"`) {
+		t.Fatalf("root vault snapshot picked up the Docker FILE default\noutput:\n%s", output)
+	}
+}
+
+func TestRootVaultSnapshotHonorsVaultFileOverride(t *testing.T) {
+	output := rootDryRun(t, "vault:snapshot", "VAULT_FILE=my.snap")
+
+	if !strings.Contains(output, `vault operator raft snapshot save "my.snap"`) {
+		t.Fatalf("root vault snapshot did not use VAULT_FILE override\noutput:\n%s", output)
+	}
+}
+
+func TestRootVaultListAdvertisesVaultFileOverride(t *testing.T) {
+	output := rootTaskOutput(t, "--list-all")
+
+	for _, token := range []string{
+		"vault:snapshot:",
+		"vault:restore:",
+		"root VAULT_FILE=path",
+	} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root task list missing %q\noutput:\n%s", token, output)
+		}
+	}
+}
+
 func rootDryRun(t *testing.T, args ...string) string {
+	t.Helper()
+
+	allArgs := append([]string{"--dry", "--yes", "--verbose"}, args...)
+	return rootTaskOutput(t, allArgs...)
+}
+
+func rootTaskOutput(t *testing.T, args ...string) string {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -133,7 +176,7 @@ func rootDryRun(t *testing.T, args ...string) string {
 	rootTaskfile := filepath.Join(wd, "Taskfile.yml")
 
 	projectDir, env := setupRootDryRunEnv(t)
-	allArgs := append([]string{"--taskfile", rootTaskfile, "--dry", "--yes", "--verbose"}, args...)
+	allArgs := append([]string{"--taskfile", rootTaskfile}, args...)
 	cmd := exec.CommandContext(ctx, "task", allArgs...)
 	cmd.Dir = projectDir
 	cmd.Env = env
@@ -169,7 +212,7 @@ func setupRootDryRunEnv(t *testing.T) (string, []string) {
 	const stub = "#!/usr/bin/env bash\nexit 0\n"
 	for _, name := range []string{
 		"fnm", "node", "npm", "npx", "pnpm", "yarn", "bun", "corepack",
-		"prettier", "eslint", "biome", "stylelint", "knip", "depcheck", "bru",
+		"prettier", "eslint", "biome", "stylelint", "knip", "depcheck", "bru", "vault",
 	} {
 		if err := os.WriteFile(filepath.Join(binDir, name), []byte(stub), 0755); err != nil {
 			t.Fatalf("write stub %s: %v", name, err)

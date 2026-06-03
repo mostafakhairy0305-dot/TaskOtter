@@ -22,11 +22,13 @@ type Taskfile struct {
 }
 
 type Task struct {
-	Desc     string `yaml:"desc"`
-	Summary  string `yaml:"summary"`
-	Internal bool   `yaml:"internal"`
-	Cmds     any    `yaml:"cmds"`
-	Deps     any    `yaml:"deps"`
+	Desc          string   `yaml:"desc"`
+	Summary       string   `yaml:"summary"`
+	Internal      bool     `yaml:"internal"`
+	Set           []string `yaml:"set"`
+	Preconditions any      `yaml:"preconditions"`
+	Cmds          any      `yaml:"cmds"`
+	Deps          any      `yaml:"deps"`
 }
 
 func AssertModule(t *testing.T, module string, expectedTasks, expectedVars []string) {

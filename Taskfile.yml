@@ -125,6 +125,16 @@ includes:
       FILE_OVERRIDE: "{{.FILE}}"
       TOOL_OVERRIDE: "{{.TOOL}}"
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  vault:
+    taskfile: taskfiles/vault/Taskfile.yml
+    vars:
+      VAULT_ADDR_OVERRIDE: "{{.VAULT_ADDR}}"
+      KEYS_FILE_OVERRIDE: "{{.KEYS_FILE}}"
+      SHARES_OVERRIDE: "{{.SHARES}}"
+      THRESHOLD_OVERRIDE: "{{.THRESHOLD}}"
+      SNAPSHOT_FILE_OVERRIDE: "{{.SNAPSHOT_FILE}}"
+      VAULT_FILE_OVERRIDE: "{{.VAULT_FILE}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   yamllint:
     taskfile: taskfiles/yamllint/Taskfile.yml
     dir: .
@@ -140,11 +150,18 @@ vars:
   TARGETS: ""
   CONFIG: ""
   CACHE: ""
+  FILE: ""
   EXTRA_ARGS: ""
   IGNORE_PATH: ""
   ALLOW_EMPTY_INPUT: ""
   IGNORE_PACKAGES: ""
   PROJECT_PATH: ""
+  VAULT_ADDR: ""
+  KEYS_FILE: ""
+  SHARES: ""
+  THRESHOLD: ""
+  SNAPSHOT_FILE: ""
+  VAULT_FILE: ""
 
 tasks:
   default:

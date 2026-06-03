@@ -134,6 +134,9 @@ func TestInstallMacosBrewDryRun(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("macOS-only test")
 	}
+	if ghAvailable() {
+		t.Skip("gh is already installed; install task would be a no-op")
+	}
 	tasktest.AssertDryRunContains(t, "gh", []string{"install"},
 		"brew install gh",
 	)
