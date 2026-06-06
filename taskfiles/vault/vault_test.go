@@ -15,6 +15,8 @@ var publicTasks = []string{
 	"install",
 	"install:undo",
 	"login",
+	"login:approle",
+	"login:root-token",
 	"peers",
 	"restore",
 	"root-token",
@@ -28,9 +30,13 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"APPROLE_MOUNT",
 	"EXTRA_ARGS",
 	"FILE",
 	"KEYS_FILE",
+	"ROLE_ID",
+	"ROOT_TOKEN",
+	"SECRET_ID",
 	"SHARES",
 	"SNAPSHOT_FILE",
 	"THRESHOLD",
@@ -44,7 +50,7 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestInputValidatedTasksDoNotInstallBeforePreconditions(t *testing.T) {
 	tf := tasktest.LoadTaskfile(t, "vault")
 
-	for _, name := range []string{"init", "login", "restore", "unseal"} {
+	for _, name := range []string{"init", "login", "login:approle", "login:root-token", "restore", "unseal"} {
 		task := tf.Tasks[name]
 		if task.Deps != nil {
 			t.Fatalf("%s should run install from cmds after local preconditions, got deps: %#v", name, task.Deps)
@@ -89,12 +95,63 @@ func TestLoginDoesNotPassRootTokenAsCommandArgument(t *testing.T) {
 	tf := tasktest.LoadTaskfile(t, "vault")
 	cmds := taskFieldYAML(t, tf.Tasks["login"].Cmds)
 
-	if !strings.Contains(cmds, `jq -r '.root_token' "$KF" | vault login -method=token -no-print`) {
-		t.Fatalf("login should pipe the root token to vault login stdin\ncmds:\n%s", cmds)
+	for _, token := range []string{`jq -r '.root_token' "$KF"`, `| vault login`, `-method=token`, `-no-print`} {
+		if !strings.Contains(cmds, token) {
+			t.Fatalf("login should pipe the root token to vault login stdin (missing %q)\ncmds:\n%s", token, cmds)
+		}
 	}
 	for _, token := range []string{`vault login "$(jq`, `vault login token=`, `vault login "$TOKEN"`} {
 		if strings.Contains(cmds, token) {
 			t.Fatalf("login should not expose the root token as a command argument\ncmds:\n%s", cmds)
+		}
+	}
+}
+
+func TestLoginRootTokenPipesTokenViaStdin(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "vault")
+	cmds := taskFieldYAML(t, tf.Tasks["login:root-token"].Cmds)
+
+	for _, token := range []string{`printf '%s' "$VAULT_LOGIN_ROOT_TOKEN"`, `| vault login`, `-method=token`, `-no-print`} {
+		if !strings.Contains(cmds, token) {
+			t.Fatalf("login:root-token should pipe token to vault login stdin (missing %q)\ncmds:\n%s", token, cmds)
+		}
+	}
+	for _, token := range []string{`vault login "$TOKEN"`, `vault login token=`} {
+		if strings.Contains(cmds, token) {
+			t.Fatalf("login:root-token should not expose token as command argument\ncmds:\n%s", cmds)
+		}
+	}
+}
+
+func TestLoginApproleRequiresBothCredentials(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "vault")
+	task := tf.Tasks["login:approle"]
+	preconditions := taskFieldYAML(t, task.Preconditions)
+	cmds := taskFieldYAML(t, task.Cmds)
+
+	for _, token := range []string{"ROLE_ID", "SECRET_ID"} {
+		if !strings.Contains(preconditions, token) {
+			t.Fatalf("login:approle should require %s in preconditions\npreconditions:\n%s", token, preconditions)
+		}
+	}
+	for _, token := range []string{
+		`printf '%s' "$VAULT_LOGIN_SECRET_ID"`,
+		`| vault write`,
+		`-field=token`,
+		`"auth/${VAULT_LOGIN_APPROLE_MOUNT}/login"`,
+		`"$VAULT_LOGIN_ROLE_ID"`,
+		`secret_id=-`,
+		`| vault login`,
+		`-method=token`,
+		`-no-print`,
+	} {
+		if !strings.Contains(cmds, token) {
+			t.Fatalf("login:approle should exchange AppRole credentials without exposing the secret_id (missing %q)\ncmds:\n%s", token, cmds)
+		}
+	}
+	for _, token := range []string{`secret_id="{{`, `secret_id="$VAULT_LOGIN_SECRET_ID"`} {
+		if strings.Contains(cmds, token) {
+			t.Fatalf("login:approle should not expose secret_id as a command argument\ncmds:\n%s", cmds)
 		}
 	}
 }
@@ -115,7 +172,7 @@ func TestLinuxParentTasksGuardUnsupportedPackageManagers(t *testing.T) {
 func TestStrictShellSetOnSensitiveTasks(t *testing.T) {
 	tf := tasktest.LoadTaskfile(t, "vault")
 
-	for _, name := range []string{"health", "init", "login", "restore", "unseal"} {
+	for _, name := range []string{"health", "init", "login", "login:approle", "login:root-token", "restore", "unseal"} {
 		task := tf.Tasks[name]
 		for _, option := range []string{"errexit", "nounset", "pipefail"} {
 			if !slices.Contains(task.Set, option) {

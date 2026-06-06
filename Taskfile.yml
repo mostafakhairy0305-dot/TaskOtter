@@ -136,6 +136,10 @@ includes:
       THRESHOLD_OVERRIDE: "{{.THRESHOLD}}"
       SNAPSHOT_FILE_OVERRIDE: "{{.SNAPSHOT_FILE}}"
       VAULT_FILE_OVERRIDE: "{{.VAULT_FILE}}"
+      ROOT_TOKEN_OVERRIDE: "{{.ROOT_TOKEN}}"
+      ROLE_ID_OVERRIDE: "{{.ROLE_ID}}"
+      SECRET_ID_OVERRIDE: "{{.SECRET_ID}}"
+      APPROLE_MOUNT_OVERRIDE: "{{.APPROLE_MOUNT}}"
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   yamllint:
     taskfile: taskfiles/yamllint/Taskfile.yml
@@ -164,6 +168,10 @@ vars:
   THRESHOLD: ""
   SNAPSHOT_FILE: ""
   VAULT_FILE: ""
+  ROOT_TOKEN: ""
+  ROLE_ID: ""
+  SECRET_ID: ""
+  APPROLE_MOUNT: ""
 
 tasks:
   default:

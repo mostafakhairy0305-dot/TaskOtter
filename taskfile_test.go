@@ -140,6 +140,56 @@ func TestRootVaultSnapshotHonorsVaultFileOverride(t *testing.T) {
 	}
 }
 
+func TestRootVaultLoginForwardsDirectToken(t *testing.T) {
+	const secret = "review-root-token"
+	output := rootDryRun(t, "vault:login:root-token", "ROOT_TOKEN="+secret)
+
+	for _, token := range []string{`printf '%s' "$VAULT_LOGIN_ROOT_TOKEN"`, "-method=token", "-no-print"} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root vault token login missing %q\noutput:\n%s", token, output)
+		}
+	}
+	if strings.Contains(output, secret) {
+		t.Fatalf("root vault token login exposed ROOT_TOKEN in command output\noutput:\n%s", output)
+	}
+}
+
+func TestRootVaultLoginForwardsAppRoleCredentials(t *testing.T) {
+	const (
+		roleID   = "review-role-id"
+		secretID = "review-secret-id"
+		mount    = "review-approle"
+	)
+	output := rootDryRun(
+		t,
+		"vault:login:approle",
+		"ROLE_ID="+roleID,
+		"SECRET_ID="+secretID,
+		"APPROLE_MOUNT="+mount,
+	)
+
+	for _, token := range []string{
+		`printf '%s' "$VAULT_LOGIN_SECRET_ID"`,
+		`| vault write`,
+		`-field=token`,
+		`"auth/${VAULT_LOGIN_APPROLE_MOUNT}/login"`,
+		`"$VAULT_LOGIN_ROLE_ID"`,
+		"secret_id=-",
+		`| vault login`,
+		"-method=token",
+		"-no-print",
+	} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root vault AppRole login missing %q\noutput:\n%s", token, output)
+		}
+	}
+	for _, secret := range []string{roleID, secretID, mount} {
+		if strings.Contains(output, secret) {
+			t.Fatalf("root vault AppRole login exposed credential or mount in command output\noutput:\n%s", output)
+		}
+	}
+}
+
 func TestRootVaultDescriptionsAdvertiseVaultFileOverride(t *testing.T) {
 	rootContent, err := os.ReadFile("Taskfile.yml")
 	if err != nil {

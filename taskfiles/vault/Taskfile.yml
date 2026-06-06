@@ -21,6 +21,10 @@ vars:
   SNAPSHOT_FILE: vault-snapshot.snap
   FILE: ""
   EXTRA_ARGS: ""
+  ROOT_TOKEN: ""
+  ROLE_ID: ""
+  SECRET_ID: ""
+  APPROLE_MOUNT: "approle"
 
 env:
   VAULT_ADDR: "{{.VAULT_ADDR_TARGET}}"
@@ -215,6 +219,64 @@ tasks:
         KF="{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
         jq -r '.root_token' "$KF" \
           | vault login -address="{{.VAULT_ADDR_TARGET}}" -method=token -no-print -
+
+  login:root-token:
+    desc: Log in to Vault using a token directly (ROOT_TOKEN=<token>)
+    summary: |
+      Authenticate with Vault using a root or service token passed directly
+      via the ROOT_TOKEN variable. The token is read from the variable and
+      piped to vault login via stdin so it does not appear in the process
+      argument list. After login, subsequent vault commands use this token
+      automatically via the token helper.
+      Auto-installs the CLI if missing.
+    set: [errexit, nounset, pipefail]
+    env:
+      VAULT_LOGIN_ROOT_TOKEN: "{{if .ROOT_TOKEN_OVERRIDE}}{{.ROOT_TOKEN_OVERRIDE}}{{else}}{{.ROOT_TOKEN}}{{end}}"
+    preconditions:
+      - sh: test -n "$VAULT_LOGIN_ROOT_TOKEN"
+        msg: ROOT_TOKEN must be set. Pass ROOT_TOKEN=<token> on the command line.
+    cmds:
+      - task: install
+      - |
+        printf '%s' "$VAULT_LOGIN_ROOT_TOKEN" \
+          | vault login -address="{{.VAULT_ADDR_TARGET}}" -method=token -no-print -
+
+  login:approle:
+    desc: Log in to Vault via AppRole (ROLE_ID=<id> SECRET_ID=<id>)
+    summary: |
+      Authenticate with Vault using the AppRole auth method. Requires a role_id
+      and secret_id passed via the ROLE_ID and SECRET_ID task variables.
+      The AppRole mount path defaults to "approle" and can be overridden with
+      APPROLE_MOUNT. After login, subsequent vault commands use the resulting
+      client token automatically via the token helper.
+      Auto-installs the CLI if missing.
+    set: [errexit, nounset, pipefail]
+    env:
+      VAULT_LOGIN_ROLE_ID: "{{if .ROLE_ID_OVERRIDE}}{{.ROLE_ID_OVERRIDE}}{{else}}{{.ROLE_ID}}{{end}}"
+      VAULT_LOGIN_SECRET_ID: "{{if .SECRET_ID_OVERRIDE}}{{.SECRET_ID_OVERRIDE}}{{else}}{{.SECRET_ID}}{{end}}"
+      VAULT_LOGIN_APPROLE_MOUNT: >-
+        {{if .APPROLE_MOUNT_OVERRIDE}}{{.APPROLE_MOUNT_OVERRIDE}}
+        {{- else}}{{.APPROLE_MOUNT}}{{end}}
+    preconditions:
+      - sh: test -n "$VAULT_LOGIN_ROLE_ID"
+        msg: ROLE_ID must be set. Pass ROLE_ID=<role-id> on the command line.
+      - sh: test -n "$VAULT_LOGIN_SECRET_ID"
+        msg: SECRET_ID must be set. Pass SECRET_ID=<secret-id> on the command line.
+    cmds:
+      - task: install
+      - |
+        printf '%s' "$VAULT_LOGIN_SECRET_ID" \
+          | vault write \
+            -address="{{.VAULT_ADDR_TARGET}}" \
+            -field=token \
+            "auth/${VAULT_LOGIN_APPROLE_MOUNT}/login" \
+            role_id="$VAULT_LOGIN_ROLE_ID" \
+            secret_id=- \
+          | vault login \
+            -address="{{.VAULT_ADDR_TARGET}}" \
+            -method=token \
+            -no-print \
+            -
 
   root-token:
     desc: Print the saved Vault root token (KEYS_FILE=path)

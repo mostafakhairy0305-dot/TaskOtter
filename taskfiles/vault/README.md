@@ -49,8 +49,10 @@ task vault:snapshot VAULT_FILE=backup.snap
 | `init`         | Initialize Vault and save unseal keys        | `KEYS_FILE`, `SHARES`, `THRESHOLD` |
 | `unseal`       | Unseal Vault using saved keys                | `KEYS_FILE`, `THRESHOLD`         |
 | `seal`         | Seal the active Vault server                 | `VAULT_ADDR`                     |
-| `login`        | Log in using the saved root token            | `KEYS_FILE`                      |
-| `root-token`   | Print the saved root token                   | `KEYS_FILE`                      |
+| `login`            | Log in using the saved root token            | `KEYS_FILE`                      |
+| `login:root-token` | Log in using a token directly                | `ROOT_TOKEN`                     |
+| `login:approle`    | Log in using the AppRole auth method         | `ROLE_ID`, `SECRET_ID`, `APPROLE_MOUNT` |
+| `root-token`       | Print the saved root token                   | `KEYS_FILE`                      |
 | `peers`        | List Vault Raft cluster peers                | `VAULT_ADDR`                     |
 | `snapshot`     | Save a Vault Raft snapshot                   | `FILE`, `SNAPSHOT_FILE`; root: `VAULT_FILE` |
 | `restore`      | Restore a Vault Raft snapshot                | `FILE`, `SNAPSHOT_FILE`; root: `VAULT_FILE` |
@@ -66,6 +68,10 @@ task vault:snapshot VAULT_FILE=backup.snap
 | `SNAPSHOT_FILE` | `vault-snapshot.snap`   | Default Raft snapshot path                       |
 | `FILE`          | _(empty)_               | Snapshot path override for `snapshot`/`restore` |
 | `EXTRA_ARGS`    | _(empty)_               | Reserved for root include compatibility          |
+| `ROOT_TOKEN`    | _(empty)_               | Token for `login:root-token`                     |
+| `ROLE_ID`       | _(empty)_               | AppRole role_id for `login:approle`              |
+| `SECRET_ID`     | _(empty)_               | AppRole secret_id for `login:approle`            |
+| `APPROLE_MOUNT` | `approle`               | AppRole mount path for `login:approle`           |
 
 ## Notes
 
