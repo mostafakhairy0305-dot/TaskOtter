@@ -14,6 +14,7 @@ includes:
 
 vars:
   VAULT_ADDR: "http://127.0.0.1:8200"
+  VAULT_ADDR_TARGET: "{{if .VAULT_ADDR_OVERRIDE}}{{.VAULT_ADDR_OVERRIDE}}{{else}}{{.VAULT_ADDR}}{{end}}"
   KEYS_FILE: .vault-init-keys.json
   SHARES: 5
   THRESHOLD: 3
@@ -22,7 +23,7 @@ vars:
   EXTRA_ARGS: ""
 
 env:
-  VAULT_ADDR: "{{if .VAULT_ADDR_OVERRIDE}}{{.VAULT_ADDR_OVERRIDE}}{{else}}{{.VAULT_ADDR}}{{end}}"
+  VAULT_ADDR: "{{.VAULT_ADDR_TARGET}}"
 
 tasks:
   default:
@@ -90,7 +91,7 @@ tasks:
       - install
     cmds:
       - vault version
-      - vault status
+      - vault status -address="{{.VAULT_ADDR_TARGET}}"
 
   status:
     desc: Show Vault seal and HA status
@@ -102,7 +103,7 @@ tasks:
     deps:
       - install
     cmds:
-      - vault status || true
+      - vault status -address="{{.VAULT_ADDR_TARGET}}" || true
 
   health:
     desc: Show Vault health as JSON (VAULT_ADDR=url)
@@ -120,7 +121,7 @@ tasks:
     cmds:
       - >-
         curl -s
-        "{{if .VAULT_ADDR_OVERRIDE}}{{.VAULT_ADDR_OVERRIDE}}{{else}}{{.VAULT_ADDR}}{{end}}/v1/sys/health"
+        "{{.VAULT_ADDR_TARGET}}/v1/sys/health"
         | jq .
 
   init:
@@ -150,6 +151,7 @@ tasks:
           exit 1
         fi
         vault operator init \
+          -address="{{.VAULT_ADDR_TARGET}}" \
           -key-shares={{if .SHARES_OVERRIDE}}{{.SHARES_OVERRIDE}}{{else}}{{.SHARES}}{{end}} \
           -key-threshold={{if .THRESHOLD_OVERRIDE}}{{.THRESHOLD_OVERRIDE}}{{else}}{{.THRESHOLD}}{{end}} \
           -format=json > "$TMP"
@@ -178,7 +180,7 @@ tasks:
         KEYS_FILE="{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
         THRESHOLD="{{if .THRESHOLD_OVERRIDE}}{{.THRESHOLD_OVERRIDE}}{{else}}{{.THRESHOLD}}{{end}}"
         for key in $(jq -r ".unseal_keys_b64[0:${THRESHOLD}][]" "$KEYS_FILE"); do
-          vault operator unseal "$key"
+          vault operator unseal -address="{{.VAULT_ADDR_TARGET}}" "$key"
         done
 
   seal:
@@ -191,7 +193,7 @@ tasks:
     deps:
       - install
     cmds:
-      - vault operator seal
+      - vault operator seal -address="{{.VAULT_ADDR_TARGET}}"
 
   login:
     desc: Log in to Vault using the saved root token (KEYS_FILE=path)
@@ -211,7 +213,8 @@ tasks:
       - task: install
       - |
         KF="{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
-        jq -r '.root_token' "$KF" | vault login -method=token -no-print -
+        jq -r '.root_token' "$KF" \
+          | vault login -address="{{.VAULT_ADDR_TARGET}}" -method=token -no-print -
 
   root-token:
     desc: Print the saved Vault root token (KEYS_FILE=path)
@@ -239,7 +242,7 @@ tasks:
     deps:
       - install
     cmds:
-      - vault operator raft list-peers
+      - vault operator raft list-peers -address="{{.VAULT_ADDR_TARGET}}"
 
   snapshot:
     desc: Save a Vault Raft snapshot (FILE=path; root VAULT_FILE=path)
@@ -258,7 +261,7 @@ tasks:
     deps:
       - install
     cmds:
-      - vault operator raft snapshot save "{{.FILE_TARGET}}"
+      - vault operator raft snapshot save -address="{{.VAULT_ADDR_TARGET}}" "{{.FILE_TARGET}}"
 
   restore:
     desc: Restore a Vault Raft snapshot (FILE=path; root VAULT_FILE=path)
@@ -284,7 +287,7 @@ tasks:
         msg: Snapshot file not found. Pass FILE=path/to/snapshot, or VAULT_FILE=path/to/snapshot from the root include.
     cmds:
       - task: install
-      - vault operator raft snapshot restore -force "{{.FILE_TARGET}}"
+      - vault operator raft snapshot restore -address="{{.VAULT_ADDR_TARGET}}" -force "{{.FILE_TARGET}}"
 
   _install:macos:
     internal: true
