@@ -53,6 +53,9 @@ task vault:snapshot VAULT_FILE=backup.snap
 | `login:root-token` | Log in using a token directly                | `ROOT_TOKEN`                     |
 | `login:approle`    | Log in using the AppRole auth method         | `ROLE_ID`, `SECRET_ID`, `APPROLE_MOUNT` |
 | `root-token`       | Print the saved root token                   | `KEYS_FILE`                      |
+| `token:issue:approle` | Exchange AppRole credentials for a token (printed to stdout) | `ROLE_ID`, `SECRET_ID`, `APPROLE_MOUNT` |
+| `token:revoke-self`   | Revoke the current Vault token              | `VAULT_TOKEN` (env)              |
+| `kv:get`              | Read a KV v2 secret and print JSON to stdout | `KV_MOUNT`, `SECRET_PATH`, `SECRET_VERSION` |
 | `peers`        | List Vault Raft cluster peers                | `VAULT_ADDR`                     |
 | `snapshot`     | Save a Vault Raft snapshot                   | `FILE`, `SNAPSHOT_FILE`; root: `VAULT_FILE` |
 | `restore`      | Restore a Vault Raft snapshot                | `FILE`, `SNAPSHOT_FILE`; root: `VAULT_FILE` |
