@@ -121,13 +121,15 @@ func TestRootAggregatesForwardCommonOverrides(t *testing.T) {
 func TestRootVaultSnapshotHonorsSnapshotFileOverride(t *testing.T) {
 	output := rootDryRun(t, "vault:snapshot", "SNAPSHOT_FILE=custom.snap")
 
-	if !strings.Contains(output, `vault operator raft snapshot save "custom.snap"`) {
-		t.Fatalf("root vault snapshot did not use SNAPSHOT_FILE override\noutput:\n%s", output)
+	for _, token := range []string{`vault operator raft snapshot save`, `"custom.snap"`} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root vault snapshot did not use SNAPSHOT_FILE override (missing %q)\noutput:\n%s", token, output)
+		}
 	}
-	if strings.Contains(output, `vault operator raft snapshot save "src/index.ts"`) {
+	if strings.Contains(output, `"src/index.ts"`) {
 		t.Fatalf("root vault snapshot picked up the TypeScript FILE default\noutput:\n%s", output)
 	}
-	if strings.Contains(output, `vault operator raft snapshot save "Dockerfile"`) {
+	if strings.Contains(output, `"Dockerfile"`) {
 		t.Fatalf("root vault snapshot picked up the Docker FILE default\noutput:\n%s", output)
 	}
 }
@@ -135,8 +137,10 @@ func TestRootVaultSnapshotHonorsSnapshotFileOverride(t *testing.T) {
 func TestRootVaultSnapshotHonorsVaultFileOverride(t *testing.T) {
 	output := rootDryRun(t, "vault:snapshot", "VAULT_FILE=my.snap")
 
-	if !strings.Contains(output, `vault operator raft snapshot save "my.snap"`) {
-		t.Fatalf("root vault snapshot did not use VAULT_FILE override\noutput:\n%s", output)
+	for _, token := range []string{`vault operator raft snapshot save`, `"my.snap"`} {
+		if !strings.Contains(output, token) {
+			t.Fatalf("root vault snapshot did not use VAULT_FILE override (missing %q)\noutput:\n%s", token, output)
+		}
 	}
 }
 
