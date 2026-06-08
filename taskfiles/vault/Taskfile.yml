@@ -312,33 +312,49 @@ tasks:
   kv:get:
     desc: Read a KV v2 secret and print JSON to stdout (KV_MOUNT=<mount> SECRET_PATH=<path> [SECRET_VERSION=<n>])
     summary: |
-      Read a KV v2 secret at SECRET_PATH under KV_MOUNT using the vault kv get command
-      and print the result as JSON. The VAULT_TOKEN environment variable must be set by
-      the caller. Optionally pass SECRET_VERSION to pin to a specific KV version.
-      Auto-installs the CLI if missing.
+      Read a KV v2 secret at SECRET_PATH under KV_MOUNT using the Vault CLI
+      and print the result as JSON.
+
+      This keeps the same interface:
+        KV_MOUNT=<mount>
+        SECRET_PATH=<path>
+        SECRET_VERSION=<n optional>
+
+      The VAULT_TOKEN environment variable must be set by the caller.
+      Optionally pass SECRET_VERSION to pin to a specific KV version.
     set: [errexit, nounset, pipefail]
     vars:
       KV_MOUNT: ""
       SECRET_PATH: ""
       SECRET_VERSION: ""
+    env:
+      KV_GET_MOUNT: "{{if .KV_MOUNT_OVERRIDE}}{{.KV_MOUNT_OVERRIDE}}{{else}}{{.KV_MOUNT}}{{end}}"
+      KV_GET_PATH: "{{if .SECRET_PATH_OVERRIDE}}{{.SECRET_PATH_OVERRIDE}}{{else}}{{.SECRET_PATH}}{{end}}"
+      KV_GET_VERSION: "{{if .SECRET_VERSION_OVERRIDE}}{{.SECRET_VERSION_OVERRIDE}}{{else}}{{.SECRET_VERSION}}{{end}}"
+      VAULT_ADDR: "{{.VAULT_ADDR_TARGET}}"
     preconditions:
-      - sh: test -n "{{.KV_MOUNT}}"
+      - sh: test -n "$KV_GET_MOUNT"
         msg: KV_MOUNT must be set. Pass KV_MOUNT=<mount> on the command line.
-      - sh: test -n "{{.SECRET_PATH}}"
+      - sh: test -n "$KV_GET_PATH"
         msg: SECRET_PATH must be set. Pass SECRET_PATH=<path> on the command line.
       - sh: test -n "${VAULT_TOKEN:-}"
         msg: VAULT_TOKEN environment variable must be set by the caller.
+      - sh: test -n "${VAULT_ADDR:-}"
+        msg: VAULT_ADDR must be set. Ensure VAULT_ADDR_TARGET is configured.
+      - sh: command -v vault >/dev/null 2>&1
+        msg: vault CLI is required to read the Vault KV endpoint.
     cmds:
-      - task: install
       - |
-        VERSION_FLAG=""
-        [ -n "{{.SECRET_VERSION}}" ] && VERSION_FLAG="-version={{.SECRET_VERSION}}"
-        vault kv get \
-          -address="{{.VAULT_ADDR_TARGET}}" \
-          -mount="{{.KV_MOUNT}}" \
-          -format=json \
-          ${VERSION_FLAG} \
-          "{{.SECRET_PATH}}"
+        MOUNT="${KV_GET_MOUNT#/}"
+        MOUNT="${MOUNT%/}"
+
+        SECRET_PATH="${KV_GET_PATH#/}"
+
+        if [ -n "$KV_GET_VERSION" ]; then
+          vault kv get -format=json -mount="$MOUNT" -version="$KV_GET_VERSION" "$SECRET_PATH"
+        else
+          vault kv get -format=json -mount="$MOUNT" "$SECRET_PATH"
+        fi
 
   token:revoke-self:
     desc: Revoke the current Vault token (VAULT_TOKEN must be set in environment)

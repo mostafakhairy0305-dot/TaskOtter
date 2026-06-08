@@ -53,7 +53,7 @@ func TestTaskfileModuleContract(t *testing.T) {
 func TestInputValidatedTasksDoNotInstallBeforePreconditions(t *testing.T) {
 	tf := tasktest.LoadTaskfile(t, "vault")
 
-	for _, name := range []string{"init", "login", "login:approle", "login:root-token", "restore", "unseal"} {
+	for _, name := range []string{"init", "login", "login:approle", "login:root-token", "restore", "token:issue:approle", "token:revoke-self", "unseal"} {
 		task := tf.Tasks[name]
 		if task.Deps != nil {
 			t.Fatalf("%s should run install from cmds after local preconditions, got deps: %#v", name, task.Deps)
@@ -175,13 +175,78 @@ func TestLinuxParentTasksGuardUnsupportedPackageManagers(t *testing.T) {
 func TestStrictShellSetOnSensitiveTasks(t *testing.T) {
 	tf := tasktest.LoadTaskfile(t, "vault")
 
-	for _, name := range []string{"health", "init", "login", "login:approle", "login:root-token", "restore", "unseal"} {
+	for _, name := range []string{"health", "init", "kv:get", "login", "login:approle", "login:root-token", "restore", "token:issue:approle", "token:revoke-self", "unseal"} {
 		task := tf.Tasks[name]
 		for _, option := range []string{"errexit", "nounset", "pipefail"} {
 			if !slices.Contains(task.Set, option) {
 				t.Fatalf("%s should set %s, got %#v", name, option, task.Set)
 			}
 		}
+	}
+}
+
+func TestTokenIssueApRolePipesSecretViaStdinWithoutLogin(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "vault")
+	task := tf.Tasks["token:issue:approle"]
+	preconditions := taskFieldYAML(t, task.Preconditions)
+	cmds := taskFieldYAML(t, task.Cmds)
+
+	for _, token := range []string{"ROLE_ID", "SECRET_ID"} {
+		if !strings.Contains(preconditions, token) {
+			t.Fatalf("token:issue:approle should require %s in preconditions\npreconditions:\n%s", token, preconditions)
+		}
+	}
+	for _, token := range []string{
+		`printf '%s' "$VAULT_LOGIN_SECRET_ID"`,
+		`| vault write`,
+		`-field=token`,
+		`"auth/${VAULT_LOGIN_APPROLE_MOUNT}/login"`,
+		`"$VAULT_LOGIN_ROLE_ID"`,
+		`secret_id=-`,
+	} {
+		if !strings.Contains(cmds, token) {
+			t.Fatalf("token:issue:approle should exchange AppRole credentials without exposing secret_id (missing %q)\ncmds:\n%s", token, cmds)
+		}
+	}
+	for _, token := range []string{`| vault login`, `-no-print`} {
+		if strings.Contains(cmds, token) {
+			t.Fatalf("token:issue:approle should not call vault login (token must go to stdout)\ncmds:\n%s", cmds)
+		}
+	}
+}
+
+func TestTokenRevokeSelfRequiresVaultToken(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "vault")
+	task := tf.Tasks["token:revoke-self"]
+	preconditions := taskFieldYAML(t, task.Preconditions)
+	cmds := taskFieldYAML(t, task.Cmds)
+
+	if !strings.Contains(preconditions, "VAULT_TOKEN") {
+		t.Fatalf("token:revoke-self should require VAULT_TOKEN in preconditions\npreconditions:\n%s", preconditions)
+	}
+	if !strings.Contains(cmds, "-self") {
+		t.Fatalf("token:revoke-self should pass -self to vault token revoke\ncmds:\n%s", cmds)
+	}
+}
+
+func TestKvGetRequiresMountPathAndToken(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "vault")
+	task := tf.Tasks["kv:get"]
+	preconditions := taskFieldYAML(t, task.Preconditions)
+	cmds := taskFieldYAML(t, task.Cmds)
+
+	for _, token := range []string{"KV_GET_MOUNT", "KV_GET_PATH", "VAULT_TOKEN", "VAULT_ADDR"} {
+		if !strings.Contains(preconditions, token) {
+			t.Fatalf("kv:get should require %s in preconditions\npreconditions:\n%s", token, preconditions)
+		}
+	}
+	for _, token := range []string{`vault kv get`, `-format=json`, `-mount=`} {
+		if !strings.Contains(cmds, token) {
+			t.Fatalf("kv:get should call vault kv get with json format (missing %q)\ncmds:\n%s", token, cmds)
+		}
+	}
+	if !strings.Contains(cmds, "KV_GET_VERSION") {
+		t.Fatalf("kv:get should handle optional SECRET_VERSION\ncmds:\n%s", cmds)
 	}
 }
 

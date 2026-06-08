@@ -72,9 +72,12 @@ task vault:snapshot VAULT_FILE=backup.snap
 | `FILE`          | _(empty)_               | Snapshot path override for `snapshot`/`restore` |
 | `EXTRA_ARGS`    | _(empty)_               | Reserved for root include compatibility          |
 | `ROOT_TOKEN`    | _(empty)_               | Token for `login:root-token`                     |
-| `ROLE_ID`       | _(empty)_               | AppRole role_id for `login:approle`              |
-| `SECRET_ID`     | _(empty)_               | AppRole secret_id for `login:approle`            |
-| `APPROLE_MOUNT` | `approle`               | AppRole mount path for `login:approle`           |
+| `ROLE_ID`       | _(empty)_               | AppRole role_id for `login:approle` and `token:issue:approle` |
+| `SECRET_ID`     | _(empty)_               | AppRole secret_id for `login:approle` and `token:issue:approle` |
+| `APPROLE_MOUNT` | `approle`               | AppRole mount path for `login:approle` and `token:issue:approle` |
+| `KV_MOUNT`      | _(empty)_               | KV v2 engine mount path for `kv:get`             |
+| `SECRET_PATH`   | _(empty)_               | Secret path within the KV mount for `kv:get`     |
+| `SECRET_VERSION`| _(empty)_               | Optional KV version to pin for `kv:get`          |
 
 ## Notes
 
@@ -86,6 +89,17 @@ ignored by the repo.
 
 `restore` is destructive and requires confirmation before it runs. It validates
 the snapshot file before installing or invoking the Vault CLI.
+
+`token:issue:approle` exchanges AppRole credentials for a client token and prints
+it to stdout — unlike `login:approle`, the token is not stored in the token helper.
+Pipe or capture the output for use by the caller.
+
+`token:revoke-self` revokes the token in `VAULT_TOKEN`. The variable must be set
+in the caller's environment before running this task.
+
+`kv:get` requires both `VAULT_TOKEN` and `VAULT_ADDR` to be set in the caller's
+environment. `KV_MOUNT` and `SECRET_PATH` must be provided as task variables.
+Pass `SECRET_VERSION=<n>` to pin to a specific KV version.
 
 When using this repository's root Taskfile include, pass `VAULT_FILE=path`
 instead of `FILE=path` for `vault:snapshot` and `vault:restore`. The standalone
