@@ -15,10 +15,7 @@ includes:
 
 vars:
   UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
-  TARGETS: "."
-  CONFIG: ""
-  DIALECT: ""
-  EXTRA_ARGS: ""
+  SQLFLUFF_VERSION: "4.2.2"
 
 tasks:
   default:
@@ -66,7 +63,7 @@ tasks:
     deps:
       - install
     cmds:
-      - bash -lc '{{.UV_LOAD}}; sqlfluff --version'
+      - bash -c '{{.UV_LOAD}}; sqlfluff --version'
 
   lint:
     desc: Lint SQL files with sqlfluff (TARGETS=path)
@@ -76,9 +73,14 @@ tasks:
       and EXTRA_ARGS for additional flags. Auto-installs sqlfluff if missing.
     deps:
       - install
+    vars:
+      TARGETS: "."
+      CONFIG: ""
+      DIALECT: ""
+      EXTRA_ARGS: ""
     cmds:
       - >-
-        bash -lc '{{.UV_LOAD}};
+        bash -c '{{.UV_LOAD}};
         sqlfluff lint
         {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
         {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
@@ -96,9 +98,14 @@ tasks:
       Auto-installs sqlfluff if missing.
     deps:
       - install
+    vars:
+      TARGETS: "."
+      CONFIG: ""
+      DIALECT: ""
+      EXTRA_ARGS: ""
     cmds:
       - >-
-        bash -lc '{{.UV_LOAD}};
+        bash -c '{{.UV_LOAD}};
         sqlfluff fix
         {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
         {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
@@ -117,9 +124,14 @@ tasks:
       Auto-installs sqlfluff if missing.
     deps:
       - install
+    vars:
+      TARGETS: "."
+      CONFIG: ""
+      DIALECT: ""
+      EXTRA_ARGS: ""
     cmds:
       - >-
-        bash -lc '{{.UV_LOAD}};
+        bash -c '{{.UV_LOAD}};
         sqlfluff parse
         {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
         {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
@@ -151,12 +163,14 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - bash -lc '{{.UV_LOAD}}; command -v sqlfluff >/dev/null 2>&1'
+      - >-
+        bash -c '{{.UV_LOAD}};
+        sqlfluff --version | grep -q "version {{.SQLFLUFF_VERSION}}$"'
     deps:
       - uv:install
     cmds:
       - echo 'Installing sqlfluff via uv...'
-      - bash -lc '{{.UV_LOAD}}; uv tool install sqlfluff'
+      - bash -c '{{.UV_LOAD}}; uv tool install --force "sqlfluff=={{.SQLFLUFF_VERSION}}"'
       - echo 'sqlfluff installed.'
 
   _install:windows:
@@ -165,12 +179,13 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command sqlfluff -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "if ((Get-Command sqlfluff -ErrorAction SilentlyContinue)
+        -and ((sqlfluff --version) -match 'version {{.SQLFLUFF_VERSION}}$')) { exit 0 } else { exit 1 }"
     deps:
       - uv:install
     cmds:
       - echo Installing sqlfluff via uv...
-      - uv tool install sqlfluff
+      - uv tool install --force sqlfluff=={{.SQLFLUFF_VERSION}}
       - echo sqlfluff installed.
 
   _install:undo:unix:
@@ -178,10 +193,10 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - bash -lc '{{.UV_LOAD}}; ! command -v sqlfluff >/dev/null 2>&1'
+      - bash -c '{{.UV_LOAD}}; ! command -v sqlfluff >/dev/null 2>&1'
     cmds:
       - echo 'Removing sqlfluff...'
-      - bash -lc '{{.UV_LOAD}}; uv tool uninstall sqlfluff'
+      - bash -c '{{.UV_LOAD}}; uv tool uninstall sqlfluff'
       - echo 'sqlfluff removed.'
 
   _install:undo:windows:
@@ -201,11 +216,11 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     preconditions:
-      - sh: bash -lc '{{.UV_LOAD}}; command -v sqlfluff >/dev/null 2>&1'
+      - sh: bash -c '{{.UV_LOAD}}; command -v sqlfluff >/dev/null 2>&1'
         msg: sqlfluff is not installed. Run task install first.
     cmds:
       - echo 'Upgrading sqlfluff via uv...'
-      - bash -lc '{{.UV_LOAD}}; uv tool upgrade sqlfluff'
+      - bash -c '{{.UV_LOAD}}; uv tool install --force "sqlfluff=={{.SQLFLUFF_VERSION}}"'
       - echo 'sqlfluff upgraded.'
 
   _upgrade:windows:

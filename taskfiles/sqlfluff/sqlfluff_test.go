@@ -18,10 +18,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
-	"CONFIG",
-	"DIALECT",
-	"EXTRA_ARGS",
-	"TARGETS",
+	"SQLFLUFF_VERSION",
 	"UV_LOAD",
 }
 
@@ -38,7 +35,7 @@ func TestRepresentativeDryRuns(t *testing.T) {
 	)
 
 	tasktest.AssertDryRunContains(t, "sqlfluff",
-		[]string{"lint", "DIALECT=postgres", "TARGETS=./migrations"},
+		[]string{"lint", "DIALECT_OVERRIDE=postgres", "TARGETS_OVERRIDE=./migrations"},
 		"sqlfluff",
 		"--dialect",
 		"postgres",

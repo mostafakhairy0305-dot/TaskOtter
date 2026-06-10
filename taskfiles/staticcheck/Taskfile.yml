@@ -20,8 +20,6 @@ vars:
   STATICCHECK_INSTALL_DIR: "{{.TOOLBIN}}/staticcheck/{{.STATICCHECK_VERSION}}"
   STATICCHECK_BIN_UNIX: "{{.STATICCHECK_INSTALL_DIR}}/staticcheck"
   STATICCHECK_BIN_WINDOWS: "{{.STATICCHECK_INSTALL_DIR}}/staticcheck.exe"
-  TARGETS: "./..."
-  EXTRA_ARGS: ""
 
 tasks:
   default:
@@ -248,6 +246,9 @@ tasks:
     desc: Run Staticcheck on macOS or Linux
     summary: Run the pinned Staticcheck binary on macOS or Linux.
     platforms: [linux, darwin]
+    vars:
+      TARGETS: "./..."
+      EXTRA_ARGS: ""
     cmds:
       - '"{{.STATICCHECK_BIN_UNIX}}" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
 
@@ -257,6 +258,9 @@ tasks:
     desc: Run Staticcheck on Windows
     summary: Run the pinned Staticcheck binary on Windows.
     platforms: [windows]
+    vars:
+      TARGETS: "./..."
+      EXTRA_ARGS: ""
     cmds:
       - '"{{.STATICCHECK_BIN_WINDOWS}}" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
 
