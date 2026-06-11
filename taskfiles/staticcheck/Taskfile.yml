@@ -16,10 +16,13 @@ includes:
 vars:
   STATICCHECK_VERSION: "2026.1"
   STATICCHECK_RELEASE_BASE_URL: https://github.com/dominikh/go-tools/releases/download
-  TOOLBIN: "{{.TASKFILE_DIR}}/../../.toolbin"
-  STATICCHECK_INSTALL_DIR: "{{.TOOLBIN}}/staticcheck/{{.STATICCHECK_VERSION}}"
-  STATICCHECK_BIN_UNIX: "{{.STATICCHECK_INSTALL_DIR}}/staticcheck"
-  STATICCHECK_BIN_WINDOWS: "{{.STATICCHECK_INSTALL_DIR}}/staticcheck.exe"
+  GLOBAL_GO_BIN:
+    sh: |
+      gobin="$(go env GOBIN)"
+      if [ -z "$gobin" ]; then
+        gobin="$(go env GOPATH)/bin"
+      fi
+      printf '%s' "$gobin"
 
 tasks:
   default:
@@ -30,11 +33,11 @@ tasks:
 
   install:
     run: once
-    desc: Install Staticcheck into the local toolbin
+    desc: Install Staticcheck into the global Go bin
     summary: |
       Download the pinned Staticcheck release for the current platform and
-      install it under TOOLBIN. The installed binary is versioned by
-      STATICCHECK_VERSION so projects can pin upgrades explicitly.
+      install it directly under GOBIN, falling back to GOPATH/bin when GOBIN
+      is unset. The pinned version is replaced automatically when it changes.
     cmds:
       - task: _install:darwin
       - task: _install:linux
@@ -85,7 +88,8 @@ tasks:
       STATICCHECK_TMP_DIR: "/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}"
       STATICCHECK_ARCHIVE: "/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}.tar.gz"
     status:
-      - test -x "{{.STATICCHECK_BIN_UNIX}}"
+      - test -x "{{.GLOBAL_GO_BIN}}/staticcheck"
+      - '"{{.GLOBAL_GO_BIN}}/staticcheck" -version | grep -Fq "staticcheck {{.STATICCHECK_VERSION}}"'
     preconditions:
       - sh: '[ "{{.STATICCHECK_ASSET_SUPPORTED}}" = "true" ]'
         msg: Unsupported macOS architecture {{.STATICCHECK_UNAME_ARCH}}.
@@ -96,23 +100,25 @@ tasks:
       - sh: command -v find >/dev/null 2>&1
         msg: find is required to locate the Staticcheck binary after extraction.
       - sh: command -v install >/dev/null 2>&1
-        msg: install is required to copy Staticcheck into TOOLBIN.
+        msg: install is required to copy Staticcheck into the global Go bin.
     cmds:
       - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
         for:
           - tmp
           - archive
-      - mkdir -p "{{.STATICCHECK_INSTALL_DIR}}"
+      - mkdir -p "{{.GLOBAL_GO_BIN}}"
       - mkdir -p "{{.STATICCHECK_TMP_DIR}}"
       - >-
         curl -fsSL
         "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz"
         -o "{{.STATICCHECK_ARCHIVE}}"
       - tar -xzf "{{.STATICCHECK_ARCHIVE}}" -C "{{.STATICCHECK_TMP_DIR}}"
+      - cmd: rm -rf "{{.GLOBAL_GO_BIN}}/staticcheck"
+        if: test -d "{{.GLOBAL_GO_BIN}}/staticcheck"
       - >-
         install -m 0755
         "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)"
-        "{{.STATICCHECK_BIN_UNIX}}"
+        "{{.GLOBAL_GO_BIN}}/staticcheck"
       - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
         for:
           - tmp
@@ -144,7 +150,8 @@ tasks:
       STATICCHECK_TMP_DIR: "/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}"
       STATICCHECK_ARCHIVE: "/tmp/taskotter-staticcheck-{{.STATICCHECK_VERSION}}-{{.STATICCHECK_ASSET}}.tar.gz"
     status:
-      - test -x "{{.STATICCHECK_BIN_UNIX}}"
+      - test -x "{{.GLOBAL_GO_BIN}}/staticcheck"
+      - '"{{.GLOBAL_GO_BIN}}/staticcheck" -version | grep -Fq "staticcheck {{.STATICCHECK_VERSION}}"'
     preconditions:
       - sh: '[ "{{.STATICCHECK_ASSET_SUPPORTED}}" = "true" ]'
         msg: Unsupported Linux architecture {{.STATICCHECK_UNAME_ARCH}}.
@@ -155,23 +162,25 @@ tasks:
       - sh: command -v find >/dev/null 2>&1
         msg: find is required to locate the Staticcheck binary after extraction.
       - sh: command -v install >/dev/null 2>&1
-        msg: install is required to copy Staticcheck into TOOLBIN.
+        msg: install is required to copy Staticcheck into the global Go bin.
     cmds:
       - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
         for:
           - tmp
           - archive
-      - mkdir -p "{{.STATICCHECK_INSTALL_DIR}}"
+      - mkdir -p "{{.GLOBAL_GO_BIN}}"
       - mkdir -p "{{.STATICCHECK_TMP_DIR}}"
       - >-
         curl -fsSL
         "{{.STATICCHECK_RELEASE_BASE_URL}}/{{.STATICCHECK_VERSION}}/staticcheck_{{.STATICCHECK_ASSET}}.tar.gz"
         -o "{{.STATICCHECK_ARCHIVE}}"
       - tar -xzf "{{.STATICCHECK_ARCHIVE}}" -C "{{.STATICCHECK_TMP_DIR}}"
+      - cmd: rm -rf "{{.GLOBAL_GO_BIN}}/staticcheck"
+        if: test -d "{{.GLOBAL_GO_BIN}}/staticcheck"
       - >-
         install -m 0755
         "$(find "{{.STATICCHECK_TMP_DIR}}" -type f -name staticcheck -print -quit)"
-        "{{.STATICCHECK_BIN_UNIX}}"
+        "{{.GLOBAL_GO_BIN}}/staticcheck"
       - cmd: rm -rf "{{if eq .ITEM "tmp"}}{{.STATICCHECK_TMP_DIR}}{{else}}{{.STATICCHECK_ARCHIVE}}{{end}}"
         for:
           - tmp
@@ -186,7 +195,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Test-Path '{{.STATICCHECK_BIN_WINDOWS}}') { exit 0 } else { exit 1 }"
+        "if ((Test-Path '{{.GLOBAL_GO_BIN}}/staticcheck.exe')
+        -and ((& '{{.GLOBAL_GO_BIN}}/staticcheck.exe' -version)
+        -like '*staticcheck {{.STATICCHECK_VERSION}}*')) { exit 0 } else { exit 1 }"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -200,7 +211,7 @@ tasks:
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "New-Item -ItemType Directory -Force -Path '{{.STATICCHECK_INSTALL_DIR}}' | Out-Null"
+        "New-Item -ItemType Directory -Force -Path '{{.GLOBAL_GO_BIN}}' | Out-Null"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
         "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'),
@@ -231,10 +242,15 @@ tasks:
         -C (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}')"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.GLOBAL_GO_BIN}}/staticcheck.exe' -PathType Container) {
+          Remove-Item '{{.GLOBAL_GO_BIN}}/staticcheck.exe' -Recurse -Force
+        }"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
         "Copy-Item (Get-ChildItem
         -Path (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}')
         -Recurse -Filter 'staticcheck.exe' | Select-Object -First 1 -ExpandProperty FullName)
-        '{{.STATICCHECK_BIN_WINDOWS}}' -Force"
+        '{{.GLOBAL_GO_BIN}}/staticcheck.exe' -Force"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
         "Remove-Item (Join-Path $env:TEMP 'taskotter-staticcheck-{{.STATICCHECK_VERSION}}'),
@@ -250,7 +266,7 @@ tasks:
       TARGETS: "./..."
       EXTRA_ARGS: ""
     cmds:
-      - '"{{.STATICCHECK_BIN_UNIX}}" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
+      - '"{{.GLOBAL_GO_BIN}}/staticcheck" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
 
   _run:windows:
     internal: true
@@ -262,7 +278,7 @@ tasks:
       TARGETS: "./..."
       EXTRA_ARGS: ""
     cmds:
-      - '"{{.STATICCHECK_BIN_WINDOWS}}" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
+      - '"{{.GLOBAL_GO_BIN}}/staticcheck.exe" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
 
   _version:unix:
     internal: true
@@ -271,7 +287,7 @@ tasks:
     summary: Print the pinned Staticcheck binary version on macOS or Linux.
     platforms: [linux, darwin]
     cmds:
-      - '"{{.STATICCHECK_BIN_UNIX}}" -version'
+      - '"{{.GLOBAL_GO_BIN}}/staticcheck" -version'
 
   _version:windows:
     internal: true
@@ -280,4 +296,4 @@ tasks:
     summary: Print the pinned Staticcheck binary version on Windows.
     platforms: [windows]
     cmds:
-      - '"{{.STATICCHECK_BIN_WINDOWS}}" -version'
+      - '"{{.GLOBAL_GO_BIN}}/staticcheck.exe" -version'

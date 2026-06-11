@@ -14,12 +14,9 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
-	"STATICCHECK_BIN_UNIX",
-	"STATICCHECK_BIN_WINDOWS",
-	"STATICCHECK_INSTALL_DIR",
+	"GLOBAL_GO_BIN",
 	"STATICCHECK_RELEASE_BASE_URL",
 	"STATICCHECK_VERSION",
-	"TOOLBIN",
 }
 
 func TestTaskfileModuleContract(t *testing.T) {
