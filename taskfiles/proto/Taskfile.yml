@@ -115,7 +115,7 @@ tasks:
     set: [errexit, nounset, pipefail]
     vars:
       RESOLVED_PROTO_PATH: '{{if .PROTO_PATH_OVERRIDE}}{{.PROTO_PATH_OVERRIDE}}{{else}}{{.PROTO_PATH}}{{end}}'
-      RESOLVED_PROTO_PATTERN: '{{if .PROTO_PATTERN_OVERRIDE}}{{.PROTO_PATTERN_OVERRIDE}}{{else}}{{.PROTO_PATTERN}}{{end}}'
+      RESOLVED_PROTO_PATTERN: '{{default .PROTO_PATTERN .PROTO_PATTERN_OVERRIDE}}'
     cmds:
       - >-
         bash -lc 'set -euo pipefail;
@@ -138,7 +138,7 @@ tasks:
     platforms: [windows]
     vars:
       RESOLVED_PROTO_PATH: '{{if .PROTO_PATH_OVERRIDE}}{{.PROTO_PATH_OVERRIDE}}{{else}}{{.PROTO_PATH}}{{end}}'
-      RESOLVED_PROTO_PATTERN: '{{if .PROTO_PATTERN_OVERRIDE}}{{.PROTO_PATTERN_OVERRIDE}}{{else}}{{.PROTO_PATTERN}}{{end}}'
+      RESOLVED_PROTO_PATTERN: '{{default .PROTO_PATTERN .PROTO_PATTERN_OVERRIDE}}'
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -245,7 +245,9 @@ tasks:
     cmds:
       - mkdir -p "{{.GLOBAL_GO_BIN}}"
       - GOBIN="{{.GLOBAL_GO_BIN}}" go install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
-      - GOBIN="{{.GLOBAL_GO_BIN}}" go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
+      - >-
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
       - echo 'protoc Go plugins installed.'
 
   _install:undo:protoc:macos:
@@ -402,5 +404,7 @@ tasks:
     internal: true
     platforms: [windows]
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Recurse -Filter *.pb.go | Remove-Item -Force"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Get-ChildItem -Recurse -Filter *.pb.go | Remove-Item -Force"
       - echo Generated protobuf files removed.

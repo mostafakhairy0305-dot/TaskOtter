@@ -23,11 +23,12 @@ tasks:
   lint:
     desc: Lint shell scripts with ShellCheck (TARGETS=glob)
     summary: |
-      Run shellcheck against TARGETS. When TARGETS is empty, all *.sh files
-      under the working tree are discovered recursively (excluding .git).
+      Run shellcheck against TARGETS. When TARGETS is empty, all *.sh and
+      *.bash files under the working tree are discovered recursively (excluding .git).
       Pass explicit paths or globs to check specific scripts. Pass EXTRA_ARGS
       for additional flags such as --shell or --severity, or CLI arguments
       after -- to override all variables directly. Auto-installs ShellCheck if missing.
+    dir: "{{.USER_WORKING_DIR}}"
     deps:
       - install
     cmds:
@@ -37,19 +38,21 @@ tasks:
   _lint:unix:
     internal: true
     platforms: [darwin, linux]
-    set: [errexit, nounset, pipefail]
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - >-
-        bash -lc 'set -euo pipefail;
+        bash -c 'set -e;
         if [ -n "{{.CLI_ARGS}}" ]; then
           shellcheck {{.CLI_ARGS}} && echo "✅ shellcheck passed" || { echo "❌ shellcheck failed"; exit 1; }
         else
           extra="{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}";
           targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
           if [ -z "$targets" ]; then
-            mapfile -d "" files < <(find . -type f -name "*.sh" ! -path "*/.git/*" -print0);
-            if [ ${#files[@]} -eq 0 ]; then echo "No shell scripts found"; exit 0; fi;
-            shellcheck $extra "${files[@]}";
+            if ! find . -type f \( -name "*.sh" -o -name "*.bash" \) ! -path "*/.git/*" -print -quit | grep -q .; then
+              echo "✅ shellcheck passed (no shell scripts found)";
+              exit 0;
+            fi;
+            find . -type f \( -name "*.sh" -o -name "*.bash" \) ! -path "*/.git/*" -exec shellcheck $extra {} +;
           else
             shellcheck $extra $targets;
           fi;

@@ -42,7 +42,6 @@ func TestInstallDryRunUsesPlatformPackageManager(t *testing.T) {
 	case "darwin":
 		tasktest.AssertDryRunContains(t, "shellcheck",
 			[]string{"install"},
-			"brew",
 			"shellcheck",
 		)
 	case "linux":

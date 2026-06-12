@@ -5,12 +5,12 @@ runs:
   using: composite
   steps:
     - name: Setup Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
       with:
         go-version-file: go.mod
         cache: true
     - name: Install Taskfile CLI
-      uses: go-task/setup-task@v2
+      uses: go-task/setup-task@01a4adf9db2d14c1de7a560f09170b6e0df736aa # v2.1.0
       with:
         version: 3.x
     - name: Show versions
@@ -20,7 +20,16 @@ runs:
         task --version
     - name: Lint YAML
       shell: bash
-      run: task yamllint:ci
+      run: task -t taskfiles/yamllint/Taskfile.yml ci
+    - name: GitHub actions YAML
+      shell: bash
+      run: task -t taskfiles/actionlint/Taskfile.yml lint
+    - name: GitHub actions Audit
+      shell: bash
+      run: task -t taskfiles/zizmor/Taskfile.yml audit
+    - name: Shell linting
+      shell: bash
+      run: task -t taskfiles/shellcheck/Taskfile.yml lint
     - name: Vet
       shell: bash
       run: go vet ./...

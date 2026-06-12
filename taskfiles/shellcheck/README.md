@@ -56,6 +56,6 @@ task shellcheck:install
 - **macOS** installs via Homebrew (`brew install shellcheck`). Homebrew must be installed.
 - **Linux** installs via `apt-get` (Debian/Ubuntu) or `dnf` (Fedora/RHEL). The task dispatches to whichever package manager is present.
 - **Windows** installs via Scoop (`scoop install shellcheck`). Scoop must be installed.
-- When `TARGETS` is empty, all `*.sh` files under the working tree are discovered recursively (excluding `.git`).
+- When `TARGETS` is empty, all `*.sh` and `*.bash` files under the working tree are discovered recursively (excluding `.git`).
 - Pass explicit paths or globs (e.g. `TARGETS="scripts/*.sh"`) to limit the scope.
 - The `lint` task auto-installs ShellCheck if it is not already present in `PATH`.

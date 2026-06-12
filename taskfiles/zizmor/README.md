@@ -12,8 +12,9 @@ This module provides tasks to audit, install, and manage [zizmor](https://github
 
 ```sh
 task -t taskfiles/zizmor/Taskfile.yml audit
-task -t taskfiles/zizmor/Taskfile.yml audit TARGETS=.github/workflows/ci.yml
+task -t taskfiles/zizmor/Taskfile.yml audit TARGETS=.github/workflows/main.yml
 task -t taskfiles/zizmor/Taskfile.yml audit EXTRA_ARGS="--min-severity high"
+task -t taskfiles/zizmor/Taskfile.yml audit EXTRA_ARGS="--gh-token $GITHUB_TOKEN"
 ```
 
 ### Included in your Taskfile
@@ -48,8 +49,8 @@ task zizmor:install
 
 | Variable | Default | Description |
 |---|---|---|
-| `EXTRA_ARGS` | `""` | Additional flags passed to `zizmor` (e.g. `--format`, `--min-severity`) |
-| `TARGETS` | `".github/workflows"` | Path to the workflow file or directory to audit |
+| `EXTRA_ARGS` | `"--offline"` | Additional flags passed to `zizmor` (e.g. `--format`, `--min-severity`, `--gh-token`) |
+| `TARGETS` | `".github"` | Path to audit; scans workflows and composite actions under `.github` |
 | `ZIZMOR_VERSION` | `"1.25.2"` | Pinned release version for binary download |
 
 ## Notes
