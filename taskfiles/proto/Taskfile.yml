@@ -14,11 +14,28 @@ includes:
     taskfile: ../go/Taskfile.yml
 
 vars:
+  GO_CMD:
+    sh: |
+      if command -v go >/dev/null 2>&1; then
+        command -v go
+      elif [ "$(uname -s 2>/dev/null || true)" = "Linux" ]; then
+        printf '%s' "/usr/local/go/bin/go"
+      else
+        printf '%s' "go"
+      fi
   GLOBAL_GO_BIN:
     sh: |
-      gobin="$(go env GOBIN 2>/dev/null || true)"
+      go_cmd="{{.GO_CMD}}"
+      gobin="${GOBIN:-}"
+      if [ -z "$gobin" ] && { command -v "$go_cmd" >/dev/null 2>&1 || [ -x "$go_cmd" ]; }; then
+        gobin="$("$go_cmd" env GOBIN 2>/dev/null || true)"
+      fi
       if [ -z "$gobin" ]; then
-        gobin="$(go env GOPATH 2>/dev/null || true)/bin"
+        gopath="${GOPATH:-}"
+        if [ -z "$gopath" ] && { command -v "$go_cmd" >/dev/null 2>&1 || [ -x "$go_cmd" ]; }; then
+          gopath="$("$go_cmd" env GOPATH 2>/dev/null || true)"
+        fi
+        gobin="${gopath:-$HOME/go}/bin"
       fi
       printf '%s' "$gobin"
   PROTO_PATH: "."
@@ -54,6 +71,8 @@ tasks:
       Linux downloads the pinned PROTOC_VERSION release into /usr/local.
       Windows uses Scoop for protoc. Go plugins are installed into the global
       Go bin (GOBIN or GOPATH/bin).
+    deps:
+      - go:install
     cmds:
       - task: _install:protoc:macos
       - task: _install:protoc:linux
@@ -84,6 +103,8 @@ tasks:
       Upgrade protoc and the Go protobuf plugins. macOS uses brew upgrade protobuf.
       Linux re-downloads the pinned PROTOC_VERSION release. Windows uses
       scoop update protobuf. Go plugins are reinstalled at their pinned versions.
+    deps:
+      - go:install
     cmds:
       - task: _upgrade:protoc:macos
       - task: _upgrade:protoc:linux
@@ -237,17 +258,17 @@ tasks:
       - test -x "{{.GLOBAL_GO_BIN}}/protoc-gen-go"
       - test -x "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc"
       - '[ "{{.FORCE}}" != "true" ]'
-    deps:
-      - go:install
     preconditions:
-      - sh: command -v go >/dev/null 2>&1
+      - sh: command -v "{{.GO_CMD}}" >/dev/null 2>&1 || test -x "{{.GO_CMD}}"
         msg: Go is required to install protoc-gen-go and protoc-gen-go-grpc.
     cmds:
       - mkdir -p "{{.GLOBAL_GO_BIN}}"
-      - GOBIN="{{.GLOBAL_GO_BIN}}" go install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
       - >-
         GOBIN="{{.GLOBAL_GO_BIN}}"
-        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
+        "{{.GO_CMD}}" install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
+      - >-
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        "{{.GO_CMD}}" install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
       - echo 'protoc Go plugins installed.'
 
   _install:undo:protoc:macos:
