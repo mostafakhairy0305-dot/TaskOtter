@@ -1,0 +1,327 @@
+---
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+vars:
+  AGAINST: ".git#branch=main"
+  BUF_VERSION: "1.47.2"
+  CONFIG: ""
+  EXTRA_ARGS: ""
+  INPUT: "."
+
+tasks:
+  default:
+    desc: Show available Buf automation tasks
+    summary: Display the list of available Buf-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  lint:
+    desc: Lint proto files with Buf (INPUT=path)
+    summary: |
+      Run buf lint against INPUT (default: .). Pass CONFIG to use a custom
+      buf.yaml via --config, and EXTRA_ARGS for additional flags such as
+      --error-format. Pass CLI arguments after -- to override all variables
+      directly. Auto-installs Buf if missing.
+    deps:
+      - install
+    cmds:
+      - >-
+        buf lint
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+        {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}
+        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        && echo "✅ buf lint passed" || { echo "❌ buf lint failed"; exit 1; }
+
+  format:
+    desc: Check proto file formatting with Buf (INPUT=path)
+    summary: |
+      Run buf format --diff to report formatting issues without modifying files.
+      Pass INPUT to check a specific directory or module. Use format:write to
+      apply fixes. Auto-installs Buf if missing.
+    deps:
+      - install
+    cmds:
+      - >-
+        buf format --diff
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        && echo "✅ buf format check passed" || { echo "❌ buf format check failed"; exit 1; }
+
+  format:write:
+    desc: Format proto files in place with Buf (INPUT=path)
+    summary: |
+      Run buf format --write to reformat all .proto files under INPUT in
+      place. Auto-installs Buf if missing.
+    deps:
+      - install
+    cmds:
+      - >-
+        buf format --write
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+
+  breaking:
+    desc: Check proto files for breaking changes against AGAINST
+    summary: |
+      Run buf breaking to detect backwards-incompatible changes in INPUT
+      compared to the AGAINST baseline (default: .git#branch=main). Pass a
+      .git ref, a Buf module name, or a local directory as AGAINST. Pass CLI
+      arguments after -- to override all variables directly. Auto-installs
+      Buf if missing.
+    deps:
+      - install
+    cmds:
+      - >-
+        buf breaking
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
+        --against "{{if .AGAINST_OVERRIDE}}{{.AGAINST_OVERRIDE}}{{else}}{{.AGAINST}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        && echo "✅ buf breaking check passed" || { echo "❌ buf breaking check failed"; exit 1; }
+
+  generate:
+    desc: Generate code from proto files with Buf (INPUT=path)
+    summary: |
+      Run buf generate to produce outputs defined in buf.gen.yaml. Requires a
+      buf.gen.yaml in the project root or at the path given by CLI_ARGS.
+      Auto-installs Buf if missing.
+    deps:
+      - install
+    cmds:
+      - >-
+        buf generate
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        && echo "✅ buf generate passed" || { echo "❌ buf generate failed"; exit 1; }
+
+  install:
+    desc: Install Buf on the current operating system
+    summary: |
+      Install Buf for the current platform if it is not already available.
+      macOS uses Homebrew (tap bufbuild/buf) to install Buf.
+      Linux downloads the pinned BUF_VERSION binary to /usr/local/bin.
+      Windows uses Scoop to install Buf.
+    cmds:
+      - task: _install:macos
+      - task: _install:linux
+      - task: _install:windows
+
+  install:undo:
+    desc: Remove Buf from the current operating system
+    summary: |
+      Remove Buf for the current platform.
+      macOS uses Homebrew to uninstall Buf.
+      Linux removes the binary from /usr/local/bin.
+      Windows uses Scoop to uninstall Buf.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove Buf from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:macos
+      - task: _install:undo:linux
+      - task: _install:undo:windows
+
+  upgrade:
+    desc: Upgrade Buf to the latest release
+    summary: |
+      Upgrade Buf to the latest available release.
+      macOS uses brew upgrade bufbuild/buf/buf.
+      Linux re-downloads the pinned BUF_VERSION binary, replacing any existing installation.
+      Windows uses scoop update buf.
+    cmds:
+      - task: _upgrade:macos
+      - task: _upgrade:linux
+      - task: _upgrade:windows
+
+  version:
+    desc: Show the installed Buf version
+    summary: Print the active Buf version via buf --version. Auto-installs Buf if missing.
+    deps:
+      - install
+    cmds:
+      - buf --version
+
+  _install:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v buf >/dev/null 2>&1
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to install Buf on macOS. Install it from https://brew.sh and re-run this task.
+    cmds:
+      - echo 'Installing Buf via Homebrew...'
+      - brew install bufbuild/buf/buf
+      - echo 'Buf installed.'
+
+  _install:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    vars:
+      BUF_UNAME_ARCH:
+        sh: uname -m
+      BUF_ARCH: >-
+        {{if or (eq .BUF_UNAME_ARCH "x86_64") (eq .BUF_UNAME_ARCH "amd64")}}x86_64
+        {{- else if or (eq .BUF_UNAME_ARCH "aarch64") (eq .BUF_UNAME_ARCH "arm64")}}aarch64
+        {{- else}}{{.BUF_UNAME_ARCH}}{{end}}
+    status:
+      - command -v buf >/dev/null 2>&1
+    preconditions:
+      - sh: 'command -v curl >/dev/null 2>&1'
+        msg: curl is required to download Buf.
+      - sh: 'command -v install >/dev/null 2>&1'
+        msg: install is required to place the Buf binary.
+      - sh: >-
+          [ "{{.BUF_ARCH}}" = "x86_64" ] || [ "{{.BUF_ARCH}}" = "aarch64" ]
+        msg: Unsupported Linux architecture. Only x86_64 and aarch64 are supported.
+    cmds:
+      - echo 'Installing Buf v{{.BUF_VERSION}} for Linux ({{.BUF_ARCH}})...'
+      - >-
+        curl -fsSL
+        -o /tmp/taskotter-buf
+        "https://github.com/bufbuild/buf/releases/download/v{{.BUF_VERSION}}/buf-Linux-{{.BUF_ARCH}}"
+      - cmd: install -m 0755 /tmp/taskotter-buf /usr/local/bin/buf
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo install -m 0755 /tmp/taskotter-buf /usr/local/bin/buf
+        if: '[ "$(id -u)" -ne 0 ]'
+      - rm -f /tmp/taskotter-buf
+      - echo 'Buf installed.'
+
+  _install:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command buf -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: Scoop is required to install Buf on Windows. Install it from https://scoop.sh and re-run this task.
+    cmds:
+      - echo Installing Buf via Scoop...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop install buf"
+      - echo Buf installed. Restart your terminal if buf is not found.
+
+  _install:undo:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v buf >/dev/null 2>&1"
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to remove Buf on macOS.
+    cmds:
+      - echo 'Removing Buf via Homebrew...'
+      - brew uninstall bufbuild/buf/buf
+      - echo 'Buf removed.'
+
+  _install:undo:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v buf >/dev/null 2>&1"
+    cmds:
+      - echo 'Removing Buf...'
+      - cmd: rm -f /usr/local/bin/buf
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo rm -f /usr/local/bin/buf
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'Buf removed.'
+
+  _install:undo:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command buf -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Removing Buf via Scoop...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop uninstall buf"
+      - echo Buf removed.
+
+  _upgrade:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to upgrade Buf on macOS.
+    cmds:
+      - echo 'Upgrading Buf via Homebrew...'
+      - cmd: brew upgrade bufbuild/buf/buf
+        if: brew list bufbuild/buf/buf >/dev/null 2>&1
+      - cmd: brew install bufbuild/buf/buf
+        if: "! brew list bufbuild/buf/buf >/dev/null 2>&1"
+      - echo 'Buf upgraded.'
+
+  _upgrade:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    vars:
+      BUF_UNAME_ARCH:
+        sh: uname -m
+      BUF_ARCH: >-
+        {{if or (eq .BUF_UNAME_ARCH "x86_64") (eq .BUF_UNAME_ARCH "amd64")}}x86_64
+        {{- else if or (eq .BUF_UNAME_ARCH "aarch64") (eq .BUF_UNAME_ARCH "arm64")}}aarch64
+        {{- else}}{{.BUF_UNAME_ARCH}}{{end}}
+    preconditions:
+      - sh: 'command -v curl >/dev/null 2>&1'
+        msg: curl is required to download Buf.
+      - sh: 'command -v install >/dev/null 2>&1'
+        msg: install is required to place the Buf binary.
+      - sh: >-
+          [ "{{.BUF_ARCH}}" = "x86_64" ] || [ "{{.BUF_ARCH}}" = "aarch64" ]
+        msg: Unsupported Linux architecture. Only x86_64 and aarch64 are supported.
+    cmds:
+      - echo 'Upgrading Buf to v{{.BUF_VERSION}} for Linux ({{.BUF_ARCH}})...'
+      - >-
+        curl -fsSL
+        -o /tmp/taskotter-buf
+        "https://github.com/bufbuild/buf/releases/download/v{{.BUF_VERSION}}/buf-Linux-{{.BUF_ARCH}}"
+      - cmd: install -m 0755 /tmp/taskotter-buf /usr/local/bin/buf
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo install -m 0755 /tmp/taskotter-buf /usr/local/bin/buf
+        if: '[ "$(id -u)" -ne 0 ]'
+      - rm -f /tmp/taskotter-buf
+      - echo 'Buf upgraded.'
+
+  _upgrade:windows:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - echo Upgrading Buf via Scoop...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop update buf"
+      - echo Buf upgraded. Restart your terminal if prompted.

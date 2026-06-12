@@ -1,0 +1,330 @@
+---
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+vars:
+  EXTRA_ARGS: ""
+  TARGETS: ""
+
+tasks:
+  default:
+    desc: Show available ShellCheck automation tasks
+    summary: Display the list of available ShellCheck-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  lint:
+    desc: Lint shell scripts with ShellCheck (TARGETS=glob)
+    summary: |
+      Run shellcheck against TARGETS. When TARGETS is empty, all *.sh files
+      under the working tree are discovered recursively (excluding .git).
+      Pass explicit paths or globs to check specific scripts. Pass EXTRA_ARGS
+      for additional flags such as --shell or --severity, or CLI arguments
+      after -- to override all variables directly. Auto-installs ShellCheck if missing.
+    deps:
+      - install
+    cmds:
+      - task: _lint:unix
+      - task: _lint:windows
+
+  _lint:unix:
+    internal: true
+    platforms: [darwin, linux]
+    set: [errexit, nounset, pipefail]
+    cmds:
+      - >-
+        bash -lc 'set -euo pipefail;
+        if [ -n "{{.CLI_ARGS}}" ]; then
+          shellcheck {{.CLI_ARGS}} && echo "✅ shellcheck passed" || { echo "❌ shellcheck failed"; exit 1; }
+        else
+          extra="{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}";
+          targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
+          if [ -z "$targets" ]; then
+            mapfile -d "" files < <(find . -type f -name "*.sh" ! -path "*/.git/*" -print0);
+            if [ ${#files[@]} -eq 0 ]; then echo "No shell scripts found"; exit 0; fi;
+            shellcheck $extra "${files[@]}";
+          else
+            shellcheck $extra $targets;
+          fi;
+          echo "✅ shellcheck passed";
+        fi'
+
+  _lint:windows:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$ErrorActionPreference='Stop';
+        if ('{{.CLI_ARGS}}') {
+          shellcheck {{.CLI_ARGS}}; exit $LASTEXITCODE
+        }
+        $extra='{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}';
+        $targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}';
+        if (-not $targets) {
+          $files = Get-ChildItem -Recurse -Filter '*.sh' -File |
+            Where-Object { $_.FullName -notmatch '\\\.git\\' };
+          if (-not $files) { Write-Host 'No shell scripts found'; exit 0 }
+          if ($extra) { shellcheck $extra.Split(' ') @($files | ForEach-Object FullName) }
+          else { shellcheck @($files | ForEach-Object FullName) }
+        } elseif ($extra) {
+          shellcheck $extra.Split(' ') $targets.Split(' ')
+        } else {
+          shellcheck $targets.Split(' ')
+        };
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        Write-Host '✅ shellcheck passed'"
+
+  install:
+    desc: Install ShellCheck on the current operating system
+    summary: |
+      Install ShellCheck for the current platform if it is not already available.
+      macOS uses Homebrew to install ShellCheck.
+      Linux uses apt-get or dnf depending on the package manager present.
+      Windows uses Scoop to install ShellCheck.
+    cmds:
+      - task: _install:macos
+      - task: _install:linux
+      - task: _install:windows
+
+  install:undo:
+    desc: Remove ShellCheck from the current operating system
+    summary: |
+      Remove ShellCheck for the current platform.
+      macOS uses Homebrew to uninstall ShellCheck.
+      Linux removes ShellCheck via apt-get or dnf.
+      Windows uses Scoop to uninstall ShellCheck.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove ShellCheck from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:macos
+      - task: _install:undo:linux
+      - task: _install:undo:windows
+
+  upgrade:
+    desc: Upgrade ShellCheck to the latest release
+    summary: |
+      Upgrade ShellCheck to the latest available release.
+      macOS uses brew upgrade shellcheck.
+      Linux upgrades ShellCheck via apt-get or dnf.
+      Windows uses scoop update shellcheck.
+    cmds:
+      - task: _upgrade:macos
+      - task: _upgrade:linux
+      - task: _upgrade:windows
+
+  version:
+    desc: Show the installed ShellCheck version
+    summary: Print the active ShellCheck version via shellcheck --version. Auto-installs ShellCheck if missing.
+    deps:
+      - install
+    cmds:
+      - shellcheck --version
+
+  _install:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v shellcheck >/dev/null 2>&1
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to install ShellCheck on macOS. Install it from https://brew.sh and re-run this task.
+    cmds:
+      - echo 'Installing ShellCheck via Homebrew...'
+      - brew install shellcheck
+      - echo 'ShellCheck installed.'
+
+  _install:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - command -v shellcheck >/dev/null 2>&1
+    cmds:
+      - task: _install:linux:apt
+      - task: _install:linux:dnf
+
+  _install:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v apt-get >/dev/null 2>&1"
+    cmds:
+      - echo 'Installing ShellCheck via apt-get...'
+      - cmd: apt-get install -y shellcheck
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get install -y shellcheck
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'ShellCheck installed.'
+
+  _install:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v dnf >/dev/null 2>&1"
+    cmds:
+      - echo 'Installing ShellCheck via dnf...'
+      - cmd: dnf install -y shellcheck
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf install -y shellcheck
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'ShellCheck installed.'
+
+  _install:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command shellcheck -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+    preconditions:
+      - sh: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        msg: Scoop is required to install ShellCheck on Windows. Install it from https://scoop.sh and re-run this task.
+    cmds:
+      - echo Installing ShellCheck via Scoop...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop install shellcheck"
+      - echo ShellCheck installed. Restart your terminal if shellcheck is not found.
+
+  _install:undo:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v shellcheck >/dev/null 2>&1"
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to remove ShellCheck on macOS.
+    cmds:
+      - echo 'Removing ShellCheck via Homebrew...'
+      - brew uninstall shellcheck
+      - echo 'ShellCheck removed.'
+
+  _install:undo:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v shellcheck >/dev/null 2>&1"
+    preconditions:
+      - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
+        msg: sudo is required to remove ShellCheck when not running as root.
+    cmds:
+      - task: _install:undo:linux:apt
+      - task: _install:undo:linux:dnf
+
+  _install:undo:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v apt-get >/dev/null 2>&1"
+    cmds:
+      - echo 'Removing ShellCheck via apt-get...'
+      - cmd: apt-get remove -y shellcheck
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get remove -y shellcheck
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'ShellCheck removed.'
+
+  _install:undo:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v dnf >/dev/null 2>&1"
+    cmds:
+      - echo 'Removing ShellCheck via dnf...'
+      - cmd: dnf remove -y shellcheck
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf remove -y shellcheck
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'ShellCheck removed.'
+
+  _install:undo:windows:
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command shellcheck -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+    cmds:
+      - echo Removing ShellCheck via Scoop...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop uninstall shellcheck"
+      - echo ShellCheck removed.
+
+  _upgrade:macos:
+    internal: true
+    platforms: [darwin]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v brew >/dev/null 2>&1
+        msg: Homebrew is required to upgrade ShellCheck on macOS.
+    cmds:
+      - echo 'Upgrading ShellCheck via Homebrew...'
+      - cmd: brew upgrade shellcheck
+        if: brew list shellcheck >/dev/null 2>&1
+      - cmd: brew install shellcheck
+        if: "! brew list shellcheck >/dev/null 2>&1"
+      - echo 'ShellCheck upgraded.'
+
+  _upgrade:linux:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    preconditions:
+      - sh: command -v shellcheck >/dev/null 2>&1
+        msg: ShellCheck is not installed. Run task install first.
+    cmds:
+      - task: _upgrade:linux:apt
+      - task: _upgrade:linux:dnf
+
+  _upgrade:linux:apt:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v apt-get >/dev/null 2>&1"
+    cmds:
+      - echo 'Upgrading ShellCheck via apt-get...'
+      - cmd: apt-get install -y --only-upgrade shellcheck
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo apt-get install -y --only-upgrade shellcheck
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'ShellCheck upgraded.'
+
+  _upgrade:linux:dnf:
+    internal: true
+    platforms: [linux]
+    set: [errexit, nounset, pipefail]
+    status:
+      - "! command -v dnf >/dev/null 2>&1"
+    cmds:
+      - echo 'Upgrading ShellCheck via dnf...'
+      - cmd: dnf upgrade -y shellcheck
+        if: '[ "$(id -u)" -eq 0 ]'
+      - cmd: sudo dnf upgrade -y shellcheck
+        if: '[ "$(id -u)" -ne 0 ]'
+      - echo 'ShellCheck upgraded.'
+
+  _upgrade:windows:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - echo Upgrading ShellCheck via Scoop...
+      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop update shellcheck"
+      - echo ShellCheck upgraded. Restart your terminal if prompted.

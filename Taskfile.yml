@@ -69,6 +69,18 @@ includes:
       DEPCHECK_PROJECT_PATH_OVERRIDE: "{{.PROJECT_PATH}}"
       IGNORE_PACKAGES_OVERRIDE: "{{.IGNORE_PACKAGES}}"
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  actionlint:
+    taskfile: taskfiles/actionlint/Taskfile.yml
+    vars:
+      TARGETS_OVERRIDE: "{{.TARGETS}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  buf:
+    taskfile: taskfiles/buf/Taskfile.yml
+    vars:
+      CONFIG_OVERRIDE: "{{.CONFIG}}"
+      INPUT_OVERRIDE: "{{.INPUT}}"
+      AGAINST_OVERRIDE: "{{.AGAINST}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   bun:
     taskfile: taskfiles/bun/Taskfile.yml
   corepack:
@@ -104,10 +116,20 @@ includes:
     taskfile: taskfiles/nvm/Taskfile.yml
   pnpm:
     taskfile: taskfiles/pnpm/Taskfile.yml
+  proto:
+    taskfile: taskfiles/proto/Taskfile.yml
+    vars:
+      PROTO_PATH_OVERRIDE: "{{.PROTO_PATH}}"
+      PROTO_PATTERN_OVERRIDE: "{{.PROTO_PATTERN}}"
   python:
     taskfile: taskfiles/python/Taskfile.yml
     vars:
       FILE_OVERRIDE: "{{.FILE}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+  shellcheck:
+    taskfile: taskfiles/shellcheck/Taskfile.yml
+    vars:
+      TARGETS_OVERRIDE: "{{.TARGETS}}"
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   sqlfluff:
     taskfile: taskfiles/sqlfluff/Taskfile.yml
@@ -150,11 +172,20 @@ includes:
       EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
   yarn:
     taskfile: taskfiles/yarn/Taskfile.yml
+  zizmor:
+    taskfile: taskfiles/zizmor/Taskfile.yml
+    vars:
+      TARGETS_OVERRIDE: "{{.TARGETS}}"
+      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
 
 vars:
   PM: ""
   TARGETS: ""
   CONFIG: ""
+  INPUT: ""
+  AGAINST: ""
+  PROTO_PATH: ""
+  PROTO_PATTERN: ""
   CACHE: ""
   FILE: ""
   EXTRA_ARGS: ""
