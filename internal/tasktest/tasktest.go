@@ -50,6 +50,27 @@ func AssertDryRunContains(t *testing.T, module string, args []string, tokens ...
 	}
 }
 
+// AssertInstallDryRun verifies install dry-run output. When the tool is already
+// on PATH the install task is skipped ("up to date"); otherwise downloadTokens
+// must appear in the output.
+func AssertInstallDryRun(t *testing.T, module, toolName string, downloadTokens ...string) {
+	t.Helper()
+
+	output := DryRun(t, module, "install")
+	if strings.Contains(output, "up to date") {
+		if !strings.Contains(output, toolName) {
+			t.Fatalf("dry-run output for %s install skipped but missing %q\noutput:\n%s", module, toolName, output)
+		}
+		return
+	}
+
+	for _, token := range downloadTokens {
+		if !strings.Contains(output, token) {
+			t.Fatalf("dry-run output for %s install missing %q\noutput:\n%s", module, token, output)
+		}
+	}
+}
+
 func RootDryRun(t *testing.T, args ...string) string {
 	t.Helper()
 

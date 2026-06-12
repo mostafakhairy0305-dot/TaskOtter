@@ -58,17 +58,9 @@ func TestRepresentativeDryRuns(t *testing.T) {
 func TestInstallDryRunUsesPlatformPackageManager(t *testing.T) {
 	switch runtime.GOOS {
 	case "darwin":
-		tasktest.AssertDryRunContains(t, "buf",
-			[]string{"install"},
-			"brew",
-			"bufbuild/buf/buf",
-		)
+		tasktest.AssertInstallDryRun(t, "buf", "buf", "brew", "bufbuild/buf/buf")
 	case "linux":
-		tasktest.AssertDryRunContains(t, "buf",
-			[]string{"install"},
-			"curl",
-			"buf-Linux-",
-		)
+		tasktest.AssertInstallDryRun(t, "buf", "buf", "curl", "buf-Linux-")
 	default:
 		t.Skip("install dry-run is covered on macOS and Linux")
 	}

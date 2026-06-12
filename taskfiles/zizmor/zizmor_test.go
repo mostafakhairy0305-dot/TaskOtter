@@ -41,17 +41,9 @@ func TestRepresentativeDryRuns(t *testing.T) {
 func TestInstallDryRunDownloadsBinary(t *testing.T) {
 	switch runtime.GOOS {
 	case "darwin":
-		tasktest.AssertDryRunContains(t, "zizmor",
-			[]string{"install"},
-			"curl",
-			"apple-darwin",
-		)
+		tasktest.AssertInstallDryRun(t, "zizmor", "zizmor", "curl", "apple-darwin")
 	case "linux":
-		tasktest.AssertDryRunContains(t, "zizmor",
-			[]string{"install"},
-			"curl",
-			"linux-gnu",
-		)
+		tasktest.AssertInstallDryRun(t, "zizmor", "zizmor", "curl", "linux-gnu")
 	default:
 		t.Skip("install dry-run is covered on macOS and Linux")
 	}
