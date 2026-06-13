@@ -138,21 +138,14 @@ tasks:
       RESOLVED_PROTO_PATH: '{{if .PROTO_PATH_OVERRIDE}}{{.PROTO_PATH_OVERRIDE}}{{else}}{{.PROTO_PATH}}{{end}}'
       RESOLVED_PROTO_PATTERN: '{{default .PROTO_PATTERN .PROTO_PATTERN_OVERRIDE}}'
     cmds:
-      - >-
-        bash -lc 'set -euo pipefail;
-        export PATH="{{.GLOBAL_GO_BIN}}:$PATH";
-        mapfile -d "" protos < <(
-          find "{{.RESOLVED_PROTO_PATH}}" -type f -name "{{.RESOLVED_PROTO_PATTERN}}" ! -path "*/.git/*" -print0
-        );
-        if [ ${#protos[@]} -eq 0 ]; then
-          echo "No .proto files found under {{.RESOLVED_PROTO_PATH}} matching -name {{.RESOLVED_PROTO_PATTERN}}";
-          exit 1;
-        fi;
-        protoc
-          --proto_path="{{.RESOLVED_PROTO_PATH}}"
-          --go_out=.
-          --go-grpc_out=.
-          "${protos[@]}"'
+      - |
+        export PATH="{{.GLOBAL_GO_BIN}}:$PATH"
+        if [ -z "$(find "{{.RESOLVED_PROTO_PATH}}" -type f -name "{{.RESOLVED_PROTO_PATTERN}}" ! -path "*/.git/*" -print -quit)" ]; then
+          echo "No .proto files found under {{.RESOLVED_PROTO_PATH}} matching -name {{.RESOLVED_PROTO_PATTERN}}"
+          exit 1
+        fi
+        find "{{.RESOLVED_PROTO_PATH}}" -type f -name "{{.RESOLVED_PROTO_PATTERN}}" ! -path "*/.git/*" \
+          -exec protoc --proto_path="{{.RESOLVED_PROTO_PATH}}" --go_out=. --go-grpc_out=. {} +
 
   _gen:windows:
     internal: true

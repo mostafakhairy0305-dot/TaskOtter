@@ -11,6 +11,7 @@ silent: true
 
 vars:
   EXTRA_ARGS: "--offline"
+  ZIZMOR_EXTRA_ARGS: "--offline"
   TARGETS: ".github"
   ZIZMOR_VERSION: "1.25.2"
 
@@ -36,13 +37,25 @@ tasks:
     deps:
       - install
     cmds:
-      - >-
-        zizmor
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}
-        {{else}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}{{end}}
-        && echo "✅ zizmor audit passed" || { echo "❌ zizmor audit found issues"; exit 1; }
+      - cmd: >-
+          env -u GH_TOKEN zizmor
+          {{if .CLI_ARGS}}{{.CLI_ARGS}}
+          {{else}}
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}}
+          {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.github{{end}}{{end}}
+          && echo "✅ zizmor audit passed" || { echo "❌ zizmor audit found issues"; exit 1; }
+        platforms: [linux, darwin]
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue;
+          zizmor
+          {{if .CLI_ARGS}}{{.CLI_ARGS}}
+          {{else}}
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}}
+          {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.github{{end}}{{end}};
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+          Write-Host '✅ zizmor audit passed'"
+        platforms: [windows]
 
   install:
     desc: Install zizmor on the current operating system
