@@ -75,13 +75,17 @@ tasks:
       Auto-installs yamllint if missing.
     deps:
       - install
+    vars:
+      TARGETS: "."
+      CONFIG: ""
+      EXTRA_ARGS: ""
     cmds:
       - >-
         bash -lc '{{.UV_LOAD}};
         yamllint
         {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}"
         {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}}
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
         && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
 
@@ -95,10 +99,13 @@ tasks:
       - install
       - _install:yamlfix:unix
       - _install:yamlfix:windows
+    vars:
+      TARGETS: "."
+      EXTRA_ARGS: ""
     cmds:
       - >-
         bash -lc '{{.UV_LOAD}};
-        _t="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
+        _t="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}";
         [ -d "$_t" ] || _t=".";
         find "$_t" \( -name "*.yml" -o -name "*.yaml" \)
         ! -name "Taskfile.yml" ! -name "Taskfile.yaml" -print0
@@ -113,13 +120,17 @@ tasks:
       Auto-installs yamllint if missing.
     deps:
       - install
+    vars:
+      TARGETS: "."
+      CONFIG: ""
+      EXTRA_ARGS: ""
     cmds:
       - >-
         bash -lc '{{.UV_LOAD}};
         yamllint --strict
         {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}"
         {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}}
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
         && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
 
