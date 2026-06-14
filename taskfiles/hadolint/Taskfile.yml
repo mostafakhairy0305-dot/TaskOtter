@@ -13,6 +13,7 @@ vars:
   CONFIG: ""
   DOCKERFILE: "Dockerfile"
   EXTRA_ARGS: ""
+  HADOLINT_VERSION: "2.14.0"
 
 tasks:
   default:
@@ -109,38 +110,34 @@ tasks:
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
+    vars:
+      HADOLINT_UNAME_ARCH:
+        sh: uname -m
+      HADOLINT_ASSET_ARCH: >-
+        {{if or (eq .HADOLINT_UNAME_ARCH "x86_64") (eq .HADOLINT_UNAME_ARCH "amd64")}}x86_64
+        {{- else if or (eq .HADOLINT_UNAME_ARCH "aarch64") (eq .HADOLINT_UNAME_ARCH "arm64")}}arm64
+        {{- else}}{{.HADOLINT_UNAME_ARCH}}{{end}}
     status:
       - command -v hadolint >/dev/null 2>&1
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required to download hadolint.
+      - sh: command -v install >/dev/null 2>&1
+        msg: install is required to place the hadolint binary.
+      - sh: >-
+          [ "{{.HADOLINT_ASSET_ARCH}}" = "x86_64" ] || [ "{{.HADOLINT_ASSET_ARCH}}" = "arm64" ]
+        msg: Unsupported Linux architecture. Only x86_64 and arm64 are supported.
     cmds:
-      - task: _install:linux:apt
-      - task: _install:linux:dnf
-
-  _install:linux:apt:
-    internal: true
-    platforms: [linux]
-    set: [errexit, nounset, pipefail]
-    status:
-      - "! command -v apt-get >/dev/null 2>&1"
-    cmds:
-      - echo 'Installing hadolint via apt-get...'
-      - cmd: apt-get install -y hadolint
+      - echo 'Installing hadolint v{{.HADOLINT_VERSION}} for Linux...'
+      - >-
+        curl -fsSL
+        -o /tmp/taskotter-hadolint
+        "https://github.com/hadolint/hadolint/releases/download/v{{.HADOLINT_VERSION}}/hadolint-linux-{{.HADOLINT_ASSET_ARCH}}"
+      - cmd: install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
         if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo apt-get install -y hadolint
+      - cmd: sudo install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
         if: '[ "$(id -u)" -ne 0 ]'
-      - echo 'hadolint installed.'
-
-  _install:linux:dnf:
-    internal: true
-    platforms: [linux]
-    set: [errexit, nounset, pipefail]
-    status:
-      - "! command -v dnf >/dev/null 2>&1"
-    cmds:
-      - echo 'Installing hadolint via dnf...'
-      - cmd: dnf install -y hadolint
-        if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo dnf install -y hadolint
-        if: '[ "$(id -u)" -ne 0 ]'
+      - rm -f /tmp/taskotter-hadolint
       - echo 'hadolint installed.'
 
   _install:windows:
@@ -184,34 +181,10 @@ tasks:
       - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
         msg: sudo is required to remove hadolint when not running as root.
     cmds:
-      - task: _install:undo:linux:apt
-      - task: _install:undo:linux:dnf
-
-  _install:undo:linux:apt:
-    internal: true
-    platforms: [linux]
-    set: [errexit, nounset, pipefail]
-    status:
-      - "! command -v apt-get >/dev/null 2>&1"
-    cmds:
-      - echo 'Removing hadolint via apt-get...'
-      - cmd: apt-get remove -y hadolint
+      - echo 'Removing hadolint...'
+      - cmd: rm -f /usr/local/bin/hadolint
         if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo apt-get remove -y hadolint
-        if: '[ "$(id -u)" -ne 0 ]'
-      - echo 'hadolint removed.'
-
-  _install:undo:linux:dnf:
-    internal: true
-    platforms: [linux]
-    set: [errexit, nounset, pipefail]
-    status:
-      - "! command -v dnf >/dev/null 2>&1"
-    cmds:
-      - echo 'Removing hadolint via dnf...'
-      - cmd: dnf remove -y hadolint
-        if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo dnf remove -y hadolint
+      - cmd: sudo rm -f /usr/local/bin/hadolint
         if: '[ "$(id -u)" -ne 0 ]'
       - echo 'hadolint removed.'
 
@@ -246,39 +219,32 @@ tasks:
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
+    vars:
+      HADOLINT_UNAME_ARCH:
+        sh: uname -m
+      HADOLINT_ASSET_ARCH: >-
+        {{if or (eq .HADOLINT_UNAME_ARCH "x86_64") (eq .HADOLINT_UNAME_ARCH "amd64")}}x86_64
+        {{- else if or (eq .HADOLINT_UNAME_ARCH "aarch64") (eq .HADOLINT_UNAME_ARCH "arm64")}}arm64
+        {{- else}}{{.HADOLINT_UNAME_ARCH}}{{end}}
     preconditions:
-      - sh: command -v hadolint >/dev/null 2>&1
-        msg: hadolint is not installed. Run task install first.
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required to download hadolint.
+      - sh: command -v install >/dev/null 2>&1
+        msg: install is required to place the hadolint binary.
+      - sh: >-
+          [ "{{.HADOLINT_ASSET_ARCH}}" = "x86_64" ] || [ "{{.HADOLINT_ASSET_ARCH}}" = "arm64" ]
+        msg: Unsupported Linux architecture. Only x86_64 and arm64 are supported.
     cmds:
-      - task: _upgrade:linux:apt
-      - task: _upgrade:linux:dnf
-
-  _upgrade:linux:apt:
-    internal: true
-    platforms: [linux]
-    set: [errexit, nounset, pipefail]
-    status:
-      - "! command -v apt-get >/dev/null 2>&1"
-    cmds:
-      - echo 'Upgrading hadolint via apt-get...'
-      - cmd: apt-get install -y --only-upgrade hadolint
+      - echo 'Upgrading hadolint to v{{.HADOLINT_VERSION}}...'
+      - >-
+        curl -fsSL
+        -o /tmp/taskotter-hadolint
+        "https://github.com/hadolint/hadolint/releases/download/v{{.HADOLINT_VERSION}}/hadolint-linux-{{.HADOLINT_ASSET_ARCH}}"
+      - cmd: install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
         if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo apt-get install -y --only-upgrade hadolint
+      - cmd: sudo install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
         if: '[ "$(id -u)" -ne 0 ]'
-      - echo 'hadolint upgraded.'
-
-  _upgrade:linux:dnf:
-    internal: true
-    platforms: [linux]
-    set: [errexit, nounset, pipefail]
-    status:
-      - "! command -v dnf >/dev/null 2>&1"
-    cmds:
-      - echo 'Upgrading hadolint via dnf...'
-      - cmd: dnf upgrade -y hadolint
-        if: '[ "$(id -u)" -eq 0 ]'
-      - cmd: sudo dnf upgrade -y hadolint
-        if: '[ "$(id -u)" -ne 0 ]'
+      - rm -f /tmp/taskotter-hadolint
       - echo 'hadolint upgraded.'
 
   _upgrade:windows:
