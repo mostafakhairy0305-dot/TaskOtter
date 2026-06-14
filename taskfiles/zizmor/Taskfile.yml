@@ -10,7 +10,11 @@ output:
 silent: true
 
 vars:
-  EXTRA_ARGS: "--offline"
+  # NOTE: Keep EXTRA_ARGS empty here. Task v3 merges included Taskfiles'
+  # file-level vars into one shared scope, so a non-empty default would leak
+  # into sibling includes (buf, hadolint, ...) and get passed as a bogus flag.
+  # The offline default lives in the namespaced ZIZMOR_EXTRA_ARGS instead.
+  EXTRA_ARGS: ""
   ZIZMOR_EXTRA_ARGS: "--offline"
   TARGETS: ".github"
   ZIZMOR_VERSION: "1.25.2"
