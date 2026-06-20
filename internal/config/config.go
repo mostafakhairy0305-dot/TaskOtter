@@ -1,3 +1,4 @@
+// Package config loads and validates TaskOtter GitHub Action inputs from the environment.
 package config
 
 import (
@@ -13,12 +14,15 @@ import (
 )
 
 const (
+	// DefaultTargetFolder is the workspace-relative directory where synced taskfiles are written.
 	DefaultTargetFolder = "taskfiles"
-	StoreRepository     = "mostafakhairy0305-dot/TaskOtter-store"
+	// StoreRepository is the GitHub repository that hosts TaskOtter store modules.
+	StoreRepository = "mostafakhairy0305-dot/TaskOtter-store"
 )
 
 var unsafeStoreVersion = regexp.MustCompile(`(?i)(^refs/|\.\./|/|\\|\^|~|\^{commit})`)
 
+// ValidationError reports invalid action input values.
 type ValidationError struct {
 	Field   string
 	Message string
@@ -28,6 +32,7 @@ func (e *ValidationError) Error() string {
 	if e.Field != "" {
 		return fmt.Sprintf("%s: %s", e.Field, e.Message)
 	}
+
 	return e.Message
 }
 
@@ -45,11 +50,13 @@ func actionInput(name string) string {
 			return v
 		}
 	}
+
 	return ""
 }
 
 func missingActionInput(name string) *ValidationError {
 	upper := strings.ToUpper(name)
+
 	return &ValidationError{
 		Field: name,
 		Message: fmt.Sprintf(
@@ -61,22 +68,31 @@ func missingActionInput(name string) *ValidationError {
 	}
 }
 
+// PackageManager selects the Node package manager for JS task resolution.
 type PackageManager string
 
 const (
-	PMNPM  PackageManager = "npm"
+	// PMNPM is the default npm package manager.
+	PMNPM PackageManager = "npm"
+	// PMYarn selects Yarn.
 	PMYarn PackageManager = "yarn"
+	// PMPnpm selects pnpm.
 	PMPnpm PackageManager = "pnpm"
-	PMBun  PackageManager = "bun"
+	// PMBun selects Bun as the runtime package manager.
+	PMBun PackageManager = "bun"
 )
 
+// VersionManager selects the Node version manager for JS task resolution.
 type VersionManager string
 
 const (
+	// VMFnm selects fnm as the Node version manager.
 	VMFnm VersionManager = "fnm"
+	// VMNvm selects nvm as the Node version manager.
 	VMNvm VersionManager = "nvm"
 )
 
+// Config holds validated TaskOtter action inputs and derived sync metadata.
 type Config struct {
 	Tasks              []string
 	JSRuntime          JSRuntime
@@ -96,126 +112,196 @@ type Config struct {
 
 type hashPayload struct {
 	Tasks              []string `json:"tasks"`
-	NodePackageManager string   `json:"node_package_manager"`
-	NodeVersionManager string   `json:"node_version_manager"`
-	TargetFolder       string   `json:"target_folder"`
-	StoreVersion       string   `json:"store_version"`
-	IncludesDoc        bool     `json:"includes_doc"`
+	NodePackageManager string   `json:"node_package_manager"` //nolint:tagliatelle // hash payload matches lock file keys
+	NodeVersionManager string   `json:"node_version_manager"` //nolint:tagliatelle // hash payload matches lock file keys
+	TargetFolder       string   `json:"target_folder"`        //nolint:tagliatelle // hash payload matches lock file keys
+	StoreVersion       string   `json:"store_version"`        //nolint:tagliatelle // hash payload matches lock file keys
+	IncludesDoc        bool     `json:"includes_doc"`         //nolint:tagliatelle // hash payload matches lock file keys
 }
 
+// LoadFromEnv reads and validates TaskOtter configuration from GitHub Actions environment variables.
 func LoadFromEnv() (*Config, error) {
-	tasksRaw := actionInput("tasks")
-	jsRaw := actionInput("js")
-	includesDocRaw := actionInput("includes-doc")
-	failOnChangesRaw := actionInput("fail-on-changes")
-	storeVersion := actionInput("store-version")
-	targetFolderRaw := actionInput("target-folder")
-	token := actionInput("github-token")
-	if token == "" {
-		token = strings.TrimSpace(os.Getenv("GITHUB_TOKEN"))
-	}
-	workspace := os.Getenv("GITHUB_WORKSPACE")
-	repository := os.Getenv("GITHUB_REPOSITORY")
-	githubOutput := os.Getenv("GITHUB_OUTPUT")
+	raw := loadRawEnv()
 
-	if workspace == "" {
-		return nil, &ValidationError{Field: "GITHUB_WORKSPACE", Message: "is required"}
-	}
-	if token == "" {
-		return nil, missingActionInput("github-token")
-	}
-
-	tasks, err := parseTasks(tasksRaw)
+	err := validateRuntimeEnv(raw.workspace, raw.token)
 	if err != nil {
 		return nil, err
 	}
 
-	jsCfg, err := parseJS(jsRaw)
-	if err != nil {
-		return nil, err
-	}
-
-	var jsRuntime JSRuntime
-	var pm PackageManager
-	var vm VersionManager
-	if jsCfg != nil {
-		jsRuntime = jsCfg.Runtime
-		pm = jsCfg.NodePackageManager
-		vm = jsCfg.NodeVersionManager
-	}
-
-	includesDoc, err := parseIncludesDoc(includesDocRaw)
-	if err != nil {
-		return nil, err
-	}
-
-	failOnChanges, err := parseFailOnChanges(failOnChangesRaw)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := validateStoreVersion(storeVersion); err != nil {
-		return nil, err
-	}
-
-	targetFolder := DefaultTargetFolder
-	if targetFolderRaw != "" {
-		targetFolder = targetFolderRaw
-	}
-	normalizedTarget, err := pathutil.ValidateTargetFolder(targetFolder, workspace)
+	parsed, err := parseEnvInputs(raw)
 	if err != nil {
 		return nil, err
 	}
 
 	hash, branch := computeConfigurationHash(hashPayload{
-		Tasks:              tasks,
-		NodePackageManager: string(pm),
-		NodeVersionManager: string(vm),
-		TargetFolder:       normalizedTarget,
-		StoreVersion:       storeVersion,
-		IncludesDoc:        includesDoc,
+		Tasks:              parsed.tasks,
+		NodePackageManager: string(parsed.packageManager),
+		NodeVersionManager: string(parsed.versionManager),
+		TargetFolder:       parsed.normalizedTarget,
+		StoreVersion:       raw.storeVersion,
+		IncludesDoc:        parsed.includesDoc,
 	})
 
 	return &Config{
-		Tasks:              tasks,
-		JSRuntime:          jsRuntime,
-		NodePackageManager: pm,
-		NodeVersionManager: vm,
-		IncludesDoc:        includesDoc,
-		FailOnChanges:      failOnChanges,
-		StoreVersion:       storeVersion,
-		TargetFolder:       normalizedTarget,
-		GitHubToken:        token,
-		Workspace:          workspace,
-		Repository:         repository,
-		GitHubOutput:       githubOutput,
+		Tasks:              parsed.tasks,
+		JSRuntime:          parsed.jsRuntime,
+		NodePackageManager: parsed.packageManager,
+		NodeVersionManager: parsed.versionManager,
+		IncludesDoc:        parsed.includesDoc,
+		FailOnChanges:      parsed.failOnChanges,
+		StoreVersion:       raw.storeVersion,
+		TargetFolder:       parsed.normalizedTarget,
+		GitHubToken:        raw.token,
+		Workspace:          raw.workspace,
+		Repository:         raw.repository,
+		GitHubOutput:       raw.githubOutput,
 		ConfigurationHash:  hash,
 		BranchName:         branch,
 	}, nil
+}
+
+type parsedEnvInputs struct {
+	tasks            []string
+	jsRuntime        JSRuntime
+	packageManager   PackageManager
+	versionManager   VersionManager
+	includesDoc      bool
+	failOnChanges    bool
+	normalizedTarget string
+}
+
+func parseEnvInputs(raw rawEnvConfig) (parsedEnvInputs, error) {
+	tasks, err := parseTasks(raw.tasksRaw)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
+	jsCfg, err := parseJS(raw.jsRaw)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
+	jsRuntime, packageManager, versionManager := jsSettingsFromConfig(jsCfg)
+
+	includesDoc, err := parseIncludesDoc(raw.includesDocRaw)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
+	failOnChanges, err := parseFailOnChanges(raw.failOnChangesRaw)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
+	err = validateStoreVersion(raw.storeVersion)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
+	targetFolder := DefaultTargetFolder
+	if raw.targetFolderRaw != "" {
+		targetFolder = raw.targetFolderRaw
+	}
+
+	normalizedTarget, err := pathutil.ValidateTargetFolder(targetFolder, raw.workspace)
+	if err != nil {
+		return parsedEnvInputs{}, fmt.Errorf("validate target folder: %w", err)
+	}
+
+	return parsedEnvInputs{
+		tasks:            tasks,
+		jsRuntime:        jsRuntime,
+		packageManager:   packageManager,
+		versionManager:   versionManager,
+		includesDoc:      includesDoc,
+		failOnChanges:    failOnChanges,
+		normalizedTarget: normalizedTarget,
+	}, nil
+}
+
+type rawEnvConfig struct {
+	tasksRaw         string
+	jsRaw            string
+	includesDocRaw   string
+	failOnChangesRaw string
+	storeVersion     string
+	targetFolderRaw  string
+	token            string
+	workspace        string
+	repository       string
+	githubOutput     string
+}
+
+func loadRawEnv() rawEnvConfig {
+	token := actionInput("github-token")
+	if token == "" {
+		token = strings.TrimSpace(os.Getenv("GITHUB_TOKEN"))
+	}
+
+	return rawEnvConfig{
+		tasksRaw:         actionInput("tasks"),
+		jsRaw:            actionInput("js"),
+		includesDocRaw:   actionInput("includes-doc"),
+		failOnChangesRaw: actionInput("fail-on-changes"),
+		storeVersion:     actionInput("store-version"),
+		targetFolderRaw:  actionInput("target-folder"),
+		token:            token,
+		workspace:        os.Getenv("GITHUB_WORKSPACE"),
+		repository:       os.Getenv("GITHUB_REPOSITORY"),
+		githubOutput:     os.Getenv("GITHUB_OUTPUT"),
+	}
+}
+
+func validateRuntimeEnv(workspace, token string) error {
+	if workspace == "" {
+		return &ValidationError{Field: "GITHUB_WORKSPACE", Message: "is required"}
+	}
+
+	if token == "" {
+		return missingActionInput("github-token")
+	}
+
+	return nil
+}
+
+func jsSettingsFromConfig(jsCfg *jsConfig) (JSRuntime, PackageManager, VersionManager) {
+	if jsCfg == nil {
+		return "", "", ""
+	}
+
+	return jsCfg.Runtime, jsCfg.NodePackageManager, jsCfg.NodeVersionManager
 }
 
 func parseTasks(raw string) ([]string, error) {
 	raw = strings.ReplaceAll(raw, ",", "\n")
 	lines := strings.Split(raw, "\n")
 	seen := make(map[string]struct{})
+
 	var tasks []string
+
 	for _, line := range lines {
 		name := strings.TrimSpace(line)
 		if name == "" {
 			continue
 		}
-		if err := pathutil.ValidateTaskName(name); err != nil {
-			return nil, err
+
+		err := pathutil.ValidateTaskName(name)
+		if err != nil {
+			return nil, fmt.Errorf("validate task name: %w", err)
 		}
+
 		if _, ok := seen[name]; ok {
 			continue
 		}
+
 		seen[name] = struct{}{}
 		tasks = append(tasks, name)
 	}
+
 	if len(tasks) == 0 {
 		return nil, &ValidationError{Field: "tasks", Message: "at least one task is required"}
 	}
+
 	return tasks, nil
 }
 
@@ -231,6 +317,7 @@ func parseBoolInput(field, raw string, defaultValue bool) (bool, error) {
 	if raw == "" {
 		return defaultValue, nil
 	}
+
 	switch strings.ToLower(raw) {
 	case "true":
 		return true, nil
@@ -248,26 +335,35 @@ func validateStoreVersion(version string) error {
 	if version == "" {
 		return nil
 	}
+
 	if unsafeStoreVersion.MatchString(version) {
 		return &ValidationError{
 			Field:   "store-version",
 			Message: fmt.Sprintf("unsafe revision expression %q", version),
 		}
 	}
+
 	return nil
 }
 
 func computeConfigurationHash(payload hashPayload) (string, string) {
-	data, _ := json.Marshal(payload)
+	data, err := json.Marshal(payload)
+	if err != nil {
+		data = []byte("{}")
+	}
+
 	sum := sha256.Sum256(data)
 	hash := hex.EncodeToString(sum[:])
-	return hash, fmt.Sprintf("taskotter/sync-%s", hash[:12])
+
+	return hash, "taskotter/sync-" + hash[:12]
 }
 
+// LockFilePath returns the workspace-relative path to the managed lock file.
 func (c *Config) LockFilePath() string {
 	return pathutil.JoinRelative(c.TargetFolder, ".taskotter-lock.yml")
 }
 
+// MetadataPath returns the workspace-relative path to TaskOtter metadata.
 func (c *Config) MetadataPath() string {
 	return ".taskotter/metadata.yml"
 }

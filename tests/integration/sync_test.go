@@ -8,6 +8,7 @@ import (
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/logging"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
@@ -15,7 +16,7 @@ type localStore struct {
 	root string
 }
 
-func (l *localStore) ResolveRef(_ context.Context, requestedVersion string) (store.RefInfo, error) {
+func (localStore *localStore) ResolveRef(_ context.Context, requestedVersion string) (store.RefInfo, error) {
 	return store.RefInfo{
 		Repository:       config.StoreRepository,
 		RequestedVersion: requestedVersion,
@@ -25,16 +26,21 @@ func (l *localStore) ResolveRef(_ context.Context, requestedVersion string) (sto
 	}, nil
 }
 
-func (l *localStore) DownloadSnapshot(_ context.Context, ref store.RefInfo) (*store.Snapshot, error) {
-	return store.LocalSnapshot(l.root, ref)
+func (localStore *localStore) DownloadSnapshot(_ context.Context, ref store.RefInfo) (*store.Snapshot, error) {
+	return store.LocalSnapshot(localStore.root, ref)
 }
 
 func TestIntegrationSyncNoGit(t *testing.T) {
+	t.Parallel()
+
 	workspace := t.TempDir()
+
 	rootTaskfile := []byte(`version: "3"
 includes: {}
 `)
-	if err := os.WriteFile(filepath.Join(workspace, "Taskfile.yml"), rootTaskfile, 0o644); err != nil {
+
+	err := os.WriteFile(filepath.Join(workspace, "Taskfile.yml"), rootTaskfile, 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -44,24 +50,40 @@ includes: {}
 	}
 
 	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
+		Tasks:              []string{"go"},
+		JSRuntime:          "",
+		NodePackageManager: "",
+		NodeVersionManager: "",
+		IncludesDoc:        true,
+		FailOnChanges:      false,
+		StoreVersion:       "",
+		TargetFolder:       "taskfiles",
+		GitHubToken:        "",
+		Workspace:          workspace,
+		Repository:         "",
+		GitHubOutput:       "",
+		ConfigurationHash:  "",
+		BranchName:         "",
 	}
 
-	o := &app.Orchestrator{
+	orchestrator := &app.Orchestrator{
+		Logger:      logging.New(),
 		StoreClient: &localStore{root: fixtureRoot},
+		GitOps:      nil,
+		PRClient:    nil,
 	}
 
-	result, err := o.Run(context.Background(), cfg)
+	result, err := orchestrator.Run(context.Background(), cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !result.Changed {
 		t.Fatal("expected changes")
 	}
-	if _, err := os.Stat(filepath.Join(workspace, "taskfiles/go/Taskfile.yml")); err != nil {
+
+	_, err = os.Stat(filepath.Join(workspace, "taskfiles/go/Taskfile.yml"))
+	if err != nil {
 		t.Fatal(err)
 	}
 }

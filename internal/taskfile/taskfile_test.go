@@ -8,7 +8,14 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/taskfile"
 )
 
+const (
+	targetFolderTaskfiles = "taskfiles"
+	taskESLint            = "eslint"
+)
+
 func TestRewriteIncludes(t *testing.T) {
+	t.Parallel()
+
 	input := []byte(`version: "3"
 includes:
   pnpm:
@@ -21,24 +28,30 @@ tasks:
 	sourceToDest := map[string]string{
 		"pnpm-fnm": "pnpm",
 	}
+
 	out, err := taskfile.RewriteIncludes(input, sourceToDest)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	text := string(out)
 	if !strings.Contains(text, "../pnpm/Taskfile.yml") {
 		t.Fatalf("include not rewritten: %s", text)
 	}
+
 	if !strings.Contains(text, "../pnpm-fnm/Taskfile.yml") {
 		t.Fatalf("command string should remain unchanged: %s", text)
 	}
 }
 
 func TestUpdateRootTaskfileFromTemplate(t *testing.T) {
+	t.Parallel()
+
 	out, err := taskfile.UpdateRootTaskfile(taskfile.NewRootTemplate(), taskfile.RootUpdateInput{
 		Tasks:        []string{"go"},
-		TargetFolder: "taskfiles",
+		TargetFolder: targetFolderTaskfiles,
 		DestByTask:   map[string]string{"go": "go"},
+		ManagedTasks: nil,
 		ModuleTaskfiles: map[string][]byte{
 			"go": []byte(`version: "3"
 vars:
@@ -50,19 +63,24 @@ vars:
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	text := string(out)
 	if !strings.Contains(text, "taskfiles/go/Taskfile.yml") {
 		t.Fatalf("missing go include: %s", text)
 	}
+
 	if !strings.Contains(text, "GO_VERSION") {
 		t.Fatalf("missing include vars: %s", text)
 	}
+
 	if !strings.Contains(text, "GO_CMD_UNIX") {
 		t.Fatalf("missing include vars: %s", text)
 	}
 }
 
 func TestUpdateRootTaskfilePreservesExistingIncludeVars(t *testing.T) {
+	t.Parallel()
+
 	root := []byte(`version: "3"
 includes:
   go:
@@ -75,9 +93,10 @@ vars:
   GO_VERSION: ""
   GO_CMD_UNIX: /usr/local/go/bin/go
 `)
+
 	out, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
 		Tasks:        []string{"go"},
-		TargetFolder: "taskfiles",
+		TargetFolder: targetFolderTaskfiles,
 		DestByTask:   map[string]string{"go": "go"},
 		ManagedTasks: []string{"go"},
 		ModuleTaskfiles: map[string][]byte{
@@ -87,16 +106,20 @@ vars:
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	text := string(out)
 	if !strings.Contains(text, "go1.22.0") {
 		t.Fatalf("existing include var override removed: %s", text)
 	}
+
 	if !strings.Contains(text, "GO_CMD_UNIX") {
 		t.Fatalf("missing newly added module var: %s", text)
 	}
 }
 
 func TestUpdateRootTaskfile(t *testing.T) {
+	t.Parallel()
+
 	root := []byte(`version: "3"
 includes:
   custom:
@@ -106,31 +129,35 @@ tasks:
     cmds:
       - echo hi
 `)
+
 	out, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
-		Tasks:        []string{"go", "eslint"},
-		TargetFolder: "taskfiles",
-		DestByTask: map[string]string{
-			"go":     "go",
-			"eslint": "eslint",
-		},
-		ManagedTasks: []string{},
+		Tasks:           []string{"go", taskESLint},
+		TargetFolder:    targetFolderTaskfiles,
+		DestByTask:      map[string]string{"go": "go", taskESLint: taskESLint},
+		ManagedTasks:    []string{},
+		ModuleTaskfiles: nil,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	text := string(out)
 	if !strings.Contains(text, "taskfiles/go/Taskfile.yml") {
 		t.Fatalf("missing go include: %s", text)
 	}
+
 	if !strings.Contains(text, "taskfiles/eslint/Taskfile.yml") {
 		t.Fatalf("missing eslint include: %s", text)
 	}
+
 	if !strings.Contains(text, "custom/Taskfile.yml") {
 		t.Fatalf("user include removed: %s", text)
 	}
 }
 
 func TestManagedIncludeDifferentPathConflict(t *testing.T) {
+	t.Parallel()
+
 	root := []byte(`version: "3"
 includes:
   eslint:
@@ -140,11 +167,13 @@ tasks:
     cmds:
       - echo hi
 `)
+
 	_, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
-		Tasks:        []string{"eslint"},
-		TargetFolder: "taskfiles",
-		DestByTask:   map[string]string{"eslint": "eslint"},
-		ManagedTasks: []string{"eslint"},
+		Tasks:           []string{taskESLint},
+		TargetFolder:    targetFolderTaskfiles,
+		DestByTask:      map[string]string{taskESLint: taskESLint},
+		ManagedTasks:    []string{taskESLint},
+		ModuleTaskfiles: nil,
 	})
 	if err == nil {
 		t.Fatal("expected conflict when alias path differs from managed path")
@@ -152,16 +181,20 @@ tasks:
 }
 
 func TestRootTaskfileAliasConflict(t *testing.T) {
+	t.Parallel()
+
 	root := []byte(`version: "3"
 includes:
   go:
     taskfile: legacy/go/Taskfile.yml
 `)
+
 	_, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
-		Tasks:        []string{"go"},
-		TargetFolder: "taskfiles",
-		DestByTask:   map[string]string{"go": "go"},
-		ManagedTasks: []string{},
+		Tasks:           []string{"go"},
+		TargetFolder:    targetFolderTaskfiles,
+		DestByTask:      map[string]string{"go": "go"},
+		ManagedTasks:    []string{},
+		ModuleTaskfiles: nil,
 	})
 	if err == nil {
 		t.Fatal("expected alias conflict")
@@ -169,15 +202,19 @@ includes:
 }
 
 func TestScalarIncludeWrongPathConflict(t *testing.T) {
+	t.Parallel()
+
 	root := []byte(`version: "3"
 includes:
   go: legacy/go/Taskfile.yml
 `)
+
 	_, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
-		Tasks:        []string{"go"},
-		TargetFolder: "taskfiles",
-		DestByTask:   map[string]string{"go": "go"},
-		ManagedTasks: []string{},
+		Tasks:           []string{"go"},
+		TargetFolder:    targetFolderTaskfiles,
+		DestByTask:      map[string]string{"go": "go"},
+		ManagedTasks:    []string{},
+		ModuleTaskfiles: nil,
 	})
 	if err == nil {
 		t.Fatal("expected scalar include path conflict")
@@ -185,16 +222,20 @@ includes:
 }
 
 func TestRewriteUsesRealStoreSnippet(t *testing.T) {
+	t.Parallel()
+
 	data, err := os.ReadFile("../../tests/fixtures/store/taskfiles/eslint-pnpm-fnm/Taskfile.yml")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	out, err := taskfile.RewriteIncludes(data, map[string]string{
 		"pnpm-fnm": "pnpm",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !strings.Contains(string(out), "../pnpm/Taskfile.yml") {
 		t.Fatalf("rewrite failed: %s", out)
 	}

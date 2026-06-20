@@ -13,22 +13,27 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
+const (
+	testMainBranch   = "main"
+	testTargetFolder = "taskfiles"
+)
+
 type localStore struct {
 	root string
 }
 
-func (l *localStore) ResolveRef(_ context.Context, requestedVersion string) (store.RefInfo, error) {
+func (localStore *localStore) ResolveRef(_ context.Context, requestedVersion string) (store.RefInfo, error) {
 	return store.RefInfo{
 		Repository:       config.StoreRepository,
 		RequestedVersion: requestedVersion,
-		SourceRef:        "refs/heads/main",
+		SourceRef:        "refs/heads/" + testMainBranch,
 		ResolvedCommit:   "deadbeef",
-		DefaultBranch:    "main",
+		DefaultBranch:    testMainBranch,
 	}, nil
 }
 
-func (l *localStore) DownloadSnapshot(_ context.Context, ref store.RefInfo) (*store.Snapshot, error) {
-	return store.LocalSnapshot(l.root, ref)
+func (localStore *localStore) DownloadSnapshot(_ context.Context, ref store.RefInfo) (*store.Snapshot, error) {
+	return store.LocalSnapshot(localStore.root, ref)
 }
 
 type mockGitOps struct {
@@ -37,27 +42,28 @@ type mockGitOps struct {
 	defaultBranchCalls int
 }
 
-func (m *mockGitOps) EnsureSafeDirectory(context.Context) error { return nil }
-func (m *mockGitOps) HasUnrelatedChanges(context.Context, map[string]struct{}) (bool, error) {
-	return m.unrelated, nil
+func (mockGitOps *mockGitOps) EnsureSafeDirectory(context.Context) error { return nil }
+func (mockGitOps *mockGitOps) HasUnrelatedChanges(context.Context, map[string]struct{}) (bool, error) {
+	return mockGitOps.unrelated, nil
 }
-func (m *mockGitOps) CheckoutBranch(context.Context, string, bool) error { return nil }
-func (m *mockGitOps) BranchExists(context.Context, string) (bool, error) {
+func (mockGitOps *mockGitOps) CheckoutBranch(context.Context, string, bool) error { return nil }
+func (mockGitOps *mockGitOps) BranchExists(context.Context, string) (bool, error) {
 	return false, nil
 }
 
-func (m *mockGitOps) LastCommitMessage(context.Context, string) (string, error) {
+func (mockGitOps *mockGitOps) LastCommitMessage(context.Context, string) (string, error) {
 	return "", nil
 }
-func (m *mockGitOps) Stage(context.Context, []string) error    { return nil }
-func (m *mockGitOps) Commit(context.Context, string) error     { return nil }
-func (m *mockGitOps) Push(context.Context, string, bool) error { return nil }
-func (m *mockGitOps) DefaultBranch(context.Context) (string, error) {
-	m.defaultBranchCalls++
-	if m.defaultBranch != "" {
-		return m.defaultBranch, nil
+func (mockGitOps *mockGitOps) Stage(context.Context, []string) error    { return nil }
+func (mockGitOps *mockGitOps) Commit(context.Context, string) error     { return nil }
+func (mockGitOps *mockGitOps) Push(context.Context, string, bool) error { return nil }
+func (mockGitOps *mockGitOps) DefaultBranch(context.Context) (string, error) {
+	mockGitOps.defaultBranchCalls++
+	if mockGitOps.defaultBranch != "" {
+		return mockGitOps.defaultBranch, nil
 	}
-	return "main", nil
+
+	return testMainBranch, nil
 }
 
 type mockPR struct {
@@ -69,37 +75,43 @@ type mockPR struct {
 	createdBase string
 }
 
-func (m *mockPR) FindOpenPR(_ context.Context, branch, base string) (*gh.PullRequest, error) {
-	m.lastHead = branch
-	m.lastBase = base
-	return m.find, nil
+func (mockPR *mockPR) FindOpenPR(_ context.Context, branch, base string) (*gh.PullRequest, error) {
+	mockPR.lastHead = branch
+	mockPR.lastBase = base
+
+	return mockPR.find, nil
 }
 
-func (m *mockPR) CreatePR(_ context.Context, branch, base, _ string) (*gh.PullRequest, error) {
-	m.createdBase = base
-	if m.create != nil {
-		return m.create, nil
+func (mockPR *mockPR) CreatePR(_ context.Context, _, base, _ string) (*gh.PullRequest, error) {
+	mockPR.createdBase = base
+	if mockPR.create != nil {
+		return mockPR.create, nil
 	}
+
 	return &gh.PullRequest{Number: 99, URL: "https://example/pr/99"}, nil
 }
 
-func (m *mockPR) UpdatePRBody(context.Context, int, string) error {
-	m.updated++
+func (mockPR *mockPR) UpdatePRBody(context.Context, int, string) error {
+	mockPR.updated++
+
 	return nil
 }
 
 func fixtureRoot(t *testing.T) string {
 	t.Helper()
+
 	root, err := filepath.Abs(filepath.Join("..", "..", "tests", "fixtures", "store"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return root
 }
 
 func workspaceWithRootTaskfile(t *testing.T) string {
 	t.Helper()
 	workspace := t.TempDir()
+
 	content := []byte(`version: "3"
 includes: {}
 tasks:
@@ -107,128 +119,205 @@ tasks:
     cmds:
       - echo hello
 `)
-	if err := os.WriteFile(filepath.Join(workspace, "Taskfile.yml"), content, 0o644); err != nil {
+
+	err := os.WriteFile(filepath.Join(workspace, "Taskfile.yml"), content, 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
+
 	return workspace
 }
 
-func TestOrchestratorNoChangeAfterApply(t *testing.T) {
-	workspace := workspaceWithRootTaskfile(t)
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
+func testConfig(workspace string) *config.Config {
+	return &config.Config{
+		Tasks:              []string{"go"},
+		JSRuntime:          "",
+		NodePackageManager: "",
+		NodeVersionManager: "",
+		IncludesDoc:        true,
+		FailOnChanges:      false,
+		StoreVersion:       "",
+		TargetFolder:       testTargetFolder,
+		GitHubToken:        "",
+		Workspace:          workspace,
+		Repository:         "",
+		GitHubOutput:       "",
+		ConfigurationHash:  "",
+		BranchName:         "",
 	}
-	o := &app.Orchestrator{StoreClient: &localStore{root: fixtureRoot(t)}}
-	first, err := o.Run(context.Background(), cfg)
+}
+
+func TestOrchestratorNoChangeAfterApply(t *testing.T) {
+	t.Parallel()
+
+	workspace := workspaceWithRootTaskfile(t)
+	cfg := testConfig(workspace)
+	orchestrator := &app.Orchestrator{
+		Logger:      nil,
+		StoreClient: &localStore{root: fixtureRoot(t)},
+		GitOps:      nil,
+		PRClient:    nil,
+	}
+
+	first, err := orchestrator.Run(context.Background(), cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !first.Changed {
 		t.Fatal("expected first run to change files")
 	}
-	second, err := o.Run(context.Background(), cfg)
+
+	second, err := orchestrator.Run(context.Background(), cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if second.Changed {
 		t.Fatal("expected no changes on second run")
 	}
 }
 
 func TestOrchestratorUnrelatedDirtyTreeFails(t *testing.T) {
+	t.Parallel()
+
 	workspace := workspaceWithRootTaskfile(t)
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
-	}
-	o := &app.Orchestrator{
+	cfg := testConfig(workspace)
+
+	orchestrator := &app.Orchestrator{
+		Logger:      nil,
 		StoreClient: &localStore{root: fixtureRoot(t)},
-		GitOps:      &mockGitOps{unrelated: true},
+		GitOps:      &mockGitOps{unrelated: true, defaultBranch: "", defaultBranchCalls: 0},
+		PRClient:    nil,
 	}
-	if err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755); err != nil {
+
+	err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
-	_, err := o.Run(context.Background(), cfg)
+
+	_, err = orchestrator.Run(context.Background(), cfg)
 	if err == nil {
 		t.Fatal("expected unrelated changes error")
 	}
-	if _, statErr := os.Stat(filepath.Join(workspace, "taskfiles/go/Taskfile.yml")); statErr == nil {
+
+	_, statErr := os.Stat(filepath.Join(workspace, "taskfiles/go/Taskfile.yml"))
+	if statErr == nil {
 		t.Fatal("workspace should not be mutated when git preconditions fail")
 	}
 }
 
 func TestOrchestratorUpdatesExistingPR(t *testing.T) {
+	t.Parallel()
+
 	workspace := workspaceWithRootTaskfile(t)
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
-		Repository:   "owner/repo",
+	cfg := testConfig(workspace)
+	cfg.Repository = "owner/repo"
+
+	pullReq := &mockPR{
+		find:        &gh.PullRequest{Number: 7, URL: "https://example/pr/7"},
+		create:      nil,
+		updated:     0,
+		lastBase:    "",
+		lastHead:    "",
+		createdBase: "",
 	}
-	pr := &mockPR{find: &gh.PullRequest{Number: 7, URL: "https://example/pr/7"}}
-	gitOps := &mockGitOps{defaultBranch: "main"}
-	o := &app.Orchestrator{
+	gitOps := &mockGitOps{unrelated: false, defaultBranch: testMainBranch, defaultBranchCalls: 0}
+
+	orchestrator := &app.Orchestrator{
+		Logger:      nil,
 		StoreClient: &localStore{root: fixtureRoot(t)},
 		GitOps:      gitOps,
-		PRClient:    pr,
+		PRClient:    pullReq,
 	}
-	if err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	result, err := o.Run(context.Background(), cfg)
+
+	err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if pr.updated != 1 {
-		t.Fatalf("expected PR body update, got %d", pr.updated)
+
+	result, err := orchestrator.Run(context.Background(), cfg)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if pr.lastBase != "main" {
-		t.Fatalf("PR base = %q, want main", pr.lastBase)
+
+	if pullReq.updated != 1 {
+		t.Fatalf("expected PR body update, got %d", pullReq.updated)
 	}
+
+	if pullReq.lastBase != testMainBranch {
+		t.Fatalf("PR base = %q, want main", pullReq.lastBase)
+	}
+
 	if gitOps.defaultBranchCalls == 0 {
 		t.Fatal("expected DefaultBranch before PR")
 	}
+
 	if result.PullRequestNumber != "7" {
 		t.Fatalf("got PR number %q", result.PullRequestNumber)
 	}
 }
 
 func TestOrchestratorCreatesPRWithResolvedBase(t *testing.T) {
+	t.Parallel()
+
 	workspace := workspaceWithRootTaskfile(t)
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
-		Repository:   "owner/repo",
+	cfg := testConfig(workspace)
+	cfg.Repository = "owner/repo"
+
+	pullReq := &mockPR{
+		find:        nil,
+		create:      nil,
+		updated:     0,
+		lastBase:    "",
+		lastHead:    "",
+		createdBase: "",
 	}
-	pr := &mockPR{}
-	gitOps := &mockGitOps{defaultBranch: "develop"}
-	o := &app.Orchestrator{
+	gitOps := &mockGitOps{unrelated: false, defaultBranch: "develop", defaultBranchCalls: 0}
+
+	orchestrator := &app.Orchestrator{
+		Logger:      nil,
 		StoreClient: &localStore{root: fixtureRoot(t)},
 		GitOps:      gitOps,
-		PRClient:    pr,
+		PRClient:    pullReq,
 	}
-	if err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755); err != nil {
+
+	err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := o.Run(context.Background(), cfg); err != nil {
+
+	_, err = orchestrator.Run(context.Background(), cfg)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if pr.createdBase != "develop" {
-		t.Fatalf("created PR base = %q, want develop", pr.createdBase)
+
+	if pullReq.createdBase != "develop" {
+		t.Fatalf("created PR base = %q, want develop", pullReq.createdBase)
 	}
 }
 
 func TestNewOrchestratorInvalidRepository(t *testing.T) {
-	cfg := &config.Config{Repository: "not-a-valid-repo"}
-	_, err := app.NewOrchestrator(cfg)
+	t.Parallel()
+
+	cfg := &config.Config{
+		Tasks:              nil,
+		JSRuntime:          "",
+		NodePackageManager: "",
+		NodeVersionManager: "",
+		IncludesDoc:        false,
+		FailOnChanges:      false,
+		StoreVersion:       "",
+		TargetFolder:       "",
+		GitHubToken:        "",
+		Workspace:          "",
+		Repository:         "not-a-valid-repo",
+		GitHubOutput:       "",
+		ConfigurationHash:  "",
+		BranchName:         "",
+	}
+
+	_, err := app.NewOrchestrator(context.Background(), cfg)
 	if err == nil {
 		t.Fatal("expected repository parse error")
 	}

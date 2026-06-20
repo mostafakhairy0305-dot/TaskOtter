@@ -13,97 +13,138 @@ import (
 )
 
 func TestBuildPlanCorruptLockFails(t *testing.T) {
+	t.Parallel()
+
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)
-	if err := os.MkdirAll(filepath.Join(workspace, "taskfiles"), 0o755); err != nil {
+
+	err := os.MkdirAll(filepath.Join(workspace, config.DefaultTargetFolder), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(workspace, "taskfiles/.taskotter-lock.yml"), []byte("{{not yaml"), 0o644); err != nil {
+
+	lockPath := filepath.Join(workspace, config.DefaultTargetFolder, ".taskotter-lock.yml")
+
+	err = os.WriteFile(lockPath, []byte("{{not yaml"), 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
+
 	meta := []byte(`target_folder: taskfiles
 lock_file: taskfiles/.taskotter-lock.yml
 configuration_hash: abc
 `)
-	if err := os.MkdirAll(filepath.Join(workspace, ".taskotter"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), meta, 0o644); err != nil {
+
+	err = os.MkdirAll(filepath.Join(workspace, ".taskotter"), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
+	err = os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), meta, 0o644)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	cfg := testConfig(workspace, func(cfg *config.Config) {
+		cfg.Tasks = []string{"go"}
+		cfg.IncludesDoc = true
+	})
 	snap := fixtureStore(t)
+
 	res, err := resolver.Resolve("go", snap.Catalog, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	in := syncer.SyncInput{
-		Config:       cfg,
-		Snapshot:     snap,
-		Requested:    map[string]syncer.ModuleRecord{"go": {SourceModule: res.SourceModule, DestinationModule: "go", Path: "taskfiles/go"}},
+
+	syncInput := syncer.SyncInput{
+		Config:   cfg,
+		Snapshot: snap,
+		Requested: map[string]syncer.ModuleRecord{
+			"go": {
+				SourceModule:      res.SourceModule,
+				DestinationModule: "go",
+				Path:              config.DefaultTargetFolder + "/go",
+			},
+		},
+		Dependencies: nil,
 		SourceToDest: map[string]string{res.SourceModule: "go"},
 		DestByTask:   map[string]string{"go": "go"},
 	}
-	if _, err := syncer.BuildPlan(in); err == nil {
+
+	_, err = syncer.BuildPlan(syncInput)
+	if err == nil {
 		t.Fatal("expected corrupt lock error")
 	}
 }
 
 func TestBuildPlanCorruptMetadataFails(t *testing.T) {
+	t.Parallel()
+
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)
-	if err := os.MkdirAll(filepath.Join(workspace, ".taskotter"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), []byte("{{not yaml"), 0o644); err != nil {
+
+	err := os.MkdirAll(filepath.Join(workspace, ".taskotter"), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
+	err = os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), []byte("{{not yaml"), 0o644)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	cfg := testConfig(workspace, func(cfg *config.Config) {
+		cfg.Tasks = []string{"go"}
+		cfg.IncludesDoc = true
+	})
 	snap := fixtureStore(t)
+
 	res, err := resolver.Resolve("go", snap.Catalog, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	in := syncer.SyncInput{
-		Config:       cfg,
-		Snapshot:     snap,
-		Requested:    map[string]syncer.ModuleRecord{"go": {SourceModule: res.SourceModule, DestinationModule: "go", Path: "taskfiles/go"}},
+
+	syncInput := syncer.SyncInput{
+		Config:   cfg,
+		Snapshot: snap,
+		Requested: map[string]syncer.ModuleRecord{
+			"go": {
+				SourceModule:      res.SourceModule,
+				DestinationModule: "go",
+				Path:              config.DefaultTargetFolder + "/go",
+			},
+		},
+		Dependencies: nil,
 		SourceToDest: map[string]string{res.SourceModule: "go"},
 		DestByTask:   map[string]string{"go": "go"},
 	}
-	if _, err := syncer.BuildPlan(in); err == nil {
+
+	_, err = syncer.BuildPlan(syncInput)
+	if err == nil {
 		t.Fatal("expected corrupt metadata error")
 	}
 }
 
 func TestMetadataOnlyChangeMarksChanged(t *testing.T) {
+	t.Parallel()
+
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)
-	cfg := &config.Config{
-		Tasks:             []string{"go"},
-		IncludesDoc:       true,
-		TargetFolder:      "taskfiles",
-		Workspace:         workspace,
-		ConfigurationHash: "hash-a",
-	}
-	in, plan := preparePlan(t, workspace, cfg)
-	if err := syncer.ApplyPlan(plan, in); err != nil {
+	cfg := testConfig(workspace, func(cfg *config.Config) {
+		cfg.Tasks = []string{"go"}
+		cfg.IncludesDoc = true
+		cfg.ConfigurationHash = "hash-a"
+	})
+
+	syncInput, plan := preparePlan(t, workspace, cfg)
+
+	err := syncer.ApplyPlan(plan, syncInput)
+	if err != nil {
 		t.Fatal(err)
 	}
 
 	cfg.ConfigurationHash = "hash-b"
+
 	_, plan2 := preparePlan(t, workspace, cfg)
 	if !plan2.Changed {
 		t.Fatal("expected metadata-only configuration hash change to mark plan changed")
@@ -111,53 +152,69 @@ func TestMetadataOnlyChangeMarksChanged(t *testing.T) {
 }
 
 func TestSHAOnlyLockChangeNotChanged(t *testing.T) {
+	t.Parallel()
+
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
-	}
-	in, plan := preparePlan(t, workspace, cfg)
-	if err := syncer.ApplyPlan(plan, in); err != nil {
+	cfg := testConfig(workspace, func(cfg *config.Config) {
+		cfg.Tasks = []string{"go"}
+		cfg.IncludesDoc = true
+	})
+
+	syncInput, plan := preparePlan(t, workspace, cfg)
+
+	err := syncer.ApplyPlan(plan, syncInput)
+	if err != nil {
 		t.Fatal(err)
 	}
 
 	snap := fixtureStore(t)
 	snap.Ref.ResolvedCommit = "different-sha-only"
+
 	resolutions, err := resolver.ResolveAll(cfg.Tasks, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
 	if err != nil {
 		t.Fatal(err)
 	}
-	in2, err := app.PrepareSyncInput(cfg, snap, resolutions, nil)
+
+	syncInput2, err := app.PrepareSyncInput(cfg, snap, resolutions, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan2, err := syncer.BuildPlan(in2)
+
+	plan2, err := syncer.BuildPlan(syncInput2)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if plan2.Changed {
-		t.Fatalf("expected no file changes when only resolved commit differs: added=%v updated=%v removed=%v", plan2.Added, plan2.Updated, plan2.Removed)
+		t.Fatalf(
+			"expected no file changes when only resolved commit differs: added=%v updated=%v removed=%v",
+			plan2.Added,
+			plan2.Updated,
+			plan2.Removed,
+		)
 	}
 }
 
 func TestConfigurationChangeMarksUpdated(t *testing.T) {
+	t.Parallel()
+
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)
-	cfg := &config.Config{
-		Tasks:        []string{"go"},
-		IncludesDoc:  true,
-		TargetFolder: "taskfiles",
-		Workspace:    workspace,
-	}
-	in, plan := preparePlan(t, workspace, cfg)
-	if err := syncer.ApplyPlan(plan, in); err != nil {
+	cfg := testConfig(workspace, func(cfg *config.Config) {
+		cfg.Tasks = []string{"go"}
+		cfg.IncludesDoc = true
+	})
+
+	syncInput, plan := preparePlan(t, workspace, cfg)
+
+	err := syncer.ApplyPlan(plan, syncInput)
+	if err != nil {
 		t.Fatal(err)
 	}
 
 	cfg.IncludesDoc = false
+
 	_, plan2 := preparePlan(t, workspace, cfg)
 	if !plan2.Changed {
 		t.Fatal("expected changes when includes-doc toggles")
@@ -166,25 +223,41 @@ func TestConfigurationChangeMarksUpdated(t *testing.T) {
 
 func writeMinimalLock(t *testing.T, workspace, targetFolder string, files []syncer.ManagedFile) {
 	t.Helper()
-	lock := syncer.LockFile{}
+
+	var lock syncer.LockFile
+
 	lock.Configuration.TargetFolder = targetFolder
 	lock.ManagedFiles = files
+
 	data, err := yaml.Marshal(lock)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	lockPath := filepath.Join(workspace, targetFolder, ".taskotter-lock.yml")
-	if err := os.MkdirAll(filepath.Dir(lockPath), 0o755); err != nil {
+
+	err = os.MkdirAll(filepath.Dir(lockPath), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(lockPath, data, 0o644); err != nil {
+
+	err = os.WriteFile(lockPath, data, 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
-	meta := []byte("target_folder: " + targetFolder + "\nlock_file: " + targetFolder + "/.taskotter-lock.yml\nconfiguration_hash: x\n")
-	if err := os.MkdirAll(filepath.Join(workspace, ".taskotter"), 0o755); err != nil {
+
+	meta := []byte(
+		"target_folder: " + targetFolder +
+			"\nlock_file: " + targetFolder + "/.taskotter-lock.yml\nconfiguration_hash: x\n",
+	)
+
+	err = os.MkdirAll(filepath.Join(workspace, ".taskotter"), 0o755)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), meta, 0o644); err != nil {
+
+	err = os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), meta, 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
 }

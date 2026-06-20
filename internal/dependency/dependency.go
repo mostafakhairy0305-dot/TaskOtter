@@ -1,18 +1,25 @@
+// Package dependency resolves transitive module dependencies from .deps.yml.
 package dependency
 
 import (
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 )
 
+var errModuleNotDefined = errors.New("module is not defined in .deps.yml")
+
+// CycleError reports a circular dependency chain.
 type CycleError struct {
 	Path []string
 }
 
 func (e *CycleError) Error() string {
-	return fmt.Sprintf("dependency cycle detected: %s", stringsJoinArrow(e.Path))
+	return "dependency cycle detected: " + stringsJoinArrow(e.Path)
 }
 
+// MissingDependencyError reports a dependency missing from .deps.yml.
 type MissingDependencyError struct {
 	Module     string
 	Dependency string
@@ -23,62 +30,72 @@ func (e *MissingDependencyError) Error() string {
 }
 
 func stringsJoinArrow(parts []string) string {
-	if len(parts) == 0 {
-		return ""
-	}
-	out := parts[0]
-	for i := 1; i < len(parts); i++ {
-		out += " -> " + parts[i]
-	}
-	return out
+	return strings.Join(parts, " -> ")
 }
 
+// ResolveTransitive returns dependency modules required by requested, excluding requested modules themselves.
 func ResolveTransitive(requested []string, deps map[string][]string) ([]string, error) {
 	needed := make(map[string]struct{})
-	var visit func(module string, stack []string) error
-	visit = func(module string, stack []string) error {
-		if _, ok := deps[module]; !ok {
-			return fmt.Errorf("module %q is not defined in .deps.yml", module)
-		}
-		for i, s := range stack {
-			if s == module {
-				cycle := append(append([]string{}, stack[i:]...), module)
-				return &CycleError{Path: cycle}
-			}
-		}
-		if _, ok := needed[module]; ok {
-			return nil
-		}
-		needed[module] = struct{}{}
-		for _, dep := range deps[module] {
-			if _, ok := deps[dep]; !ok {
-				return &MissingDependencyError{Module: module, Dependency: dep}
-			}
-			if err := visit(dep, append(stack, module)); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
 
 	for _, module := range requested {
-		if err := visit(module, nil); err != nil {
+		err := visitModule(module, nil, deps, needed)
+		if err != nil {
 			return nil, err
 		}
 	}
 
+	return transitiveDependencies(requested, needed), nil
+}
+
+func visitModule(module string, stack []string, deps map[string][]string, needed map[string]struct{}) error {
+	if _, ok := deps[module]; !ok {
+		return fmt.Errorf("%w: %q", errModuleNotDefined, module)
+	}
+
+	for i, s := range stack {
+		if s == module {
+			cycle := append(append([]string{}, stack[i:]...), module)
+
+			return &CycleError{Path: cycle}
+		}
+	}
+
+	if _, ok := needed[module]; ok {
+		return nil
+	}
+
+	needed[module] = struct{}{}
+	for _, dep := range deps[module] {
+		if _, ok := deps[dep]; !ok {
+			return &MissingDependencyError{Module: module, Dependency: dep}
+		}
+
+		err := visitModule(dep, append(stack, module), deps, needed)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func transitiveDependencies(requested []string, needed map[string]struct{}) []string {
 	requestedSet := make(map[string]struct{}, len(requested))
-	for _, m := range requested {
-		requestedSet[m] = struct{}{}
+	for _, module := range requested {
+		requestedSet[module] = struct{}{}
 	}
 
 	var dependencies []string
+
 	for module := range needed {
 		if _, ok := requestedSet[module]; ok {
 			continue
 		}
+
 		dependencies = append(dependencies, module)
 	}
+
 	sort.Strings(dependencies)
-	return dependencies, nil
+
+	return dependencies
 }

@@ -20,12 +20,6 @@ linters:
               desc: use fmt in development, but not in production code
     ireturn:
       allow: [anon, empty, error, generic, stdlib]
-    exhaustruct:
-      exclude:
-        - ^github\.com/aws/aws-sdk-go-v2/.*$
-        - ^github\.com/gorilla/websocket\.Upgrader$
-        - ^net/url\.URL$
-        - ^github\.com/mostafa-khairy-zofirm/tracker-server/internal/infrastructure/cache\.Config$
   exclusions:
     paths: [.*\.pb\.go]
     rules:

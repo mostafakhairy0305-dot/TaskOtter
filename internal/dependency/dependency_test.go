@@ -6,25 +6,36 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/dependency"
 )
 
+const (
+	modESLintPnpmFnm = "eslint-pnpm-fnm"
+	modPnpmFnm       = "pnpm-fnm"
+	modCorepackFnm   = "corepack-fnm"
+	modFnm           = "fnm"
+)
+
 func deps() map[string][]string {
 	return map[string][]string{
-		"eslint-pnpm-fnm": {"pnpm-fnm"},
-		"pnpm-fnm":        {"corepack-fnm", "fnm"},
-		"corepack-fnm":    {"fnm"},
-		"fnm":             {},
-		"go":              {},
+		modESLintPnpmFnm: {modPnpmFnm},
+		modPnpmFnm:       {modCorepackFnm, modFnm},
+		modCorepackFnm:   {modFnm},
+		modFnm:           {},
+		"go":             {},
 	}
 }
 
 func TestResolveTransitive(t *testing.T) {
-	got, err := dependency.ResolveTransitive([]string{"eslint-pnpm-fnm"}, deps())
+	t.Parallel()
+
+	got, err := dependency.ResolveTransitive([]string{modESLintPnpmFnm}, deps())
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"corepack-fnm", "fnm", "pnpm-fnm"}
+
+	want := []string{modCorepackFnm, modFnm, modPnpmFnm}
 	if len(got) != len(want) {
 		t.Fatalf("got %#v, want %#v", got, want)
 	}
+
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("got %#v, want %#v", got, want)
@@ -33,33 +44,42 @@ func TestResolveTransitive(t *testing.T) {
 }
 
 func TestDuplicateDependencyDeduped(t *testing.T) {
-	got, err := dependency.ResolveTransitive([]string{"eslint-pnpm-fnm", "pnpm-fnm"}, deps())
+	t.Parallel()
+
+	got, err := dependency.ResolveTransitive([]string{modESLintPnpmFnm, modPnpmFnm}, deps())
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, dep := range got {
-		if dep == "pnpm-fnm" {
+		if dep == modPnpmFnm {
 			t.Fatal("requested module should not appear in dependencies")
 		}
 	}
 }
 
 func TestMissingDependency(t *testing.T) {
-	d := deps()
-	d["eslint-pnpm-fnm"] = []string{"missing-mod"}
-	_, err := dependency.ResolveTransitive([]string{"eslint-pnpm-fnm"}, d)
+	t.Parallel()
+
+	depMap := deps()
+	depMap[modESLintPnpmFnm] = []string{"missing-mod"}
+
+	_, err := dependency.ResolveTransitive([]string{modESLintPnpmFnm}, depMap)
 	if err == nil {
 		t.Fatal("expected missing dependency error")
 	}
 }
 
 func TestDependencyCycle(t *testing.T) {
-	d := map[string][]string{
+	t.Parallel()
+
+	depMap := map[string][]string{
 		"a": {"b"},
 		"b": {"c"},
 		"c": {"a"},
 	}
-	_, err := dependency.ResolveTransitive([]string{"a"}, d)
+
+	_, err := dependency.ResolveTransitive([]string{"a"}, depMap)
 	if err == nil {
 		t.Fatal("expected cycle error")
 	}

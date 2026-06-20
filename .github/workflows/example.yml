@@ -12,9 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           fetch-depth: 0
+          persist-credentials: true
       - name: TaskOtter
         id: taskotter
         uses: ./
@@ -33,7 +34,11 @@ jobs:
           target-folder: taskfiles
       - name: Print result
         shell: bash
+        env:
+          TASKOTTER_CHANGED: ${{ steps.taskotter.outputs.changed }}
+          TASKOTTER_SOURCE_SHA: ${{ steps.taskotter.outputs.source-sha }}
+          TASKOTTER_PULL_REQUEST_URL: ${{ steps.taskotter.outputs.pull-request-url }}
         run: |-
-          echo "Changed: ${{ steps.taskotter.outputs.changed }}"
-          echo "Source SHA: ${{ steps.taskotter.outputs.source-sha }}"
-          echo "Pull request: ${{ steps.taskotter.outputs.pull-request-url }}"
+          echo "Changed: ${TASKOTTER_CHANGED}"
+          echo "Source SHA: ${TASKOTTER_SOURCE_SHA}"
+          echo "Pull request: ${TASKOTTER_PULL_REQUEST_URL}"

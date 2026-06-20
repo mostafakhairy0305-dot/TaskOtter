@@ -1,10 +1,13 @@
+// Package github creates and updates TaskOtter sync pull requests.
 package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
@@ -15,160 +18,224 @@ import (
 )
 
 const (
-	prTitle = "chore(taskotter): sync taskfiles"
+	prTitle        = "chore(taskotter): sync taskfiles"
+	outputFilePerm = 0o600
 )
 
+// ErrPullRequestNotFound indicates no open pull request exists for the branch.
+var ErrPullRequestNotFound = errors.New("open pull request not found")
+
+// PullRequest is a minimal view of a GitHub pull request.
 type PullRequest struct {
 	Number int
 	URL    string
 }
 
+// Client wraps the GitHub API for TaskOtter sync operations.
 type Client struct {
 	api   *github.Client
 	owner string
 	repo  string
 }
 
-func NewClient(token, repository string) (*Client, error) {
-	owner, repoName, err := repo.Parse(repository)
-	if err != nil {
-		return nil, err
-	}
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	return &Client{
-		api:   github.NewClient(oauth2.NewClient(context.Background(), ts)),
-		owner: owner,
-		repo:  repoName,
-	}, nil
-}
-
-func (c *Client) FindOpenPR(ctx context.Context, branch, base string) (*PullRequest, error) {
-	head := fmt.Sprintf("%s:%s", c.owner, branch)
-	prs, _, err := c.api.PullRequests.List(ctx, c.owner, c.repo, &github.PullRequestListOptions{
-		State: "open",
-		Head:  head,
-		Base:  base,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("list pull requests: %w", err)
-	}
-	if len(prs) == 0 {
-		return nil, nil
-	}
-	pr := prs[0]
-	return &PullRequest{Number: pr.GetNumber(), URL: pr.GetHTMLURL()}, nil
-}
-
-func (c *Client) CreatePR(ctx context.Context, branch, base, body string) (*PullRequest, error) {
-	newPR := &github.NewPullRequest{
-		Title: github.Ptr(prTitle),
-		Head:  github.Ptr(branch),
-		Base:  github.Ptr(base),
-		Body:  github.Ptr(body),
-	}
-	pr, _, err := c.api.PullRequests.Create(ctx, c.owner, c.repo, newPR)
-	if err != nil {
-		return nil, fmt.Errorf("create pull request: %w", err)
-	}
-	return &PullRequest{Number: pr.GetNumber(), URL: pr.GetHTMLURL()}, nil
-}
-
-func (c *Client) UpdatePRBody(ctx context.Context, number int, body string) error {
-	_, _, err := c.api.PullRequests.Edit(ctx, c.owner, c.repo, number, &github.PullRequest{
-		Body: github.Ptr(body),
-	})
-	if err != nil {
-		return fmt.Errorf("update pull request: %w", err)
-	}
-	return nil
-}
-
-type storeRef struct {
+// StoreRef carries store reference metadata for PR rendering.
+type StoreRef struct {
 	SourceRef      string
 	ResolvedCommit string
 	DefaultBranch  string
 }
 
-func StoreRefFrom(ref store.RefInfo) storeRef {
-	return storeRef{
+// NewClient creates a GitHub API client for repository.
+func NewClient(ctx context.Context, token, repository string) (*Client, error) {
+	owner, repoName, err := repo.Parse(repository)
+	if err != nil {
+		return nil, fmt.Errorf("parse repository: %w", err)
+	}
+
+	tokenSource := oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken:  token,
+		TokenType:    "Bearer",
+		RefreshToken: "",
+		Expiry:       time.Time{},
+		ExpiresIn:    0,
+	})
+
+	return &Client{
+		api:   github.NewClient(oauth2.NewClient(ctx, tokenSource)),
+		owner: owner,
+		repo:  repoName,
+	}, nil
+}
+
+// FindOpenPR returns an open pull request for branch into base, if one exists.
+func (c *Client) FindOpenPR(ctx context.Context, branch, base string) (*PullRequest, error) {
+	head := fmt.Sprintf("%s:%s", c.owner, branch)
+
+	listOpts := &github.PullRequestListOptions{
+		State:     "open",
+		Head:      head,
+		Base:      base,
+		Sort:      "",
+		Direction: "",
+		ListOptions: github.ListOptions{
+			Page:    0,
+			PerPage: 0,
+		},
+	}
+
+	prs, _, err := c.api.PullRequests.List(ctx, c.owner, c.repo, listOpts)
+	if err != nil {
+		return nil, fmt.Errorf("list pull requests: %w", err)
+	}
+
+	if len(prs) == 0 {
+		return nil, ErrPullRequestNotFound
+	}
+
+	pr := prs[0]
+
+	return &PullRequest{Number: pr.GetNumber(), URL: pr.GetHTMLURL()}, nil
+}
+
+// CreatePR opens a new pull request from branch into base.
+func (c *Client) CreatePR(ctx context.Context, branch, base, body string) (*PullRequest, error) {
+	newPR := &github.NewPullRequest{
+		Title:               github.Ptr(prTitle),
+		Head:                github.Ptr(branch),
+		Base:                github.Ptr(base),
+		Body:                github.Ptr(body),
+		HeadRepo:            nil,
+		Issue:               nil,
+		MaintainerCanModify: nil,
+		Draft:               nil,
+	}
+
+	pr, _, err := c.api.PullRequests.Create(ctx, c.owner, c.repo, newPR)
+	if err != nil {
+		return nil, fmt.Errorf("create pull request: %w", err)
+	}
+
+	return &PullRequest{Number: pr.GetNumber(), URL: pr.GetHTMLURL()}, nil
+}
+
+// UpdatePRBody replaces the body of an existing pull request.
+func (c *Client) UpdatePRBody(ctx context.Context, number int, body string) error {
+	var edit github.PullRequest
+
+	edit.Body = github.Ptr(body)
+
+	_, _, err := c.api.PullRequests.Edit(ctx, c.owner, c.repo, number, &edit)
+	if err != nil {
+		return fmt.Errorf("update pull request: %w", err)
+	}
+
+	return nil
+}
+
+// StoreRefFrom converts store reference metadata for PR rendering.
+func StoreRefFrom(ref store.RefInfo) StoreRef {
+	return StoreRef{
 		SourceRef:      ref.SourceRef,
 		ResolvedCommit: ref.ResolvedCommit,
 		DefaultBranch:  ref.DefaultBranch,
 	}
 }
 
-func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref storeRef) string {
-	var b strings.Builder
-	b.WriteString("## TaskOtter\n\n")
-	fmt.Fprintf(&b, "- Source: `%s`\n", config.StoreRepository)
-	fmt.Fprintf(&b, "- Requested version: `%s`\n", emptyDash(cfg.StoreVersion))
-	fmt.Fprintf(&b, "- Source reference: `%s`\n", ref.SourceRef)
-	fmt.Fprintf(&b, "- Resolved commit: `%s`\n", ref.ResolvedCommit)
-	fmt.Fprintf(&b, "- Default branch: `%s`\n", ref.DefaultBranch)
-	fmt.Fprintf(&b, "- Target folder: `%s`\n", cfg.TargetFolder)
-	fmt.Fprintf(&b, "- Documentation included: `%t`\n", cfg.IncludesDoc)
-	fmt.Fprintf(&b, "- JS runtime: `%s`\n", emptyDash(string(cfg.JSRuntime)))
-	if cfg.JSRuntime == config.JSRuntimeNodeJS {
-		fmt.Fprintf(&b, "- Package manager: `%s`\n", cfg.NodePackageManager)
-		fmt.Fprintf(&b, "- Version manager: `%s`\n", cfg.NodeVersionManager)
-	}
-	b.WriteString("\n")
+// BuildPRBody renders the markdown body for a sync pull request.
+func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref StoreRef) string {
+	var body strings.Builder
+	body.WriteString("## TaskOtter\n\n")
+	fmt.Fprintf(&body, "- Source: `%s`\n", config.StoreRepository)
+	fmt.Fprintf(&body, "- Requested version: `%s`\n", emptyDash(cfg.StoreVersion))
+	fmt.Fprintf(&body, "- Source reference: `%s`\n", ref.SourceRef)
+	fmt.Fprintf(&body, "- Resolved commit: `%s`\n", ref.ResolvedCommit)
+	fmt.Fprintf(&body, "- Default branch: `%s`\n", ref.DefaultBranch)
+	fmt.Fprintf(&body, "- Target folder: `%s`\n", cfg.TargetFolder)
+	fmt.Fprintf(&body, "- Documentation included: `%t`\n", cfg.IncludesDoc)
+	fmt.Fprintf(&body, "- JS runtime: `%s`\n", emptyDash(string(cfg.JSRuntime)))
 
-	b.WriteString("### Requested modules\n\n")
-	b.WriteString("| Task | Source module | Destination |\n")
-	b.WriteString("|---|---|---|\n")
+	if cfg.JSRuntime == config.JSRuntimeNodeJS {
+		fmt.Fprintf(&body, "- Package manager: `%s`\n", cfg.NodePackageManager)
+		fmt.Fprintf(&body, "- Version manager: `%s`\n", cfg.NodeVersionManager)
+	}
+
+	body.WriteString("\n")
+
+	body.WriteString("### Requested modules\n\n")
+	body.WriteString("| Task | Source module | Destination |\n")
+	body.WriteString("|---|---|---|\n")
+
 	for _, task := range cfg.Tasks {
 		rec := plan.Requested[task]
-		fmt.Fprintf(&b, "| %s | `%s` | `%s` |\n", task, rec.SourceModule, rec.Path)
+		fmt.Fprintf(&body, "| %s | `%s` | `%s` |\n", task, rec.SourceModule, rec.Path)
 	}
 
-	b.WriteString("\n### Dependencies\n\n")
-	b.WriteString("| Source module | Destination |\n")
-	b.WriteString("|---|---|\n")
+	body.WriteString("\n### Dependencies\n\n")
+	body.WriteString("| Source module | Destination |\n")
+	body.WriteString("|---|---|\n")
+
 	for _, dep := range plan.Dependencies {
-		fmt.Fprintf(&b, "| `%s` | `%s` |\n", dep.SourceModule, dep.Path)
+		fmt.Fprintf(&body, "| `%s` | `%s` |\n", dep.SourceModule, dep.Path)
 	}
 
-	b.WriteString("\n### File changes\n\n")
-	fmt.Fprintf(&b, "- Added: %d\n", len(plan.Added))
-	for _, p := range plan.Added {
-		fmt.Fprintf(&b, "  - `%s`\n", p)
+	body.WriteString("\n### File changes\n\n")
+	fmt.Fprintf(&body, "- Added: %d\n", len(plan.Added))
+
+	for _, path := range plan.Added {
+		fmt.Fprintf(&body, "  - `%s`\n", path)
 	}
-	fmt.Fprintf(&b, "- Updated: %d\n", len(plan.Updated))
-	for _, p := range plan.Updated {
-		fmt.Fprintf(&b, "  - `%s`\n", p)
+
+	fmt.Fprintf(&body, "- Updated: %d\n", len(plan.Updated))
+
+	for _, path := range plan.Updated {
+		fmt.Fprintf(&body, "  - `%s`\n", path)
 	}
-	fmt.Fprintf(&b, "- Removed: %d\n", len(plan.Removed))
-	for _, p := range plan.Removed {
-		fmt.Fprintf(&b, "  - `%s`\n", p)
+
+	fmt.Fprintf(&body, "- Removed: %d\n", len(plan.Removed))
+
+	for _, path := range plan.Removed {
+		fmt.Fprintf(&body, "  - `%s`\n", path)
 	}
-	return b.String()
+
+	return body.String()
 }
 
 func emptyDash(v string) string {
 	if v == "" {
 		return ""
 	}
+
 	return v
 }
 
+// WriteOutputs writes GitHub Actions step outputs to path.
 func WriteOutputs(path string, values map[string]string) error {
 	if path == "" {
 		return nil
 	}
-	var b strings.Builder
+
+	var output strings.Builder
+
 	for key, value := range values {
 		if strings.Contains(value, "\n") {
-			b.WriteString(key)
-			b.WriteString("<<EOF\n")
-			b.WriteString(value)
-			b.WriteString("\nEOF\n")
+			output.WriteString(key)
+			output.WriteString("<<EOF\n")
+			output.WriteString(value)
+			output.WriteString("\nEOF\n")
+
 			continue
 		}
-		b.WriteString(key)
-		b.WriteString("=")
-		b.WriteString(value)
-		b.WriteString("\n")
+
+		output.WriteString(key)
+		output.WriteString("=")
+		output.WriteString(value)
+		output.WriteString("\n")
 	}
-	return os.WriteFile(path, []byte(b.String()), 0o644)
+
+	err := os.WriteFile(path, []byte(output.String()), outputFilePerm)
+	if err != nil {
+		return fmt.Errorf("write GitHub Actions outputs: %w", err)
+	}
+
+	return nil
 }

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/normalizer"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
@@ -9,19 +11,28 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
-func PrepareSyncInput(cfg *config.Config, snapshot *store.Snapshot, resolutions []resolver.Resolution, depSources []string) (syncer.SyncInput, error) {
+// PrepareSyncInput maps resolved modules and dependencies into syncer input records.
+func PrepareSyncInput(
+	cfg *config.Config,
+	snapshot *store.Snapshot,
+	resolutions []resolver.Resolution,
+	depSources []string,
+) (syncer.SyncInput, error) {
 	requestedSources := make([]string, 0, len(resolutions))
 	for _, res := range resolutions {
 		requestedSources = append(requestedSources, res.SourceModule)
 	}
+
 	allSources := append(append([]string{}, requestedSources...), depSources...)
+
 	sourceToDest, err := normalizer.BuildDestinationMap(allSources)
 	if err != nil {
-		return syncer.SyncInput{}, err
+		return syncer.SyncInput{}, fmt.Errorf("build destination map: %w", err)
 	}
 
 	requestedRecords := make(map[string]syncer.ModuleRecord)
 	destByTask := make(map[string]string)
+
 	for _, res := range resolutions {
 		dest := sourceToDest[res.SourceModule]
 		requestedRecords[res.LogicalTask] = syncer.ModuleRecord{

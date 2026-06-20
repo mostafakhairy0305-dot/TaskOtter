@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 	gh "github.com/mostafakhairy0305-dot/TaskOtter/internal/github"
@@ -13,6 +14,9 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
+const syncRequiredErrorSuffix = " Merge the sync pull request to update taskfiles, then re-run this workflow.\n"
+
+// Result captures sync outcomes for logging, GitHub Actions output, and PR metadata.
 type Result struct {
 	Changed              bool
 	StoreVersion         string
@@ -27,9 +31,10 @@ type Result struct {
 	Ref                  store.RefInfo
 }
 
+// ResolvedTask is the JSON representation of a resolved task module mapping.
 type ResolvedTask struct {
-	SourceModule      string `json:"source_module"`
-	DestinationModule string `json:"destination_module"`
+	SourceModule      string `json:"source_module"`      //nolint:tagliatelle // GitHub Actions output uses snake_case keys
+	DestinationModule string `json:"destination_module"` //nolint:tagliatelle // GitHub Actions output uses snake_case keys
 	Path              string `json:"path"`
 }
 
@@ -42,58 +47,82 @@ func buildResolvedTasksJSON(requested map[string]syncer.ModuleRecord) (string, e
 			Path:              rec.Path,
 		}
 	}
+
 	data, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("marshal resolved tasks: %w", err)
 	}
+
 	return string(data), nil
 }
 
 func buildResolvedDependenciesJSON(deps []syncer.ModuleRecord) (string, error) {
-	data, err := json.MarshalIndent(deps, "", "  ")
+	out := make([]ResolvedTask, 0, len(deps))
+	for _, dep := range deps {
+		out = append(out, ResolvedTask{
+			SourceModule:      dep.SourceModule,
+			DestinationModule: dep.DestinationModule,
+			Path:              dep.Path,
+		})
+	}
+
+	data, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("marshal resolved dependencies: %w", err)
 	}
+
 	return string(data), nil
 }
 
 func buildResult(cfg *config.Config, plan *syncer.Plan, ref store.RefInfo) (*Result, error) {
 	result := &Result{
-		Changed:      plan.Changed,
-		StoreVersion: cfg.StoreVersion,
-		SourceRef:    ref.SourceRef,
-		SourceSHA:    ref.ResolvedCommit,
-		TargetFolder: cfg.TargetFolder,
-		Plan:         plan,
-		Ref:          ref,
+		Changed:              plan.Changed,
+		StoreVersion:         cfg.StoreVersion,
+		SourceRef:            ref.SourceRef,
+		SourceSHA:            ref.ResolvedCommit,
+		TargetFolder:         cfg.TargetFolder,
+		ResolvedTasksJSON:    "",
+		ResolvedDependencies: "",
+		PullRequestNumber:    "",
+		PullRequestURL:       "",
+		Plan:                 plan,
+		Ref:                  ref,
 	}
+
 	var err error
+
 	result.ResolvedTasksJSON, err = buildResolvedTasksJSON(plan.Requested)
 	if err != nil {
 		return nil, err
 	}
+
 	result.ResolvedDependencies, err = buildResolvedDependenciesJSON(plan.Dependencies)
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
 func printSummary(log *logging.Logger, cfg *config.Config, plan *syncer.Plan, result *Result, prURL string) {
 	log.Printf("Requested tasks: %v", cfg.Tasks)
+
 	for _, task := range cfg.Tasks {
 		rec := plan.Requested[task]
 		log.Printf("Source module %s -> %s", rec.SourceModule, rec.Path)
 	}
+
 	for _, dep := range plan.Dependencies {
 		log.Printf("Dependency %s -> %s", dep.SourceModule, dep.Path)
 	}
+
 	log.Printf("Store version: %s", empty(result.StoreVersion))
 	log.Printf("Source SHA: %s", result.SourceSHA)
 	log.Printf("Target folder: %s", result.TargetFolder)
 	log.Printf("Files added: %d", len(plan.Added))
 	log.Printf("Files updated: %d", len(plan.Updated))
 	log.Printf("Files removed: %d", len(plan.Removed))
+
 	if prURL != "" {
 		log.Printf("Pull request: %s", prURL)
 	} else {
@@ -105,36 +134,55 @@ func empty(v string) string {
 	if v == "" {
 		return "(latest default branch)"
 	}
+
 	return v
 }
 
+// SyncRequired reports whether the sync run changed managed files.
 func SyncRequired(result *Result) bool {
 	return result.Changed
 }
 
+// ReportSyncRequired writes GitHub Actions annotations when a sync pull request must be merged.
 func ReportSyncRequired(result *Result) {
 	var summary string
+
 	if result.PullRequestURL != "" {
 		prNumber := result.PullRequestNumber
 		if prNumber == "" {
 			prNumber = "unknown"
 		}
+
 		summary = fmt.Sprintf("TaskOtter opened sync PR #%s: %s", prNumber, result.PullRequestURL)
 	} else {
 		summary = "TaskOtter synced taskfile changes but did not return a pull request URL."
 	}
-	_, _ = fmt.Fprintf(os.Stderr, "::error title=TaskOtter sync required::%s Merge the sync pull request to update taskfiles, then re-run this workflow.\n", summary)
-	_, _ = fmt.Fprintln(os.Stderr, "::notice title=What happened::TaskOtter compared managed files with the store and found drift. This job fails intentionally until the sync PR is merged.")
+
+	_, _ = fmt.Fprintf(
+		os.Stderr,
+		"::error title=TaskOtter sync required::%s"+syncRequiredErrorSuffix,
+		summary,
+	)
+	_, _ = fmt.Fprintln(
+		os.Stderr,
+		"::notice title=What happened::TaskOtter compared managed files with the store and found drift. "+
+			"This job fails intentionally until the sync PR is merged.",
+	)
 }
 
+// ReportSyncUpToDate writes GitHub Actions notices when managed files already match the store.
 func ReportSyncUpToDate(result *Result) {
-	_, _ = fmt.Fprintf(os.Stdout, "::notice title=TaskOtter sync up to date::Managed taskfiles match the store. No sync pull request was created.\n")
+	_, _ = fmt.Fprintf(
+		os.Stdout,
+		"::notice title=TaskOtter sync up to date::Managed taskfiles match the store. No sync pull request was created.\n",
+	)
 	_, _ = fmt.Fprintf(os.Stdout, "Store source SHA: %s\n", result.SourceSHA)
 }
 
+// WriteActionOutputs writes sync result fields to GitHub Actions output or stdout.
 func WriteActionOutputs(cfg *config.Config, result *Result) error {
 	values := map[string]string{
-		"changed":               fmt.Sprintf("%t", result.Changed),
+		"changed":               strconv.FormatBool(result.Changed),
 		"store-version":         result.StoreVersion,
 		"source-ref":            result.SourceRef,
 		"source-sha":            result.SourceSHA,
@@ -145,15 +193,24 @@ func WriteActionOutputs(cfg *config.Config, result *Result) error {
 		"pull-request-url":      result.PullRequestURL,
 	}
 	if cfg.GitHubOutput != "" {
-		return gh.WriteOutputs(cfg.GitHubOutput, values)
+		err := gh.WriteOutputs(cfg.GitHubOutput, values)
+		if err != nil {
+			return fmt.Errorf("write GitHub Actions outputs: %w", err)
+		}
+
+		return nil
 	}
+
 	keys := make([]string, 0, len(values))
-	for k := range values {
-		keys = append(keys, k)
+	for key := range values {
+		keys = append(keys, key)
 	}
+
 	sort.Strings(keys)
-	for _, k := range keys {
-		_, _ = fmt.Fprintf(os.Stdout, "%s=%s\n", k, values[k])
+
+	for _, key := range keys {
+		_, _ = fmt.Fprintf(os.Stdout, "%s=%s\n", key, values[key])
 	}
+
 	return nil
 }

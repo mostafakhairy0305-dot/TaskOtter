@@ -1,12 +1,22 @@
 package pathutil_test
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 )
 
+const (
+	folderTaskfiles = "taskfiles"
+	folderTask      = "task"
+)
+
 func TestIsTestPath(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		path string
 		want bool
@@ -18,31 +28,92 @@ func TestIsTestPath(t *testing.T) {
 		{"README.md", false},
 		{"latest.txt", false},
 	}
-	for _, tc := range cases {
-		got := pathutil.IsTestPath(tc.path)
-		if got != tc.want {
-			t.Fatalf("IsTestPath(%q) = %t, want %t", tc.path, got, tc.want)
+	for _, testCase := range cases {
+		got := pathutil.IsTestPath(testCase.path)
+		if got != testCase.want {
+			t.Fatalf("IsTestPath(%q) = %t, want %t", testCase.path, got, testCase.want)
 		}
 	}
 }
 
 func TestHasFolderPrefix(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		path   string
 		folder string
 		want   bool
 	}{
-		{"taskfiles/go", "taskfiles", true},
-		{"taskfiles/go/Taskfile.yml", "taskfiles", true},
-		{"task", "task", true},
-		{"taskfiles-extra/foo", "task", false},
-		{"task/extra", "taskfiles", false},
-		{"", "taskfiles", false},
+		{"taskfiles/go", folderTaskfiles, true},
+		{"taskfiles/go/Taskfile.yml", folderTaskfiles, true},
+		{folderTask, folderTask, true},
+		{"taskfiles-extra/foo", folderTask, false},
+		{"task/extra", folderTaskfiles, false},
+		{"", folderTaskfiles, false},
 	}
-	for _, tc := range cases {
-		got := pathutil.HasFolderPrefix(tc.path, tc.folder)
-		if got != tc.want {
-			t.Fatalf("HasFolderPrefix(%q, %q) = %t, want %t", tc.path, tc.folder, got, tc.want)
+	for _, testCase := range cases {
+		got := pathutil.HasFolderPrefix(testCase.path, testCase.folder)
+		if got != testCase.want {
+			t.Fatalf("HasFolderPrefix(%q, %q) = %t, want %t", testCase.path, testCase.folder, got, testCase.want)
 		}
+	}
+}
+
+func TestValidateRelativePathRejectsTraversal(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+
+	cases := []string{
+		"",
+		"..",
+		"../outside",
+		"taskfiles/../../outside",
+		"/etc/passwd",
+	}
+	for _, rel := range cases {
+		_, err := pathutil.ValidateRelativePath(root, rel)
+		if err == nil {
+			t.Fatalf("ValidateRelativePath(%q) expected error", rel)
+		}
+	}
+}
+
+func TestReadRelativeFileMissingReturnsNotExist(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+
+	_, err := pathutil.ReadRelativeFile(root, "Taskfile.yml")
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("ReadRelativeFile() err = %v, want ErrNotExist", err)
+	}
+}
+
+func TestReadRelativeFile(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	rel := "taskfiles/go/Taskfile.yml"
+
+	want := []byte("version: \"3\"\n")
+
+	err := os.MkdirAll(filepath.Join(root, "taskfiles", "go"), 0o755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = os.WriteFile(filepath.Join(root, filepath.FromSlash(rel)), want, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := pathutil.ReadRelativeFile(root, rel)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(got) != string(want) {
+		t.Fatalf("ReadRelativeFile() = %q, want %q", got, want)
 	}
 }

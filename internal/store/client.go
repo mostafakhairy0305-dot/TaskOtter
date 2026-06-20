@@ -1,8 +1,10 @@
+// Package store downloads and loads TaskOtter store snapshots from GitHub.
 package store
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,14 +16,30 @@ import (
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/archive"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 	"gopkg.in/yaml.v3"
 )
 
 const (
 	storeOwner = "mostafakhairy0305-dot"
 	storeRepo  = "TaskOtter-store"
+
+	httpClientTimeout = 60 * time.Second
 )
 
+var (
+	errArchiveAuthFailed     = errors.New("authentication failed downloading store archive")
+	errArchiveRateLimit      = errors.New("GitHub rate limit exceeded downloading store archive")
+	errArchiveDownloadFailed = errors.New("download store archive failed")
+	errDepsMissingModule     = errors.New(".deps.yml references missing module")
+	errDepsMissingDependency = errors.New(".deps.yml references missing dependency")
+	errGitHubAPIFailed       = errors.New("GitHub API request failed")
+	errDefaultBranchEmpty    = errors.New("store repository default branch is empty")
+	errStoreTagNotFound      = errors.New("store tag does not exist")
+	errResolveTagFailed      = errors.New("resolve tag failed")
+)
+
+// RefInfo describes a resolved store ref and commit.
 type RefInfo struct {
 	Repository       string
 	RequestedVersion string
@@ -30,6 +48,7 @@ type RefInfo struct {
 	DefaultBranch    string
 }
 
+// Snapshot holds an extracted store tree and module metadata.
 type Snapshot struct {
 	RootDir string
 	Catalog map[string]struct{}
@@ -38,36 +57,52 @@ type Snapshot struct {
 	cleanup func() error
 }
 
+// Close removes temporary snapshot files when present.
 func (s *Snapshot) Close() error {
 	if s.cleanup != nil {
 		return s.cleanup()
 	}
+
 	return nil
 }
 
+// ModuleDir returns the on-disk path for a source module directory.
 func (s *Snapshot) ModuleDir(sourceModule string) string {
 	return filepath.Join(s.RootDir, "taskfiles", sourceModule)
 }
 
+// HTTPDoer performs HTTP requests for the store client.
 type HTTPDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// Client resolves store refs and downloads store archives from GitHub.
 type Client struct {
 	httpClient HTTPDoer
 	token      string
 	baseURL    string
 }
 
-func NewClient(token string) *Client {
+// NewClient returns a store client authenticated with the given GitHub token.
+func NewClient(ctx context.Context, token string) *Client {
+	_ = ctx
+
 	return &Client{
-		httpClient: &http.Client{Timeout: 60 * time.Second},
-		token:      token,
-		baseURL:    "https://api.github.com",
+		httpClient: &http.Client{
+			Timeout:       httpClientTimeout,
+			Transport:     nil,
+			CheckRedirect: nil,
+			Jar:           nil,
+		},
+		token:   token,
+		baseURL: "https://api.github.com",
 	}
 }
 
-func NewClientWithHTTP(token string, httpClient HTTPDoer) *Client {
+// NewClientWithHTTP returns a store client that uses a custom HTTP doer.
+func NewClientWithHTTP(ctx context.Context, token string, httpClient HTTPDoer) *Client {
+	_ = ctx
+
 	return &Client{
 		httpClient: httpClient,
 		token:      token,
@@ -75,15 +110,14 @@ func NewClientWithHTTP(token string, httpClient HTTPDoer) *Client {
 	}
 }
 
+// WithBaseURL overrides the GitHub API base URL, primarily for tests.
 func (c *Client) WithBaseURL(baseURL string) *Client {
 	c.baseURL = strings.TrimRight(baseURL, "/")
+
 	return c
 }
 
-func (c *Client) apiURL(path string) string {
-	return c.baseURL + path
-}
-
+// ResolveRef resolves a requested store version to a commit SHA.
 func (c *Client) ResolveRef(ctx context.Context, requestedVersion string) (RefInfo, error) {
 	defaultBranch, err := c.getDefaultBranch(ctx)
 	if err != nil {
@@ -93,34 +127,43 @@ func (c *Client) ResolveRef(ctx context.Context, requestedVersion string) (RefIn
 	info := RefInfo{
 		Repository:       config.StoreRepository,
 		RequestedVersion: requestedVersion,
+		SourceRef:        "",
+		ResolvedCommit:   "",
 		DefaultBranch:    defaultBranch,
 	}
 
 	if requestedVersion == "" {
-		sha, err := c.resolveBranchHead(ctx, defaultBranch)
-		if err != nil {
-			return RefInfo{}, err
+		sha, resolveErr := c.resolveBranchHead(ctx, defaultBranch)
+		if resolveErr != nil {
+			return RefInfo{}, resolveErr
 		}
+
 		info.SourceRef = "refs/heads/" + defaultBranch
 		info.ResolvedCommit = sha
+
 		return info, nil
 	}
 
-	sha, err := c.resolveTag(ctx, requestedVersion)
-	if err != nil {
-		return RefInfo{}, err
+	sha, resolveErr := c.resolveTag(ctx, requestedVersion)
+	if resolveErr != nil {
+		return RefInfo{}, resolveErr
 	}
+
 	info.SourceRef = "refs/tags/" + requestedVersion
 	info.ResolvedCommit = sha
+
 	return info, nil
 }
 
+// DownloadSnapshot downloads and extracts a store archive for the given ref.
 func (c *Client) DownloadSnapshot(ctx context.Context, ref RefInfo) (*Snapshot, error) {
-	url := c.apiURL(fmt.Sprintf("/repos/%s/%s/tarball/%s", storeOwner, storeRepo, ref.ResolvedCommit))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	downloadURL := c.apiURL(fmt.Sprintf("/repos/%s/%s/tarball/%s", storeOwner, storeRepo, ref.ResolvedCommit))
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create download request: %w", err)
 	}
+
 	c.applyHeaders(req)
 
 	resp, err := c.httpClient.Do(req)
@@ -129,36 +172,36 @@ func (c *Client) DownloadSnapshot(ctx context.Context, ref RefInfo) (*Snapshot, 
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, fmt.Errorf("authentication failed downloading store archive (HTTP %d)", resp.StatusCode)
-	}
-	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, fmt.Errorf("GitHub rate limit exceeded downloading store archive")
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("download store archive failed with HTTP %d", resp.StatusCode)
+	err = archiveDownloadStatusError(resp.StatusCode)
+	if err != nil {
+		return nil, err
 	}
 
 	tmpDir, err := os.MkdirTemp("", "taskotter-store-*")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create temp directory: %w", err)
 	}
 
 	cleanup := func() error { return os.RemoveAll(tmpDir) }
+
 	root, err := archive.ExtractTarGz(resp.Body, tmpDir)
 	if err != nil {
 		_ = cleanup()
-		return nil, err
+
+		return nil, fmt.Errorf("extract store archive: %w", err)
 	}
 
 	catalog, err := loadCatalog(root)
 	if err != nil {
 		_ = cleanup()
+
 		return nil, err
 	}
+
 	deps, err := loadDeps(root, catalog)
 	if err != nil {
 		_ = cleanup()
+
 		return nil, err
 	}
 
@@ -171,81 +214,118 @@ func (c *Client) DownloadSnapshot(ctx context.Context, ref RefInfo) (*Snapshot, 
 	}, nil
 }
 
+func archiveDownloadStatusError(statusCode int) error {
+	switch {
+	case statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden:
+		return fmt.Errorf("%w (HTTP %d)", errArchiveAuthFailed, statusCode)
+	case statusCode == http.StatusTooManyRequests:
+		return errArchiveRateLimit
+	case statusCode != http.StatusOK:
+		return fmt.Errorf("%w with HTTP %d", errArchiveDownloadFailed, statusCode)
+	default:
+		return nil
+	}
+}
+
+func (c *Client) apiURL(path string) string {
+	return c.baseURL + path
+}
+
 func loadCatalog(root string) (map[string]struct{}, error) {
 	taskfilesDir := filepath.Join(root, "taskfiles")
+
 	entries, err := os.ReadDir(taskfilesDir)
 	if err != nil {
 		return nil, fmt.Errorf("load module catalog: %w", err)
 	}
+
 	catalog := make(map[string]struct{})
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			catalog[entry.Name()] = struct{}{}
 		}
 	}
+
 	return catalog, nil
 }
 
 func loadDeps(root string, catalog map[string]struct{}) (map[string][]string, error) {
-	path := filepath.Join(root, ".deps.yml")
-	data, err := os.ReadFile(path)
+	data, err := pathutil.ReadRelativeFile(root, ".deps.yml")
 	if err != nil {
 		return nil, fmt.Errorf("read .deps.yml: %w", err)
 	}
+
 	var raw map[string][]string
-	if err := yaml.Unmarshal(data, &raw); err != nil {
+
+	err = yaml.Unmarshal(data, &raw)
+	if err != nil {
 		return nil, fmt.Errorf("parse .deps.yml: %w", err)
 	}
+
 	for module, deps := range raw {
 		if _, ok := catalog[module]; !ok {
-			return nil, fmt.Errorf(".deps.yml references missing module %q", module)
+			return nil, fmt.Errorf("%w %q", errDepsMissingModule, module)
 		}
+
 		for _, dep := range deps {
 			if _, ok := catalog[dep]; !ok {
-				return nil, fmt.Errorf(".deps.yml references missing dependency %q for module %q", dep, module)
+				return nil, fmt.Errorf("%w %q for module %q", errDepsMissingDependency, dep, module)
 			}
 		}
 	}
+
 	return raw, nil
 }
 
 func (c *Client) applyHeaders(req *http.Request) {
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("X-Github-Api-Version", "2022-11-28")
 	req.Header.Set("User-Agent", "TaskOtter")
+
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 }
 
-func (c *Client) getJSON(ctx context.Context, path string, v any) error {
+func (c *Client) getJSON(ctx context.Context, path string, payload any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.apiURL(path), nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("create API request: %w", err)
 	}
+
 	c.applyHeaders(req)
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHub API request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GitHub API %s failed with HTTP %d", path, resp.StatusCode)
+		return fmt.Errorf("%w: %s returned HTTP %d", errGitHubAPIFailed, path, resp.StatusCode)
 	}
-	return decodeJSON(resp.Body, v)
+
+	return decodeJSON(resp.Body, payload)
 }
 
 func (c *Client) getDefaultBranch(ctx context.Context) (string, error) {
 	var payload struct {
-		DefaultBranch string `json:"default_branch"`
+		DefaultBranch string `json:"default_branch"` //nolint:tagliatelle // GitHub REST API uses snake_case
 	}
+
 	path := fmt.Sprintf("/repos/%s/%s", storeOwner, storeRepo)
-	if err := c.getJSON(ctx, path, &payload); err != nil {
+
+	err := c.getJSON(ctx, path, &payload)
+	if err != nil {
 		return "", fmt.Errorf("fetch store repository metadata: %w", err)
 	}
+
 	if payload.DefaultBranch == "" {
-		return "", fmt.Errorf("store repository default branch is empty")
+		return "", errDefaultBranchEmpty
 	}
+
 	return payload.DefaultBranch, nil
 }
 
@@ -253,10 +333,14 @@ func (c *Client) resolveBranchHead(ctx context.Context, branch string) (string, 
 	var payload struct {
 		SHA string `json:"sha"`
 	}
+
 	path := fmt.Sprintf("/repos/%s/%s/commits/%s", storeOwner, storeRepo, url.PathEscape(branch))
-	if err := c.getJSON(ctx, path, &payload); err != nil {
+
+	err := c.getJSON(ctx, path, &payload)
+	if err != nil {
 		return "", fmt.Errorf("resolve branch %q: %w", branch, err)
 	}
+
 	return payload.SHA, nil
 }
 
@@ -267,26 +351,36 @@ func (c *Client) resolveTag(ctx context.Context, tag string) (string, error) {
 			Type string `json:"type"`
 		} `json:"object"`
 	}
+
 	path := fmt.Sprintf("/repos/%s/%s/git/ref/tags/%s", storeOwner, storeRepo, url.PathEscape(tag))
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.apiURL(path), nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("create tag request: %w", err)
 	}
+
 	c.applyHeaders(req)
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("resolve tag request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode == http.StatusNotFound {
-		return "", fmt.Errorf("store tag %q does not exist", tag)
+		return "", fmt.Errorf("%w: %q", errStoreTagNotFound, tag)
 	}
+
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("resolve tag %q failed with HTTP %d", tag, resp.StatusCode)
+		return "", fmt.Errorf("%w %q with HTTP %d", errResolveTagFailed, tag, resp.StatusCode)
 	}
-	if err := decodeJSON(resp.Body, &payload); err != nil {
-		return "", err
+
+	err = decodeJSON(resp.Body, &payload)
+	if err != nil {
+		return "", fmt.Errorf("decode tag response: %w", err)
 	}
+
 	sha := payload.Object.SHA
 	if payload.Object.Type == "tag" {
 		sha, err = c.peelAnnotatedTag(ctx, sha)
@@ -294,6 +388,7 @@ func (c *Client) resolveTag(ctx context.Context, tag string) (string, error) {
 			return "", err
 		}
 	}
+
 	return sha, nil
 }
 
@@ -303,15 +398,24 @@ func (c *Client) peelAnnotatedTag(ctx context.Context, sha string) (string, erro
 			SHA string `json:"sha"`
 		} `json:"object"`
 	}
+
 	path := fmt.Sprintf("/repos/%s/%s/git/tags/%s", storeOwner, storeRepo, sha)
-	if err := c.getJSON(ctx, path, &payload); err != nil {
+
+	err := c.getJSON(ctx, path, &payload)
+	if err != nil {
 		return "", fmt.Errorf("resolve annotated tag: %w", err)
 	}
+
 	return payload.Object.SHA, nil
 }
 
-func decodeJSON(r io.Reader, v any) error {
-	return json.NewDecoder(r).Decode(v)
+func decodeJSON(reader io.Reader, payload any) error {
+	err := json.NewDecoder(reader).Decode(payload)
+	if err != nil {
+		return fmt.Errorf("decode JSON response: %w", err)
+	}
+
+	return nil
 }
 
 // LocalSnapshot creates a snapshot from an on-disk directory (tests/fixtures).
@@ -320,9 +424,17 @@ func LocalSnapshot(root string, ref RefInfo) (*Snapshot, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	deps, err := loadDeps(root, catalog)
 	if err != nil {
 		return nil, err
 	}
-	return &Snapshot{RootDir: root, Catalog: catalog, Deps: deps, Ref: ref}, nil
+
+	return &Snapshot{
+		RootDir: root,
+		Catalog: catalog,
+		Deps:    deps,
+		Ref:     ref,
+		cleanup: nil,
+	}, nil
 }

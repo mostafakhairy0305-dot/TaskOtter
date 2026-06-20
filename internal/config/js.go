@@ -7,17 +7,25 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	fieldJSPackageManager = "js.package-manager"
+	fieldJSVersionManager = "js.version-manager"
+)
+
+// JSRuntime selects the JavaScript runtime for Node-oriented task resolution.
 type JSRuntime string
 
 const (
-	JSRuntimeBun    JSRuntime = "bun"
+	// JSRuntimeBun selects Bun as the JS runtime.
+	JSRuntimeBun JSRuntime = "bun"
+	// JSRuntimeNodeJS selects Node.js as the JS runtime.
 	JSRuntimeNodeJS JSRuntime = "nodejs"
 )
 
 type jsInput struct {
 	Runtime        string `yaml:"runtime"`
-	PackageManager string `yaml:"package-manager"`
-	VersionManager string `yaml:"version-manager"`
+	PackageManager string `yaml:"package-manager"` //nolint:tagliatelle // action js input uses kebab-case keys
+	VersionManager string `yaml:"version-manager"` //nolint:tagliatelle // action js input uses kebab-case keys
 }
 
 type jsConfig struct {
@@ -29,73 +37,29 @@ type jsConfig struct {
 func parseJS(raw string) (*jsConfig, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // empty js input means no JS runtime configuration
 	}
 
-	var in jsInput
-	if err := yaml.Unmarshal([]byte(raw), &in); err != nil {
+	var yamlInput jsInput
+
+	err := yaml.Unmarshal([]byte(raw), &yamlInput)
+	if err != nil {
 		return nil, &ValidationError{
 			Field:   "js",
 			Message: fmt.Sprintf("invalid YAML: %v", err),
 		}
 	}
 
-	runtime := strings.TrimSpace(in.Runtime)
+	runtime := strings.TrimSpace(yamlInput.Runtime)
 	if runtime == "" {
 		runtime = string(JSRuntimeNodeJS)
 	}
 
 	switch JSRuntime(runtime) {
 	case JSRuntimeBun:
-		if strings.TrimSpace(in.PackageManager) != "" {
-			return nil, &ValidationError{
-				Field:   "js.package-manager",
-				Message: "is only valid when js.runtime is nodejs",
-			}
-		}
-		if strings.TrimSpace(in.VersionManager) != "" {
-			return nil, &ValidationError{
-				Field:   "js.version-manager",
-				Message: "is only valid when js.runtime is nodejs",
-			}
-		}
-		return &jsConfig{
-			Runtime:            JSRuntimeBun,
-			NodePackageManager: PMBun,
-		}, nil
-
+		return parseJSBun(yamlInput)
 	case JSRuntimeNodeJS:
-		pmRaw := strings.TrimSpace(in.PackageManager)
-		if pmRaw == "" {
-			pmRaw = string(PMNPM)
-		}
-		vmRaw := strings.TrimSpace(in.VersionManager)
-		if vmRaw == "" {
-			vmRaw = string(VMFnm)
-		}
-
-		pm, err := parseNodePackageManager(pmRaw)
-		if err != nil {
-			return nil, err
-		}
-		if pm == PMBun {
-			return nil, &ValidationError{
-				Field:   "js.package-manager",
-				Message: `use js.runtime "bun" instead of package-manager "bun"`,
-			}
-		}
-
-		vm, err := parseNodeVersionManager(vmRaw)
-		if err != nil {
-			return nil, err
-		}
-
-		return &jsConfig{
-			Runtime:            JSRuntimeNodeJS,
-			NodePackageManager: pm,
-			NodeVersionManager: vm,
-		}, nil
-
+		return parseJSNodeJS(yamlInput)
 	default:
 		return nil, &ValidationError{
 			Field:   "js.runtime",
@@ -104,13 +68,70 @@ func parseJS(raw string) (*jsConfig, error) {
 	}
 }
 
+func parseJSBun(yamlInput jsInput) (*jsConfig, error) {
+	if strings.TrimSpace(yamlInput.PackageManager) != "" {
+		return nil, &ValidationError{
+			Field:   fieldJSPackageManager,
+			Message: "is only valid when js.runtime is nodejs",
+		}
+	}
+
+	if strings.TrimSpace(yamlInput.VersionManager) != "" {
+		return nil, &ValidationError{
+			Field:   fieldJSVersionManager,
+			Message: "is only valid when js.runtime is nodejs",
+		}
+	}
+
+	return &jsConfig{
+		Runtime:            JSRuntimeBun,
+		NodePackageManager: PMBun,
+		NodeVersionManager: "",
+	}, nil
+}
+
+func parseJSNodeJS(yamlInput jsInput) (*jsConfig, error) {
+	packageManagerRaw := strings.TrimSpace(yamlInput.PackageManager)
+	if packageManagerRaw == "" {
+		packageManagerRaw = string(PMNPM)
+	}
+
+	versionManagerRaw := strings.TrimSpace(yamlInput.VersionManager)
+	if versionManagerRaw == "" {
+		versionManagerRaw = string(VMFnm)
+	}
+
+	packageManager, err := parseNodePackageManager(packageManagerRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	if packageManager == PMBun {
+		return nil, &ValidationError{
+			Field:   fieldJSPackageManager,
+			Message: `use js.runtime "bun" instead of package-manager "bun"`,
+		}
+	}
+
+	versionManager, err := parseNodeVersionManager(versionManagerRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	return &jsConfig{
+		Runtime:            JSRuntimeNodeJS,
+		NodePackageManager: packageManager,
+		NodeVersionManager: versionManager,
+	}, nil
+}
+
 func parseNodePackageManager(raw string) (PackageManager, error) {
 	switch raw {
 	case "npm", "yarn", "pnpm":
 		return PackageManager(raw), nil
 	default:
 		return "", &ValidationError{
-			Field:   "js.package-manager",
+			Field:   fieldJSPackageManager,
 			Message: fmt.Sprintf("invalid value %q: allowed values are npm, yarn, or pnpm", raw),
 		}
 	}
@@ -122,7 +143,7 @@ func parseNodeVersionManager(raw string) (VersionManager, error) {
 		return VersionManager(raw), nil
 	default:
 		return "", &ValidationError{
-			Field:   "js.version-manager",
+			Field:   fieldJSVersionManager,
 			Message: fmt.Sprintf("invalid value %q: allowed values are fnm or nvm", raw),
 		}
 	}

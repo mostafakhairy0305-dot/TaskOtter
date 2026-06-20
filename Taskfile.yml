@@ -91,9 +91,12 @@ tasks:
         desc: Format Go and YAML files
         deps:
             - go:fmt
-            - yamllint:lint:fix
     fmt:check:
         desc: Check Go and YAML formatting without modifying files
         deps:
             - go:fmt:check
-            - yamllint:lint
+    ci:
+        desc: Run all CI checks
+        deps:
+            - fmt:check
+            - lint

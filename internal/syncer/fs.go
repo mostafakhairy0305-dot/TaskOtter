@@ -1,25 +1,35 @@
 package syncer
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 )
 
-// CopyFileToHook, when non-nil, replaces copyFileTo (for tests).
+// CopyFileToHook replaces copyFileTo during tests when non-nil.
+//
+//nolint:gochecknoglobals // test hook
 var CopyFileToHook func(path string, entry FileEntry) error
 
 func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
+
+	err := os.MkdirAll(dir, dirModePerm)
+	if err != nil {
+		return fmt.Errorf("create directory %q: %w", dir, err)
 	}
+
 	tmp, err := os.CreateTemp(dir, ".taskotter-*")
 	if err != nil {
-		return err
+		return fmt.Errorf("create temp file in %q: %w", dir, err)
 	}
+
 	tmpPath := tmp.Name()
+
 	cleanup := true
 	defer func() {
 		if cleanup {
@@ -27,36 +37,53 @@ func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
 			_ = os.Remove(tmpPath)
 		}
 	}()
-	if _, err := tmp.Write(data); err != nil {
-		return err
+
+	_, err = tmp.Write(data)
+	if err != nil {
+		return fmt.Errorf("write temp file %q: %w", tmpPath, err)
 	}
-	if err := tmp.Chmod(mode); err != nil {
-		return err
+
+	err = tmp.Chmod(mode)
+	if err != nil {
+		return fmt.Errorf("chmod temp file %q: %w", tmpPath, err)
 	}
-	if err := tmp.Close(); err != nil {
-		return err
+
+	err = tmp.Close()
+	if err != nil {
+		return fmt.Errorf("close temp file %q: %w", tmpPath, err)
 	}
+
 	cleanup = false
-	return os.Rename(tmpPath, path)
+
+	err = os.Rename(tmpPath, path)
+	if err != nil {
+		return fmt.Errorf("rename temp file to %q: %w", path, err)
+	}
+
+	return nil
 }
 
 func copyFileTo(path string, entry FileEntry) error {
 	if CopyFileToHook != nil {
 		return CopyFileToHook(path, entry)
 	}
+
 	return writeFileAtomic(path, entry.Data, entry.Mode)
 }
 
-func CopyFile(src, dst string, mode os.FileMode) error {
-	in, err := os.Open(src)
+// CopyFile copies rel under root to dst with the given mode.
+func CopyFile(root, rel, dst string, mode os.FileMode) error {
+	source, err := pathutil.OpenRelativeFile(root, rel)
 	if err != nil {
-		return err
+		return fmt.Errorf("open %q: %w", rel, err)
 	}
-	defer func() { _ = in.Close() }()
-	data, err := io.ReadAll(in)
+	defer func() { _ = source.Close() }()
+
+	data, err := io.ReadAll(source)
 	if err != nil {
-		return err
+		return fmt.Errorf("read %q: %w", rel, err)
 	}
+
 	return writeFileAtomic(dst, data, mode)
 }
 
@@ -65,11 +92,14 @@ func sortedModuleRecords(requested map[string]ModuleRecord, deps []ModuleRecord)
 	for task := range requested {
 		tasks = append(tasks, task)
 	}
+
 	sort.Strings(tasks)
+
 	out := make([]ModuleRecord, 0, len(requested)+len(deps))
 	for _, task := range tasks {
 		out = append(out, requested[task])
 	}
+
 	return append(out, deps...)
 }
 
@@ -78,5 +108,6 @@ func preserveMode(mode os.FileMode) os.FileMode {
 	if perm&0o111 != 0 {
 		return perm
 	}
-	return 0o644
+
+	return fileModeRegular
 }

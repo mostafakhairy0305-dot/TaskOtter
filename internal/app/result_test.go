@@ -8,49 +8,98 @@ import (
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
-func captureStderr(t *testing.T, fn func()) string {
+func emptyRefInfo() store.RefInfo {
+	return store.RefInfo{
+		Repository:       "",
+		RequestedVersion: "",
+		SourceRef:        "",
+		ResolvedCommit:   "",
+		DefaultBranch:    "",
+	}
+}
+
+func captureStderr(t *testing.T, runFn func()) string {
 	t.Helper()
+
 	old := os.Stderr
-	r, w, err := os.Pipe()
+
+	reader, writer, err := os.Pipe()
 	if err != nil {
 		t.Fatal(err)
 	}
-	os.Stderr = w
-	fn()
-	_ = w.Close()
+
+	os.Stderr = writer
+
+	runFn()
+
+	_ = writer.Close()
 	os.Stderr = old
+
 	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, r); err != nil {
+
+	_, err = io.Copy(&buf, reader)
+	if err != nil {
 		t.Fatal(err)
 	}
-	_ = r.Close()
+
+	_ = reader.Close()
+
 	return buf.String()
 }
 
 func TestReportSyncRequiredWithPullRequest(t *testing.T) {
+	t.Parallel()
+
 	result := &app.Result{
-		Changed:           true,
-		PullRequestNumber: "42",
-		PullRequestURL:    "https://example.com/pull/42",
+		Changed:              true,
+		StoreVersion:         "",
+		SourceRef:            "",
+		SourceSHA:            "",
+		TargetFolder:         "",
+		ResolvedTasksJSON:    "",
+		ResolvedDependencies: "",
+		PullRequestNumber:    "42",
+		PullRequestURL:       "https://example.com/pull/42",
+		Plan:                 nil,
+		Ref:                  emptyRefInfo(),
 	}
+
 	out := captureStderr(t, func() {
 		app.ReportSyncRequired(result)
 	})
 	if !strings.Contains(out, "::error title=TaskOtter sync required::") {
 		t.Fatalf("missing error annotation: %s", out)
 	}
+
 	if !strings.Contains(out, "TaskOtter opened sync PR #42: https://example.com/pull/42") {
 		t.Fatalf("missing PR summary: %s", out)
 	}
+
 	if !strings.Contains(out, "::notice title=What happened::") {
 		t.Fatalf("missing notice annotation: %s", out)
 	}
 }
 
 func TestReportSyncRequiredWithoutPullRequest(t *testing.T) {
-	result := &app.Result{Changed: true}
+	t.Parallel()
+
+	result := &app.Result{
+		Changed:              true,
+		StoreVersion:         "",
+		SourceRef:            "",
+		SourceSHA:            "",
+		TargetFolder:         "",
+		ResolvedTasksJSON:    "",
+		ResolvedDependencies: "",
+		PullRequestNumber:    "",
+		PullRequestURL:       "",
+		Plan:                 nil,
+		Ref:                  emptyRefInfo(),
+	}
+
 	out := captureStderr(t, func() {
 		app.ReportSyncRequired(result)
 	})
@@ -60,10 +109,39 @@ func TestReportSyncRequiredWithoutPullRequest(t *testing.T) {
 }
 
 func TestSyncRequired(t *testing.T) {
-	if !app.SyncRequired(&app.Result{Changed: true}) {
+	t.Parallel()
+
+	changed := &app.Result{
+		Changed:              true,
+		StoreVersion:         "",
+		SourceRef:            "",
+		SourceSHA:            "",
+		TargetFolder:         "",
+		ResolvedTasksJSON:    "",
+		ResolvedDependencies: "",
+		PullRequestNumber:    "",
+		PullRequestURL:       "",
+		Plan:                 nil,
+		Ref:                  emptyRefInfo(),
+	}
+	if !app.SyncRequired(changed) {
 		t.Fatal("expected changed result to require sync")
 	}
-	if app.SyncRequired(&app.Result{Changed: false}) {
+
+	unchanged := &app.Result{
+		Changed:              false,
+		StoreVersion:         "",
+		SourceRef:            "",
+		SourceSHA:            "",
+		TargetFolder:         "",
+		ResolvedTasksJSON:    "",
+		ResolvedDependencies: "",
+		PullRequestNumber:    "",
+		PullRequestURL:       "",
+		Plan:                 nil,
+		Ref:                  emptyRefInfo(),
+	}
+	if app.SyncRequired(unchanged) {
 		t.Fatal("expected unchanged result not to require sync")
 	}
 }

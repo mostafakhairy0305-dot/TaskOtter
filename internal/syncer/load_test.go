@@ -9,21 +9,35 @@ import (
 )
 
 func TestLoadMetadataCorruptFails(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "metadata.yml")
-	if err := os.WriteFile(path, []byte("{{bad"), 0o644); err != nil {
+	t.Parallel()
+
+	root := t.TempDir()
+	rel := "metadata.yml"
+
+	err := os.WriteFile(filepath.Join(root, rel), []byte("{{bad"), 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := syncer.LoadMetadata(path); err == nil {
+
+	_, err = syncer.LoadMetadata(root, rel)
+	if err == nil {
 		t.Fatal("expected corrupt metadata error")
 	}
 }
 
 func TestLoadLockCorruptFails(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "lock.yml")
-	if err := os.WriteFile(path, []byte("{{bad"), 0o644); err != nil {
+	t.Parallel()
+
+	root := t.TempDir()
+	rel := "lock.yml"
+
+	err := os.WriteFile(filepath.Join(root, rel), []byte("{{bad"), 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := syncer.LoadLock(path); err == nil {
+
+	_, err = syncer.LoadLock(root, rel)
+	if err == nil {
 		t.Fatal("expected corrupt lock error")
 	}
 }

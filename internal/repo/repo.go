@@ -1,14 +1,20 @@
+// Package repo parses GitHub repository coordinates.
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
-func Parse(full string) (owner, name string, err error) {
+var errInvalidRepository = errors.New("invalid repository")
+
+// Parse splits owner/name repository coordinates.
+func Parse(full string) (string, string, error) {
 	parts := strings.Split(full, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("invalid repository %q", full)
+		return "", "", fmt.Errorf("%w %q", errInvalidRepository, full)
 	}
+
 	return parts[0], parts[1], nil
 }
