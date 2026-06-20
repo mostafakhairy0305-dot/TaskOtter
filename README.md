@@ -76,7 +76,7 @@ jobs:
         id: taskotter
         uses: mostafakhairy0305-dot/TaskOtter@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
           tasks: |
             eslint
             prettier
@@ -93,7 +93,7 @@ jobs:
 ```yaml
 - uses: mostafakhairy0305-dot/TaskOtter@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ github.token }}
     store-version: v1.4.0
     target-folder: automation/taskfiles
     tasks: |
@@ -109,7 +109,7 @@ jobs:
 ```yaml
 - uses: mostafakhairy0305-dot/TaskOtter@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ github.token }}
     tasks: |
       eslint
       prettier
@@ -123,7 +123,7 @@ jobs:
 ```yaml
 - uses: mostafakhairy0305-dot/TaskOtter@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ github.token }}
     target-folder: build/taskfiles
     tasks: |
       actionlint
