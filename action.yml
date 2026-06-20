@@ -1,6 +1,10 @@
-name: TaskOtter
+name: TaskOtter Sync
 description: Synchronize taskfiles from the TaskOtter store into your repository.
 author: mostafakhairy0305-dot
+
+branding:
+  icon: package
+  color: blue
 
 inputs:
   tasks:

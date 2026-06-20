@@ -104,6 +104,9 @@ jobs:
         run: |
           test -f action.yml
           grep -q 'using: docker' action.yml
+          grep -q '^name: TaskOtter Sync$' action.yml
+          grep -q '^  icon: package$' action.yml
+          grep -q '^  color: blue$' action.yml
 
   integration:
     runs-on: ubuntu-latest

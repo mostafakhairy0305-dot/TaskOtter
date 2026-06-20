@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo/image.png" alt="TaskOtter logo" width="240">
+</p>
+
 # TaskOtter
 
 Docker-based GitHub Action that synchronizes task modules from the [TaskOtter store](https://github.com/mostafakhairy0305-dot/TaskOtter-store) into your repository, resolves transitive dependencies, normalizes destination folder names, updates your root `Taskfile.yml`, and opens or updates a deterministic pull request when changes exist.
