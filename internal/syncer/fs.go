@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 )
@@ -14,6 +15,22 @@ import (
 //
 //nolint:gochecknoglobals // test hook
 var CopyFileToHook func(path string, entry FileEntry) error
+
+var copyFileHookMu sync.RWMutex
+
+// SetCopyFileToHookForTest installs a test hook. Pair with ClearCopyFileToHookForTest in t.Cleanup.
+func SetCopyFileToHookForTest(hook func(path string, entry FileEntry) error) {
+	copyFileHookMu.Lock()
+	CopyFileToHook = hook
+	copyFileHookMu.Unlock()
+}
+
+// ClearCopyFileToHookForTest removes the test hook installed by SetCopyFileToHookForTest.
+func ClearCopyFileToHookForTest() {
+	copyFileHookMu.Lock()
+	CopyFileToHook = nil
+	copyFileHookMu.Unlock()
+}
 
 func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
 	dir := filepath.Dir(path)
@@ -64,8 +81,12 @@ func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
 }
 
 func copyFileTo(path string, entry FileEntry) error {
-	if CopyFileToHook != nil {
-		return CopyFileToHook(path, entry)
+	copyFileHookMu.RLock()
+	hook := CopyFileToHook
+	copyFileHookMu.RUnlock()
+
+	if hook != nil {
+		return hook(path, entry)
 	}
 
 	return writeFileAtomic(path, entry.Data, entry.Mode)

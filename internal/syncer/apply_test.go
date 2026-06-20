@@ -92,10 +92,21 @@ func TestApplyPlanPreservesExecutableMode(t *testing.T) {
 
 	setupPath := filepath.Join("..", "..", "tests", "fixtures", "store", "taskfiles", "go", "setup.sh")
 
-	err := os.Chmod(setupPath, 0o755)
+	info, err := os.Stat(setupPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	origMode := info.Mode().Perm()
+
+	err = os.Chmod(setupPath, 0o755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		_ = os.Chmod(setupPath, origMode)
+	})
 
 	cfg := testConfig(workspace, func(cfg *config.Config) {
 		cfg.Tasks = []string{"go"}
@@ -155,7 +166,7 @@ func TestApplyPlanPromoteBeforeDelete(t *testing.T) {
 
 	var promoted int
 
-	syncer.CopyFileToHook = func(path string, entry syncer.FileEntry) error {
+	syncer.SetCopyFileToHookForTest(func(path string, entry syncer.FileEntry) error {
 		if strings.Contains(path, filepath.Join(".taskotter", "staging")) {
 			return writeFileEntry(path, entry)
 		}
@@ -166,9 +177,9 @@ func TestApplyPlanPromoteBeforeDelete(t *testing.T) {
 		}
 
 		return writeFileEntry(path, entry)
-	}
+	})
 
-	t.Cleanup(func() { syncer.CopyFileToHook = nil })
+	t.Cleanup(syncer.ClearCopyFileToHookForTest)
 
 	err = syncer.ApplyPlan(plan, syncInput)
 	if err == nil {
@@ -195,7 +206,7 @@ func TestApplyPlanWriteOrder(t *testing.T) {
 	var order []string
 
 	stagingMarker := filepath.Join(".taskotter", "staging")
-	syncer.CopyFileToHook = func(path string, entry syncer.FileEntry) error {
+	syncer.SetCopyFileToHookForTest(func(path string, entry syncer.FileEntry) error {
 		if strings.Contains(path, stagingMarker) {
 			return writeFileEntry(path, entry)
 		}
@@ -208,9 +219,9 @@ func TestApplyPlanWriteOrder(t *testing.T) {
 		order = append(order, filepath.ToSlash(rel))
 
 		return writeFileEntry(path, entry)
-	}
+	})
 
-	t.Cleanup(func() { syncer.CopyFileToHook = nil })
+	t.Cleanup(syncer.ClearCopyFileToHookForTest)
 
 	err := syncer.ApplyPlan(plan, syncInput)
 	if err != nil {

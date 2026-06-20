@@ -7,12 +7,11 @@ import (
 )
 
 func TestParseJSNodeJSDefaults(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_JS"] = "runtime: nodejs\n"
 	setEnv(t, env)
+	t.Parallel()
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
@@ -33,12 +32,11 @@ func TestParseJSNodeJSDefaults(t *testing.T) {
 }
 
 func TestParseJSBun(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_JS"] = "runtime: bun\n"
 	setEnv(t, env)
+	t.Parallel()
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
@@ -59,12 +57,11 @@ func TestParseJSBun(t *testing.T) {
 }
 
 func TestParseJSBunRejectsVersionManager(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_JS"] = "runtime: bun\nversion-manager: fnm\n"
 	setEnv(t, env)
+	t.Parallel()
 
 	_, err := config.LoadFromEnv()
 	if err == nil {
@@ -73,12 +70,11 @@ func TestParseJSBunRejectsVersionManager(t *testing.T) {
 }
 
 func TestParseJSNodeJSRejectsBunPackageManager(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_JS"] = "runtime: nodejs\npackage-manager: bun\n"
 	setEnv(t, env)
+	t.Parallel()
 
 	_, err := config.LoadFromEnv()
 	if err == nil {
@@ -87,10 +83,9 @@ func TestParseJSNodeJSRejectsBunPackageManager(t *testing.T) {
 }
 
 func TestParseJSEmpty(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	setEnv(t, baseEnv(dir))
+	t.Parallel()
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
