@@ -230,7 +230,7 @@ tasks:
         cmds:
             - echo Installing uv via the official PowerShell installer...
             - >-
-              powershell -ExecutionPolicy ByPass -c "irm {{if .UV_VERSION}}https://astral.sh/uv/{{.UV_VERSION}}/install.ps1{{else}}{{.UV_INSTALL_URL_WINDOWS}}{{end}} | iex"
+              powershell -ExecutionPolicy ByPass -c "$installer = if ('{{.UV_VERSION}}') { 'https://astral.sh/uv/' + '{{.UV_VERSION}}' + '/install.ps1' } else { '{{.UV_INSTALL_URL_WINDOWS}}' }; irm $installer | iex"
             - echo uv installed. Restart your terminal to use uv.
     _install:undo:unix:
         internal: true

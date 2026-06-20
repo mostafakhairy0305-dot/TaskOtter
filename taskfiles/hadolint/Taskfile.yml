@@ -109,7 +109,7 @@ tasks:
         cmds:
             - echo 'Installing hadolint v{{.HADOLINT_VERSION}} for Linux...'
             - >-
-              curl -fsSL -o /tmp/taskotter-hadolint "https://github.com/hadolint/hadolint/releases/download/v{{.HADOLINT_VERSION}}/hadolint-linux-{{.HADOLINT_ASSET_ARCH}}"
+              download_url="https://github.com/hadolint/hadolint/releases/download/v{{.HADOLINT_VERSION}}"; download_url="${download_url}/hadolint-linux-{{.HADOLINT_ASSET_ARCH}}"; curl -fsSL -o /tmp/taskotter-hadolint "$download_url"
             - cmd: install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
               if: '[ "$(id -u)" -eq 0 ]'
             - cmd: sudo install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
@@ -203,7 +203,7 @@ tasks:
         cmds:
             - echo 'Upgrading hadolint to v{{.HADOLINT_VERSION}}...'
             - >-
-              curl -fsSL -o /tmp/taskotter-hadolint "https://github.com/hadolint/hadolint/releases/download/v{{.HADOLINT_VERSION}}/hadolint-linux-{{.HADOLINT_ASSET_ARCH}}"
+              download_url="https://github.com/hadolint/hadolint/releases/download/v{{.HADOLINT_VERSION}}"; download_url="${download_url}/hadolint-linux-{{.HADOLINT_ASSET_ARCH}}"; curl -fsSL -o /tmp/taskotter-hadolint "$download_url"
             - cmd: install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
               if: '[ "$(id -u)" -eq 0 ]'
             - cmd: sudo install -m 0755 /tmp/taskotter-hadolint /usr/local/bin/hadolint
