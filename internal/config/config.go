@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/pathutil"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 )
 
 const (

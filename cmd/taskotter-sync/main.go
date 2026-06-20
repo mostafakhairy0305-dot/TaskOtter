@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/app"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 )
 
 func main() {
@@ -36,9 +36,9 @@ func run() int {
 	}
 
 	if result.Changed {
-		fmt.Println("TaskOtter synchronization produced changes.")
+		fmt.Println("TaskOtter produced changes.")
 	} else {
-		fmt.Println("TaskOtter synchronization completed with no changes.")
+		fmt.Println("TaskOtter completed with no changes.")
 	}
 	return 0
 }

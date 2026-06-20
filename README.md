@@ -1,6 +1,6 @@
-# TaskOtter Sync GitHub Action
+# TaskOtter
 
-Docker-based GitHub Action that synchronizes [TaskOtter](https://github.com/mostafakhairy0305-dot/TaskOtter-store) task modules from the official store into your repository, resolves transitive dependencies, normalizes destination folder names, updates your root `Taskfile.yml`, and opens or updates a deterministic pull request when changes exist.
+Docker-based GitHub Action that synchronizes task modules from the [TaskOtter store](https://github.com/mostafakhairy0305-dot/TaskOtter-store) into your repository, resolves transitive dependencies, normalizes destination folder names, updates your root `Taskfile.yml`, and opens or updates a deterministic pull request when changes exist.
 
 ## Features
 
@@ -53,7 +53,7 @@ permissions:
 ### Latest store version
 
 ```yaml
-name: Sync TaskOtter Tasks
+name: TaskOtter
 
 on:
   workflow_dispatch:
@@ -68,13 +68,13 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Synchronize TaskOtter modules
+      - name: TaskOtter
         id: taskotter
-        uses: mostafakhairy0305-dot/taskotter-sync-action@v1
+        uses: mostafakhairy0305-dot/TaskOtter@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           tasks: |
@@ -91,7 +91,7 @@ jobs:
 ### Pinned store tag
 
 ```yaml
-- uses: mostafakhairy0305-dot/taskotter-sync-action@v1
+- uses: mostafakhairy0305-dot/TaskOtter@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     store-version: v1.4.0
@@ -107,7 +107,7 @@ jobs:
 ### Bun (no version manager)
 
 ```yaml
-- uses: mostafakhairy0305-dot/taskotter-sync-action@v1
+- uses: mostafakhairy0305-dot/TaskOtter@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     tasks: |
@@ -121,7 +121,7 @@ jobs:
 ### Non-Node tasks only
 
 ```yaml
-- uses: mostafakhairy0305-dot/taskotter-sync-action@v1
+- uses: mostafakhairy0305-dot/TaskOtter@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     target-folder: build/taskfiles
@@ -134,7 +134,7 @@ jobs:
 
 ## Prerequisites
 
-Your repository must already contain a root `Taskfile.yml`. The action updates managed `includes` entries but does not create a new root Taskfile.
+Your repository must already contain a root `Taskfile.yml`. TaskOtter updates managed `includes` entries but does not create a new root Taskfile.
 
 ## Behavior
 
@@ -164,7 +164,7 @@ taskfiles/fnm/Taskfile.yml         ← fnm
 ### Pull requests
 
 - Branch: `taskotter/sync-<configuration-hash>`
-- Title: `chore(taskotter): synchronize TaskOtter taskfiles`
+- Title: `chore(taskotter): sync taskfiles`
 - Updates an existing open PR for the same branch instead of creating duplicates
 - No commit or PR when synchronized content is unchanged
 
@@ -189,7 +189,7 @@ taskfiles/fnm/Taskfile.yml         ← fnm
 go vet ./...
 go test -race ./...
 go build ./cmd/taskotter-sync
-docker build -t taskotter-sync:local .
+docker build -t taskotter:local .
 ```
 
 ## Security

@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/normalizer"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/pathutil"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/resolver"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/normalizer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/resolver"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
 func PrepareSyncInput(cfg *config.Config, snapshot *store.Snapshot, resolutions []resolver.Resolution, depSources []string) (syncer.SyncInput, error) {

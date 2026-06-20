@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/pathutil"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/taskfile"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/taskfile"
 	"gopkg.in/yaml.v3"
 )
 

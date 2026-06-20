@@ -1,10 +1,10 @@
-name: TaskOtter Sync
-description: Synchronize TaskOtter taskfiles from the TaskOtter store into your repository.
+name: TaskOtter
+description: Synchronize taskfiles from the TaskOtter store into your repository.
 author: mostafakhairy0305-dot
 
 inputs:
   tasks:
-    description: Comma-separated or multiline list of logical TaskOtter task names.
+    description: Comma-separated or multiline list of logical task names.
     required: true
   node-package-manager:
     description: Node package manager for Node-specific tasks (npm, yarn, pnpm, or bun).
@@ -19,7 +19,7 @@ inputs:
     required: false
     default: "true"
   store-version:
-    description: Specific Git tag from the TaskOtter store. Empty uses the default branch HEAD.
+    description: Specific Git tag from the store. Empty uses the default branch HEAD.
     required: false
     default: ""
   target-folder:

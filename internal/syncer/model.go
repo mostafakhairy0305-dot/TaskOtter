@@ -3,8 +3,8 @@ package syncer
 import (
 	"os"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
 type ModuleRecord struct {

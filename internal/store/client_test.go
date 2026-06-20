@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
 func TestResolveRefDefaultBranch(t *testing.T) {

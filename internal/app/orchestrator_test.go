@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/app"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/git"
-	gh "github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/github"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/git"
+	gh "github.com/mostafakhairy0305-dot/TaskOtter/internal/github"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
 type localStore struct {

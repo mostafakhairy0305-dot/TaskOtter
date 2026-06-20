@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/git"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/git"
 )
 
 type mockGitOps struct {

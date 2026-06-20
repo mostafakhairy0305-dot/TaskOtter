@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/dependency"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/git"
-	gh "github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/github"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/logging"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/resolver"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/dependency"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/git"
+	gh "github.com/mostafakhairy0305-dot/TaskOtter/internal/github"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/logging"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/resolver"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
 type StoreClient interface {
@@ -158,7 +158,7 @@ func (o *Orchestrator) run(ctx context.Context, cfg *config.Config) (*Result, er
 
 	var snapshot *store.Snapshot
 	var snapErr error
-	o.Logger.Group("Download TaskOtter store", func() {
+	o.Logger.Group("Download store", func() {
 		snapshot, snapErr = o.StoreClient.DownloadSnapshot(ctx, ref)
 		if snapErr != nil {
 			return

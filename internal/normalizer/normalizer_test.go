@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/normalizer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/normalizer"
 )
 
 func TestNormalizeExamples(t *testing.T) {

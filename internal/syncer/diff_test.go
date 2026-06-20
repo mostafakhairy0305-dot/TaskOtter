@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/app"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/resolver"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/resolver"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 	"gopkg.in/yaml.v3"
 )
 

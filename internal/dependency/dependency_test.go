@@ -3,7 +3,7 @@ package dependency_test
 import (
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/dependency"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/dependency"
 )
 
 func deps() map[string][]string {

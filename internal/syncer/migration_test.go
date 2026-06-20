@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/normalizer"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/normalizer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
 func TestTargetFolderMigration(t *testing.T) {

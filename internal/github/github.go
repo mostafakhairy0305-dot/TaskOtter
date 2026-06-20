@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v69/github"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/repo"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/repo"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 	"golang.org/x/oauth2"
 )
 
 const (
-	prTitle = "chore(taskotter): synchronize TaskOtter taskfiles"
+	prTitle = "chore(taskotter): sync taskfiles"
 )
 
 type PullRequest struct {
@@ -99,7 +99,7 @@ func StoreRefFrom(ref store.RefInfo) storeRef {
 
 func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref storeRef) string {
 	var b strings.Builder
-	b.WriteString("## TaskOtter synchronization\n\n")
+	b.WriteString("## TaskOtter\n\n")
 	b.WriteString(fmt.Sprintf("- Source: `%s`\n", config.StoreRepository))
 	b.WriteString(fmt.Sprintf("- Requested version: `%s`\n", emptyDash(cfg.StoreVersion)))
 	b.WriteString(fmt.Sprintf("- Source reference: `%s`\n", ref.SourceRef))

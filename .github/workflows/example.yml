@@ -1,4 +1,4 @@
-name: Sync TaskOtter Tasks
+name: TaskOtter
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Synchronize TaskOtter modules
+      - name: TaskOtter
         id: taskotter
         uses: ./
         with:

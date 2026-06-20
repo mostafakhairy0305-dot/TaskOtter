@@ -1,4 +1,4 @@
-name: Test TaskOtter Sync Action
+name: Test TaskOtter
 
 on:
   push:
@@ -34,7 +34,7 @@ jobs:
         run: go build -o /dev/null ./cmd/taskotter-sync
 
       - name: Build Docker image
-        run: docker build -t taskotter-sync:test .
+        run: docker build -t taskotter:test .
 
       - name: Validate action metadata
         run: |

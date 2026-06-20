@@ -171,10 +171,10 @@ func AllowedPathSet(paths []string) map[string]struct{} {
 
 func WriteLocalIdentity(ctx context.Context, c GitOps) error {
 	if client, ok := c.(*Client); ok {
-		if err := client.run(ctx, "config", "user.email", "taskotter-sync-action@users.noreply.github.com"); err != nil {
+		if err := client.run(ctx, "config", "user.email", "taskotter@users.noreply.github.com"); err != nil {
 			return err
 		}
-		return client.run(ctx, "config", "user.name", "taskotter-sync-action")
+		return client.run(ctx, "config", "user.name", "TaskOtter")
 	}
 	return nil
 }

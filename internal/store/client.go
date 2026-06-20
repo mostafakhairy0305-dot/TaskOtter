@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/archive"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/archive"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -212,7 +212,7 @@ func loadDeps(root string, catalog map[string]struct{}) (map[string][]string, er
 func (c *Client) applyHeaders(req *http.Request) {
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	req.Header.Set("User-Agent", "taskotter-sync-action")
+	req.Header.Set("User-Agent", "TaskOtter")
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}

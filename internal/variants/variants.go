@@ -3,7 +3,7 @@ package variants
 import (
 	"fmt"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 )
 
 // NodeToolSuffixes identifies node tool variant suffixes (without leading task name).

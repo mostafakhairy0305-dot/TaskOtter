@@ -7,7 +7,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/pathutil"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 	"gopkg.in/yaml.v3"
 )
 

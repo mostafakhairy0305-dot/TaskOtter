@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 )
 
 func setEnv(t *testing.T, kv map[string]string) {

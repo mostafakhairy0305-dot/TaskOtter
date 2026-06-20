@@ -6,11 +6,11 @@ import (
 	"os"
 	"sort"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	gh "github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/github"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/logging"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	gh "github.com/mostafakhairy0305-dot/TaskOtter/internal/github"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/logging"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
 type Result struct {

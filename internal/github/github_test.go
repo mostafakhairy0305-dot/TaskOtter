@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	gh "github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/github"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/syncer"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	gh "github.com/mostafakhairy0305-dot/TaskOtter/internal/github"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
 func TestWriteOutputsMultilineJSON(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/archive"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/archive"
 )
 
 func buildTarGz(t *testing.T, entries map[string][]byte) []byte {

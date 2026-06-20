@@ -8,8 +8,8 @@
 
 ## Learned Workspace Facts
 
-- TaskOtter is a Docker-based Go GitHub Action (`github.com/mostafakhairy0305-dot/taskotter-sync-action`, Go 1.23) with entrypoint `cmd/taskotter-sync` and metadata in `action.yml`.
-- The action syncs taskfile modules from `mostafakhairy0305-dot/TaskOtter-store` into the consumer repo; default target folder is `taskfiles`.
+- TaskOtter is a Docker-based GitHub Action (Go 1.23) in `mostafakhairy0305-dot/TaskOtter`; the container entrypoint is `/taskotter`.
+- TaskOtter syncs taskfile modules from `mostafakhairy0305-dot/TaskOtter-store` into the consumer repo; default target folder is `taskfiles`.
 - Store modules live under `taskfiles/<module>/`; transitive dependencies are resolved from the store's `.deps.yml`.
 - Destination folder names are normalized by stripping package-manager and version-manager suffixes (e.g. `eslint-pnpm-fnm` → `taskfiles/eslint`).
 - Managed sync state is tracked in `<target-folder>/.taskotter-lock.yml`; PRs use branch `taskotter/sync-<configuration-hash>`.

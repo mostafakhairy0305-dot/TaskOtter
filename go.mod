@@ -1,4 +1,4 @@
-module github.com/mostafakhairy0305-dot/taskotter-sync-action
+module github.com/mostafakhairy0305-dot/TaskOtter
 
 go 1.23.0
 

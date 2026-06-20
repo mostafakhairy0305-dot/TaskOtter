@@ -3,7 +3,7 @@ package pathutil_test
 import (
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/pathutil"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 )
 
 func TestHasFolderPrefix(t *testing.T) {

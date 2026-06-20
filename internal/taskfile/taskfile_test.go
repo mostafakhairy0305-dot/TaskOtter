@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/taskfile"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/taskfile"
 )
 
 func TestRewriteIncludes(t *testing.T) {

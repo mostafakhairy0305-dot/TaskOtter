@@ -3,8 +3,8 @@ package variants_test
 import (
 	"testing"
 
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/variants"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/variants"
 )
 
 func TestBuildSourceModule(t *testing.T) {
