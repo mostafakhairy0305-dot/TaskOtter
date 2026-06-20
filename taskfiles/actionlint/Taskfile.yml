@@ -114,7 +114,7 @@ tasks:
             - echo 'Installing actionlint v{{.ACTIONLINT_VERSION}} for Linux ({{.ACTIONLINT_ARCH}})...'
             - mkdir -p "{{.ACTIONLINT_TMP_DIR}}"
             - >-
-              curl -fsSL -o "{{.ACTIONLINT_ARCHIVE}}" "https://github.com/rhysd/actionlint/releases/download/v{{.ACTIONLINT_VERSION}}/actionlint_{{.ACTIONLINT_VERSION}}_linux_{{.ACTIONLINT_ARCH}}.tar.gz"
+              archive_url="https://github.com/rhysd/actionlint/releases/download/v{{.ACTIONLINT_VERSION}}"; archive_url="${archive_url}/actionlint_{{.ACTIONLINT_VERSION}}_linux_{{.ACTIONLINT_ARCH}}.tar.gz"; curl -fsSL -o "{{.ACTIONLINT_ARCHIVE}}" "$archive_url"
             - tar -xzf "{{.ACTIONLINT_ARCHIVE}}" -C "{{.ACTIONLINT_TMP_DIR}}"
             - cmd: >-
                 install -m 0755 "$(find "{{.ACTIONLINT_TMP_DIR}}" -type f -name actionlint -print -quit)" /usr/local/bin/actionlint
@@ -213,7 +213,7 @@ tasks:
             - echo 'Upgrading actionlint to v{{.ACTIONLINT_VERSION}} for Linux ({{.ACTIONLINT_ARCH}})...'
             - mkdir -p "{{.ACTIONLINT_TMP_DIR}}"
             - >-
-              curl -fsSL -o "{{.ACTIONLINT_ARCHIVE}}" "https://github.com/rhysd/actionlint/releases/download/v{{.ACTIONLINT_VERSION}}/actionlint_{{.ACTIONLINT_VERSION}}_linux_{{.ACTIONLINT_ARCH}}.tar.gz"
+              archive_url="https://github.com/rhysd/actionlint/releases/download/v{{.ACTIONLINT_VERSION}}"; archive_url="${archive_url}/actionlint_{{.ACTIONLINT_VERSION}}_linux_{{.ACTIONLINT_ARCH}}.tar.gz"; curl -fsSL -o "{{.ACTIONLINT_ARCHIVE}}" "$archive_url"
             - tar -xzf "{{.ACTIONLINT_ARCHIVE}}" -C "{{.ACTIONLINT_TMP_DIR}}"
             - cmd: >-
                 install -m 0755 "$(find "{{.ACTIONLINT_TMP_DIR}}" -type f -name actionlint -print -quit)" /usr/local/bin/actionlint
