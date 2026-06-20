@@ -35,6 +35,7 @@ func TestBuildPRBody(t *testing.T) {
 	cfg := &config.Config{
 		Tasks:              []string{"eslint"},
 		TargetFolder:       "taskfiles",
+		JSRuntime:          config.JSRuntimeNodeJS,
 		NodePackageManager: config.PMPnpm,
 		NodeVersionManager: config.VMFnm,
 		IncludesDoc:        true,

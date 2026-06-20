@@ -107,8 +107,12 @@ func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref storeRef) string {
 	b.WriteString(fmt.Sprintf("- Default branch: `%s`\n", ref.DefaultBranch))
 	b.WriteString(fmt.Sprintf("- Target folder: `%s`\n", cfg.TargetFolder))
 	b.WriteString(fmt.Sprintf("- Documentation included: `%t`\n", cfg.IncludesDoc))
-	b.WriteString(fmt.Sprintf("- Node package manager: `%s`\n", emptyDash(string(cfg.NodePackageManager))))
-	b.WriteString(fmt.Sprintf("- Node version manager: `%s`\n\n", emptyDash(string(cfg.NodeVersionManager))))
+	b.WriteString(fmt.Sprintf("- JS runtime: `%s`\n", emptyDash(string(cfg.JSRuntime))))
+	if cfg.JSRuntime == config.JSRuntimeNodeJS {
+		b.WriteString(fmt.Sprintf("- Package manager: `%s`\n", cfg.NodePackageManager))
+		b.WriteString(fmt.Sprintf("- Version manager: `%s`\n", cfg.NodeVersionManager))
+	}
+	b.WriteString("\n")
 
 	b.WriteString("### Requested modules\n\n")
 	b.WriteString("| Task | Source module | Destination |\n")

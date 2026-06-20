@@ -17,15 +17,14 @@ func setEnv(t *testing.T, kv map[string]string) {
 
 func baseEnv(workspace string) map[string]string {
 	return map[string]string{
-		"INPUT_TASKS":                "go",
-		"INPUT_NODE_PACKAGE_MANAGER": "",
-		"INPUT_NODE_VERSION_MANAGER": "",
-		"INPUT_INCLUDES_DOC":         "",
-		"INPUT_STORE_VERSION":        "",
-		"INPUT_TARGET_FOLDER":        "",
-		"INPUT_GITHUB_TOKEN":         "token",
-		"GITHUB_WORKSPACE":           workspace,
-		"GITHUB_REPOSITORY":          "owner/repo",
+		"INPUT_TASKS":         "go",
+		"INPUT_JS":            "",
+		"INPUT_INCLUDES_DOC":  "",
+		"INPUT_STORE_VERSION": "",
+		"INPUT_TARGET_FOLDER": "",
+		"INPUT_GITHUB_TOKEN":  "token",
+		"GITHUB_WORKSPACE":    workspace,
+		"GITHUB_REPOSITORY":   "owner/repo",
 	}
 }
 
@@ -67,8 +66,7 @@ func TestLoadFromEnvDockerInputEnvNames(t *testing.T) {
 	env := baseEnv(dir)
 	env["INPUT_GITHUB_TOKEN"] = ""
 	env["INPUT_GITHUB-TOKEN"] = "docker-token"
-	env["INPUT_NODE-PACKAGE-MANAGER"] = "pnpm"
-	env["INPUT_NODE-VERSION-MANAGER"] = "fnm"
+	env["INPUT_JS"] = "runtime: nodejs\npackage-manager: pnpm\nversion-manager: fnm\n"
 	env["INPUT_INCLUDES-DOC"] = "false"
 	env["INPUT_TARGET-FOLDER"] = "custom/taskfiles"
 	setEnv(t, env)
@@ -127,18 +125,17 @@ func TestBunWithVersionManagerRejected(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_TASKS"] = "eslint"
-	env["INPUT_NODE_PACKAGE_MANAGER"] = "bun"
-	env["INPUT_NODE_VERSION_MANAGER"] = "fnm"
+	env["INPUT_JS"] = "runtime: bun\nversion-manager: fnm\n"
 	setEnv(t, env)
 	if _, err := config.LoadFromEnv(); err == nil {
-		t.Fatal("expected bun+fnm validation error")
+		t.Fatal("expected bun+version-manager validation error")
 	}
 }
 
 func TestInvalidPackageManager(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)
-	env["INPUT_NODE_PACKAGE_MANAGER"] = "cargo"
+	env["INPUT_JS"] = "runtime: nodejs\npackage-manager: cargo\n"
 	setEnv(t, env)
 	if _, err := config.LoadFromEnv(); err == nil {
 		t.Fatal("expected invalid package manager error")

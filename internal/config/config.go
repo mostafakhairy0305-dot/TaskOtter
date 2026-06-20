@@ -79,6 +79,7 @@ const (
 
 type Config struct {
 	Tasks              []string
+	JSRuntime          JSRuntime
 	NodePackageManager PackageManager
 	NodeVersionManager VersionManager
 	IncludesDoc        bool
@@ -103,8 +104,7 @@ type hashPayload struct {
 
 func LoadFromEnv() (*Config, error) {
 	tasksRaw := actionInput("tasks")
-	pmRaw := actionInput("node-package-manager")
-	vmRaw := actionInput("node-version-manager")
+	jsRaw := actionInput("js")
 	includesDocRaw := actionInput("includes-doc")
 	storeVersion := actionInput("store-version")
 	targetFolderRaw := actionInput("target-folder")
@@ -128,20 +128,18 @@ func LoadFromEnv() (*Config, error) {
 		return nil, err
 	}
 
-	pm, err := parsePackageManager(pmRaw)
-	if err != nil {
-		return nil, err
-	}
-	vm, err := parseVersionManager(vmRaw)
+	jsCfg, err := parseJS(jsRaw)
 	if err != nil {
 		return nil, err
 	}
 
-	if pm == PMBun && vm != "" {
-		return nil, &ValidationError{
-			Field:   "node-version-manager",
-			Message: `node-package-manager "bun" cannot be combined with node-version-manager; leave node-version-manager empty`,
-		}
+	var jsRuntime JSRuntime
+	var pm PackageManager
+	var vm VersionManager
+	if jsCfg != nil {
+		jsRuntime = jsCfg.Runtime
+		pm = jsCfg.NodePackageManager
+		vm = jsCfg.NodeVersionManager
 	}
 
 	includesDoc, err := parseIncludesDoc(includesDocRaw)
@@ -173,6 +171,7 @@ func LoadFromEnv() (*Config, error) {
 
 	return &Config{
 		Tasks:              tasks,
+		JSRuntime:          jsRuntime,
 		NodePackageManager: pm,
 		NodeVersionManager: vm,
 		IncludesDoc:        includesDoc,
@@ -210,34 +209,6 @@ func parseTasks(raw string) ([]string, error) {
 		return nil, &ValidationError{Field: "tasks", Message: "at least one task is required"}
 	}
 	return tasks, nil
-}
-
-func parsePackageManager(raw string) (PackageManager, error) {
-	switch raw {
-	case "":
-		return "", nil
-	case "npm", "yarn", "pnpm", "bun":
-		return PackageManager(raw), nil
-	default:
-		return "", &ValidationError{
-			Field:   "node-package-manager",
-			Message: fmt.Sprintf("invalid value %q: allowed values are npm, yarn, pnpm, bun, or empty", raw),
-		}
-	}
-}
-
-func parseVersionManager(raw string) (VersionManager, error) {
-	switch raw {
-	case "":
-		return "", nil
-	case "fnm", "nvm":
-		return VersionManager(raw), nil
-	default:
-		return "", &ValidationError{
-			Field:   "node-version-manager",
-			Message: fmt.Sprintf("invalid value %q: allowed values are fnm, nvm, or empty", raw),
-		}
-	}
 }
 
 func parseIncludesDoc(raw string) (bool, error) {

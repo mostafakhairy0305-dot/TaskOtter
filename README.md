@@ -28,11 +28,32 @@ permissions:
 |-------|----------|---------|-------------|
 | `tasks` | yes | — | Comma-separated or multiline list of logical task names (`eslint`, `go`, …) |
 | `github-token` | yes | — | Token for pushing the sync branch and managing pull requests |
-| `node-package-manager` | no | empty | `npm`, `yarn`, `pnpm`, or `bun` for Node-specific tasks |
-| `node-version-manager` | no | empty | `fnm` or `nvm` (required for npm/yarn/pnpm; must be empty for bun) |
+| `js` | no | empty | YAML block for Node task resolution (see below) |
 | `includes-doc` | no | `true` | Copy `README.md` and `docs/` when `true` |
 | `store-version` | no | empty | Store Git tag (for example `v1.4.0`); empty uses default branch HEAD |
 | `target-folder` | no | `taskfiles` | Repository-relative destination directory |
+
+### `js` input
+
+Optional YAML block for resolving Node.js task variants. Omit when syncing non-Node tasks only.
+
+| Field | When | Default | Allowed values |
+|-------|------|---------|----------------|
+| `runtime` | always | `nodejs` | `nodejs`, `bun` |
+| `package-manager` | `runtime: nodejs` | `npm` | `npm`, `yarn`, `pnpm` |
+| `version-manager` | `runtime: nodejs` | `fnm` | `fnm`, `nvm` |
+
+```yaml
+js: |
+  runtime: nodejs
+  package-manager: pnpm
+  version-manager: fnm
+```
+
+```yaml
+js: |
+  runtime: bun
+```
 
 ## Outputs
 
@@ -82,8 +103,10 @@ jobs:
             prettier
             typescript
             go
-          node-package-manager: pnpm
-          node-version-manager: fnm
+          js: |
+            runtime: nodejs
+            package-manager: pnpm
+            version-manager: fnm
           includes-doc: true
           target-folder: taskfiles
 ```
@@ -100,11 +123,13 @@ jobs:
       eslint
       prettier
       go
-    node-package-manager: pnpm
-    node-version-manager: fnm
+    js: |
+      runtime: nodejs
+      package-manager: pnpm
+      version-manager: fnm
 ```
 
-### Bun (no version manager)
+### Bun runtime
 
 ```yaml
 - uses: mostafakhairy0305-dot/TaskOtter@v1
@@ -114,7 +139,8 @@ jobs:
       eslint
       prettier
       typescript
-    node-package-manager: bun
+    js: |
+      runtime: bun
     includes-doc: false
 ```
 
@@ -141,9 +167,9 @@ Your repository must already contain a root `Taskfile.yml`. TaskOtter updates ma
 ### Module resolution
 
 - Non-Node tasks (`go`, `docker`, `shellcheck`, …) resolve directly by name
-- Node tasks require `node-package-manager`
-- `npm`, `yarn`, and `pnpm` also require `node-version-manager`
-- `bun` rejects `node-version-manager`
+- Node tasks require the `js` input
+- `runtime: nodejs` uses `package-manager` (default `npm`) and `version-manager` (default `fnm`)
+- `runtime: bun` ignores `package-manager` and `version-manager`
 
 ### Destination layout
 

@@ -28,8 +28,10 @@ jobs:
             prettier
             typescript
             go
-          node-package-manager: pnpm
-          node-version-manager: fnm
+          js: |
+            runtime: nodejs
+            package-manager: pnpm
+            version-manager: fnm
           includes-doc: true
           target-folder: taskfiles
 

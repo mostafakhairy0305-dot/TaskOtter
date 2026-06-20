@@ -62,7 +62,7 @@ func Resolve(task string, catalog map[string]struct{}, pm config.PackageManager,
 	if pm == "" {
 		return Resolution{}, &ResolveError{
 			LogicalTask: task,
-			Message:     fmt.Sprintf(`Task %q requires node-package-manager. Select npm, yarn, pnpm, or bun.`, task),
+			Message:     fmt.Sprintf(`Task %q requires js configuration for Node tasks. Set js.runtime to bun or nodejs.`, task),
 		}
 	}
 

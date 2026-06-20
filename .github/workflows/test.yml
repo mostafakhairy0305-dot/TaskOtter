@@ -30,7 +30,8 @@ jobs:
             yamllint
             actionlint
             zizmor
-          node-package-manager: bun
+          js: |
+            runtime: bun
           includes-doc: true
           target-folder: taskfiles
 

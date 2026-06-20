@@ -83,3 +83,18 @@ func TestRejectSymlink(t *testing.T) {
 		t.Fatal("expected symlink rejection")
 	}
 }
+
+func TestSkipPAXGlobalHeader(t *testing.T) {
+	data, err := os.ReadFile("testdata/github-pax.tar.gz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dest := t.TempDir()
+	_, err = archive.ExtractTarGz(bytes.NewReader(data), dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dest, "taskfiles/go/Taskfile.yml")); err != nil {
+		t.Fatal(err)
+	}
+}

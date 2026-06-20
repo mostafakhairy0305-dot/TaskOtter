@@ -50,7 +50,7 @@ func BuildSourceModule(task string, pm config.PackageManager, vm config.VersionM
 		return task + "-bun", nil
 	case config.PMNPM, config.PMYarn, config.PMPnpm:
 		if vm == "" {
-			return "", fmt.Errorf("node-version-manager required for package manager %q", pm)
+			return "", fmt.Errorf("js.version-manager required for package manager %q", pm)
 		}
 		return fmt.Sprintf("%s-%s-%s", task, pm, vm), nil
 	default:

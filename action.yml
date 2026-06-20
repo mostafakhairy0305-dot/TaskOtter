@@ -6,12 +6,12 @@ inputs:
   tasks:
     description: Comma-separated or multiline list of logical task names.
     required: true
-  node-package-manager:
-    description: Node package manager for Node-specific tasks (npm, yarn, pnpm, or bun).
-    required: false
-    default: ""
-  node-version-manager:
-    description: Node version manager for npm, yarn, or pnpm tasks (fnm or nvm).
+  js:
+    description: |
+      YAML settings for Node.js task resolution.
+      runtime: bun | nodejs (default nodejs)
+      When runtime is nodejs: package-manager npm | yarn | pnpm (default npm),
+      version-manager fnm | nvm (default fnm).
     required: false
     default: ""
   includes-doc:

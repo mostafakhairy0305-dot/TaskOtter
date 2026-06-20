@@ -49,6 +49,13 @@ func ExtractTarGz(reader io.Reader, destDir string) (string, error) {
 			return "", &ExtractError{Message: fmt.Sprintf("read tar entry: %v", err)}
 		}
 
+		if isTarMetadataEntry(header.Typeflag) {
+			if err := discardTarEntry(tr, header.Size); err != nil {
+				return "", &ExtractError{Message: fmt.Sprintf("skip tar metadata entry %q: %v", header.Name, err)}
+			}
+			continue
+		}
+
 		if !validTarPath(header.Name) {
 			return "", &ExtractError{Message: fmt.Sprintf("unsafe tar path %q", header.Name)}
 		}
@@ -102,6 +109,23 @@ func ExtractTarGz(reader io.Reader, destDir string) (string, error) {
 	}
 
 	return destDir, nil
+}
+
+func isTarMetadataEntry(typeflag byte) bool {
+	switch typeflag {
+	case tar.TypeXGlobalHeader, tar.TypeXHeader, tar.TypeGNULongName, tar.TypeGNULongLink:
+		return true
+	default:
+		return false
+	}
+}
+
+func discardTarEntry(r io.Reader, size int64) error {
+	if size <= 0 {
+		return nil
+	}
+	_, err := io.CopyN(io.Discard, r, size)
+	return err
 }
 
 func validTarPath(name string) bool {

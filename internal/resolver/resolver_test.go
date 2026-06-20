@@ -61,7 +61,7 @@ func TestNodeTaskRequiresPackageManager(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "requires node-package-manager") {
+	if !strings.Contains(err.Error(), "requires js configuration") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -72,7 +72,7 @@ func TestNpmRequiresVersionManager(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "node-version-manager required") {
+	if !strings.Contains(err.Error(), "js.version-manager required") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
