@@ -51,11 +51,23 @@ func BuildPlan(in SyncInput) (*Plan, error) {
 		managedTasks = oldLock.Configuration.Tasks
 	}
 
+	moduleTaskfiles := make(map[string][]byte, len(in.Requested))
+	for task, rec := range in.Requested {
+		files, ok := moduleContents[rec.SourceModule]
+		if !ok {
+			continue
+		}
+		if entry, ok := files["Taskfile.yml"]; ok {
+			moduleTaskfiles[task] = entry.Data
+		}
+	}
+
 	newRoot, err := taskfile.UpdateRootTaskfile(rootBytes, taskfile.RootUpdateInput{
-		Tasks:        in.Config.Tasks,
-		TargetFolder: in.Config.TargetFolder,
-		DestByTask:   in.DestByTask,
-		ManagedTasks: managedTasks,
+		Tasks:           in.Config.Tasks,
+		TargetFolder:    in.Config.TargetFolder,
+		DestByTask:      in.DestByTask,
+		ManagedTasks:    managedTasks,
+		ModuleTaskfiles: moduleTaskfiles,
 	})
 	if err != nil {
 		return nil, err
@@ -184,6 +196,9 @@ func collectModuleFiles(sourceDir string, includesDoc bool, sourceToDest map[str
 		}
 		rel = filepath.ToSlash(rel)
 		if !includesDoc && pathutil.IsDocPath(rel) {
+			return nil
+		}
+		if pathutil.IsTestPath(rel) {
 			return nil
 		}
 		info, err := d.Info()

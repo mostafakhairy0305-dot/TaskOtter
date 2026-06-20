@@ -108,10 +108,11 @@ func findMappingValue(mapNode *yaml.Node, key string) *yaml.Node {
 }
 
 type RootUpdateInput struct {
-	Tasks        []string
-	TargetFolder string
-	DestByTask   map[string]string
-	ManagedTasks []string
+	Tasks           []string
+	TargetFolder    string
+	DestByTask      map[string]string
+	ManagedTasks    []string
+	ModuleTaskfiles map[string][]byte
 }
 
 func UpdateRootTaskfile(content []byte, in RootUpdateInput) ([]byte, error) {
@@ -159,14 +160,19 @@ func UpdateRootTaskfile(content []byte, in RootUpdateInput) ([]byte, error) {
 			return nil, &RewriteError{Message: fmt.Sprintf("missing destination for task %q", task)}
 		}
 		path := filepath.ToSlash(filepath.Join(in.TargetFolder, dest, "Taskfile.yml"))
+		moduleVars, err := extractVarsNode(in.ModuleTaskfiles[task])
+		if err != nil {
+			return nil, err
+		}
 		if entry, ok := existing[task]; ok {
 			if !isManagedInclude(entry, path, in.ManagedTasks, task) {
 				return nil, &RewriteError{Message: fmt.Sprintf("include alias %q already exists and is not managed by TaskOtter", task)}
 			}
 			setIncludePath(entry, path)
+			mergeIncludeVars(entry, moduleVars)
 			continue
 		}
-		entry := newIncludeEntry(path)
+		entry := newIncludeEntry(path, moduleVars)
 		appendMappingPair(includesNode, scalar(task), entry)
 	}
 
@@ -200,9 +206,70 @@ func setIncludePath(entry *yaml.Node, path string) {
 	taskfileNode.Value = path
 }
 
-func newIncludeEntry(path string) *yaml.Node {
+func extractVarsNode(content []byte) (*yaml.Node, error) {
+	if len(content) == 0 {
+		return nil, nil
+	}
+	var node yaml.Node
+	if err := yaml.Unmarshal(content, &node); err != nil {
+		return nil, &RewriteError{Message: fmt.Sprintf("parse module Taskfile YAML: %v", err)}
+	}
+	if len(node.Content) == 0 {
+		return nil, nil
+	}
+	varsNode := findMappingValue(node.Content[0], "vars")
+	if varsNode == nil || varsNode.Kind != yaml.MappingNode || len(varsNode.Content) == 0 {
+		return nil, nil
+	}
+	return cloneYAMLNode(varsNode), nil
+}
+
+func mergeIncludeVars(entry *yaml.Node, moduleVars *yaml.Node) {
+	if moduleVars == nil || moduleVars.Kind != yaml.MappingNode {
+		return
+	}
+	existingVars := findMappingValue(entry, "vars")
+	if existingVars == nil {
+		appendMappingPair(entry, scalar("vars"), moduleVars)
+		return
+	}
+	if existingVars.Kind != yaml.MappingNode {
+		return
+	}
+	existingKeys := make(map[string]struct{}, len(existingVars.Content)/2)
+	for i := 0; i < len(existingVars.Content); i += 2 {
+		existingKeys[existingVars.Content[i].Value] = struct{}{}
+	}
+	for i := 0; i < len(moduleVars.Content); i += 2 {
+		key := moduleVars.Content[i].Value
+		if _, ok := existingKeys[key]; ok {
+			continue
+		}
+		appendMappingPair(existingVars, cloneYAMLNode(moduleVars.Content[i]), cloneYAMLNode(moduleVars.Content[i+1]))
+	}
+}
+
+func cloneYAMLNode(node *yaml.Node) *yaml.Node {
+	if node == nil {
+		return nil
+	}
+	data, err := yaml.Marshal(node)
+	if err != nil {
+		return nil
+	}
+	var out yaml.Node
+	if err := yaml.Unmarshal(data, &out); err != nil || len(out.Content) == 0 {
+		return nil
+	}
+	return out.Content[0]
+}
+
+func newIncludeEntry(path string, moduleVars *yaml.Node) *yaml.Node {
 	entry := &yaml.Node{Kind: yaml.MappingNode}
 	appendMappingPair(entry, scalar("taskfile"), scalar(path))
+	if moduleVars != nil {
+		appendMappingPair(entry, scalar("vars"), moduleVars)
+	}
 	return entry
 }
 

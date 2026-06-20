@@ -39,6 +39,13 @@ func TestUpdateRootTaskfileFromTemplate(t *testing.T) {
 		Tasks:        []string{"go"},
 		TargetFolder: "taskfiles",
 		DestByTask:   map[string]string{"go": "go"},
+		ModuleTaskfiles: map[string][]byte{
+			"go": []byte(`version: "3"
+vars:
+  GO_VERSION: ""
+  GO_CMD_UNIX: /usr/local/go/bin/go
+`),
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -46,6 +53,46 @@ func TestUpdateRootTaskfileFromTemplate(t *testing.T) {
 	text := string(out)
 	if !strings.Contains(text, "taskfiles/go/Taskfile.yml") {
 		t.Fatalf("missing go include: %s", text)
+	}
+	if !strings.Contains(text, "GO_VERSION") {
+		t.Fatalf("missing include vars: %s", text)
+	}
+	if !strings.Contains(text, "GO_CMD_UNIX") {
+		t.Fatalf("missing include vars: %s", text)
+	}
+}
+
+func TestUpdateRootTaskfilePreservesExistingIncludeVars(t *testing.T) {
+	root := []byte(`version: "3"
+includes:
+  go:
+    taskfile: taskfiles/go/Taskfile.yml
+    vars:
+      GO_VERSION: go1.22.0
+`)
+	module := []byte(`version: "3"
+vars:
+  GO_VERSION: ""
+  GO_CMD_UNIX: /usr/local/go/bin/go
+`)
+	out, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
+		Tasks:        []string{"go"},
+		TargetFolder: "taskfiles",
+		DestByTask:   map[string]string{"go": "go"},
+		ManagedTasks: []string{"go"},
+		ModuleTaskfiles: map[string][]byte{
+			"go": module,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(out)
+	if !strings.Contains(text, "go1.22.0") {
+		t.Fatalf("existing include var override removed: %s", text)
+	}
+	if !strings.Contains(text, "GO_CMD_UNIX") {
+		t.Fatalf("missing newly added module var: %s", text)
 	}
 }
 

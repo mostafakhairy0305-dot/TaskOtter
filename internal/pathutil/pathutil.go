@@ -153,6 +153,15 @@ func IsDocPath(rel string) bool {
 	return strings.HasPrefix(rel, "docs/") || strings.Contains(rel, "/docs/")
 }
 
+func IsTestPath(rel string) bool {
+	rel = NormalizeSlashes(rel)
+	base := rel
+	if idx := strings.LastIndex(rel, "/"); idx >= 0 {
+		base = rel[idx+1:]
+	}
+	return strings.Contains(base, "_test.")
+}
+
 func HasFolderPrefix(path, folder string) bool {
 	path = NormalizeSlashes(path)
 	folder = NormalizeSlashes(folder)
