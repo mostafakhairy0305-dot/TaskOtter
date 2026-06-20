@@ -231,7 +231,6 @@ func TestUnsafeStoreVersion(t *testing.T) {
 }
 
 func TestTargetFolderValidation(t *testing.T) {
-
 	dir := t.TempDir()
 
 	cases := []struct {
