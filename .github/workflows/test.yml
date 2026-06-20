@@ -8,6 +8,33 @@ permissions:
   contents: read
 
 jobs:
+  itself:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: TaskOtter
+        id: taskotter
+        uses: ./
+        with:
+          github-token: ${{ github.token }}
+          tasks: |
+            - go
+            - hadolint
+            - yamllint
+            - actionlint
+            - zizmor
+          node-package-manager: bun
+          includes-doc: true
+          target-folder: taskfiles
+
+      - name: Print result
+        shell: bash
+        run: |
+          echo "Changed: ${{ steps.taskotter.outputs.changed }}"
+          echo "Source SHA: ${{ steps.taskotter.outputs.source-sha }}"
+          echo "Pull request: ${{ steps.taskotter.outputs.pull-request-url }}"
   test:
     runs-on: ubuntu-latest
     steps:
