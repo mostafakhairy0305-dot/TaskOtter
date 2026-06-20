@@ -59,7 +59,7 @@ jobs:
           go-version-file: go.mod
           cache: false
       - name: Install Task
-        run: go install github.com/go-task/task/v3/cmd/task@latest
+        run: go install github.com/go-task/task/v3/cmd/task@v3.44.1
       - name: Run CI
         run: task ci
   test:
