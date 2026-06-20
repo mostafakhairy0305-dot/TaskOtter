@@ -16,6 +16,7 @@ configuration:
     node_package_manager: bun
     node_version_manager: ""
     includes_doc: true
+    sync_root: true
 resolved_modules:
     requested:
         actionlint:
