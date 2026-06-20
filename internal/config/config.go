@@ -83,6 +83,7 @@ type Config struct {
 	NodePackageManager PackageManager
 	NodeVersionManager VersionManager
 	IncludesDoc        bool
+	FailOnChanges      bool
 	StoreVersion       string
 	TargetFolder       string
 	GitHubToken        string
@@ -106,6 +107,7 @@ func LoadFromEnv() (*Config, error) {
 	tasksRaw := actionInput("tasks")
 	jsRaw := actionInput("js")
 	includesDocRaw := actionInput("includes-doc")
+	failOnChangesRaw := actionInput("fail-on-changes")
 	storeVersion := actionInput("store-version")
 	targetFolderRaw := actionInput("target-folder")
 	token := actionInput("github-token")
@@ -147,6 +149,11 @@ func LoadFromEnv() (*Config, error) {
 		return nil, err
 	}
 
+	failOnChanges, err := parseFailOnChanges(failOnChangesRaw)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := validateStoreVersion(storeVersion); err != nil {
 		return nil, err
 	}
@@ -175,6 +182,7 @@ func LoadFromEnv() (*Config, error) {
 		NodePackageManager: pm,
 		NodeVersionManager: vm,
 		IncludesDoc:        includesDoc,
+		FailOnChanges:      failOnChanges,
 		StoreVersion:       storeVersion,
 		TargetFolder:       normalizedTarget,
 		GitHubToken:        token,
@@ -212,8 +220,16 @@ func parseTasks(raw string) ([]string, error) {
 }
 
 func parseIncludesDoc(raw string) (bool, error) {
+	return parseBoolInput("includes-doc", raw, true)
+}
+
+func parseFailOnChanges(raw string) (bool, error) {
+	return parseBoolInput("fail-on-changes", raw, false)
+}
+
+func parseBoolInput(field, raw string, defaultValue bool) (bool, error) {
 	if raw == "" {
-		return true, nil
+		return defaultValue, nil
 	}
 	switch strings.ToLower(raw) {
 	case "true":
@@ -222,7 +238,7 @@ func parseIncludesDoc(raw string) (bool, error) {
 		return false, nil
 	default:
 		return false, &ValidationError{
-			Field:   "includes-doc",
+			Field:   field,
 			Message: fmt.Sprintf("invalid value %q: allowed values are true or false", raw),
 		}
 	}

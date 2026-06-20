@@ -152,6 +152,42 @@ func TestInvalidIncludesDoc(t *testing.T) {
 	}
 }
 
+func TestFailOnChangesDefaultsFalse(t *testing.T) {
+	dir := t.TempDir()
+	setEnv(t, baseEnv(dir))
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+	if cfg.FailOnChanges {
+		t.Fatal("FailOnChanges should default to false")
+	}
+}
+
+func TestFailOnChangesTrue(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_FAIL-ON-CHANGES"] = "true"
+	setEnv(t, env)
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+	if !cfg.FailOnChanges {
+		t.Fatal("FailOnChanges = false, want true")
+	}
+}
+
+func TestInvalidFailOnChanges(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_FAIL-ON-CHANGES"] = "yes"
+	setEnv(t, env)
+	if _, err := config.LoadFromEnv(); err == nil {
+		t.Fatal("expected invalid fail-on-changes error")
+	}
+}
+
 func TestUnsafeStoreVersion(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)

@@ -24,6 +24,7 @@ jobs:
         uses: ./
         with:
           github-token: ${{ github.token }}
+          fail-on-changes: true
           tasks: |
             go
             hadolint
@@ -37,41 +38,12 @@ jobs:
           target-folder: taskfiles
 
       - name: Print result
+        if: always()
         shell: bash
         run: |
           echo "Changed: ${{ steps.taskotter.outputs.changed }}"
           echo "Source SHA: ${{ steps.taskotter.outputs.source-sha }}"
           echo "Pull request: ${{ steps.taskotter.outputs.pull-request-url }}"
-
-      - name: Fail if sync created a pull request
-        if: steps.taskotter.outputs.changed == 'true'
-        shell: bash
-        env:
-          PR_URL: ${{ steps.taskotter.outputs.pull-request-url }}
-          PR_NUMBER: ${{ steps.taskotter.outputs.pull-request-number }}
-          SOURCE_SHA: ${{ steps.taskotter.outputs.source-sha }}
-        run: |
-          if [ -n "$PR_URL" ]; then
-            summary="TaskOtter opened sync PR #${PR_NUMBER:-unknown}: $PR_URL"
-          else
-            summary="TaskOtter synced taskfile changes but did not return a pull request URL."
-          fi
-
-          echo "::error title=TaskOtter sync required::${summary} Merge the sync pull request to update taskfiles, then re-run this workflow."
-          echo "::notice title=What happened::TaskOtter compared managed files with the store and found drift. This job fails intentionally until the sync PR is merged."
-          echo "Pull request: ${PR_URL:-none}"
-          echo "Pull request number: ${PR_NUMBER:-none}"
-          echo "Store source SHA: ${SOURCE_SHA:-unknown}"
-          exit 1
-
-      - name: Report TaskOtter sync success
-        if: steps.taskotter.outputs.changed != 'true'
-        shell: bash
-        env:
-          SOURCE_SHA: ${{ steps.taskotter.outputs.source-sha }}
-        run: |
-          echo "::notice title=TaskOtter sync up to date::Managed taskfiles match the store. No sync pull request was created."
-          echo "Store source SHA: ${SOURCE_SHA:-unknown}"
   test:
     runs-on: ubuntu-latest
     needs: itself

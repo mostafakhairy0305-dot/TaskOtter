@@ -37,8 +37,16 @@ func run() int {
 
 	if result.Changed {
 		fmt.Println("TaskOtter produced changes.")
-	} else {
-		fmt.Println("TaskOtter completed with no changes.")
+		if cfg.FailOnChanges {
+			app.ReportSyncRequired(result)
+			return 1
+		}
+		return 0
+	}
+
+	fmt.Println("TaskOtter completed with no changes.")
+	if cfg.FailOnChanges {
+		app.ReportSyncUpToDate(result)
 	}
 	return 0
 }

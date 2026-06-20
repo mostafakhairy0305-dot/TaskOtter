@@ -33,6 +33,12 @@ inputs:
   github-token:
     description: Token used to push the sync branch and create or update a pull request.
     required: true
+  fail-on-changes:
+    description: |
+      When true, exit with a failure after opening or updating a sync pull request.
+      Use in CI jobs that should block until the sync PR is merged.
+    required: false
+    default: "false"
 
 outputs:
   changed:

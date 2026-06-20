@@ -36,6 +36,7 @@ permissions:
 | `includes-doc` | no | `true` | Copy `README.md` and `docs/` when `true` |
 | `store-version` | no | empty | Store Git tag (for example `v1.4.0`); empty uses default branch HEAD |
 | `target-folder` | no | `taskfiles` | Repository-relative destination directory |
+| `fail-on-changes` | no | `false` | Exit with failure after opening or updating a sync pull request (for CI drift checks) |
 
 ### `js` input
 
@@ -113,6 +114,39 @@ jobs:
             version-manager: fnm
           includes-doc: true
           target-folder: taskfiles
+```
+
+### CI drift check
+
+Use `fail-on-changes: true` in jobs that should block when TaskOtter opens a sync pull request. The action exits with a clear `::error` annotation and fails the job until the PR is merged.
+
+```yaml
+jobs:
+  taskotter:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: TaskOtter
+        uses: mostafakhairy0305-dot/TaskOtter@v1
+        with:
+          github-token: ${{ github.token }}
+          fail-on-changes: true
+          tasks: |
+            go
+            actionlint
+          target-folder: taskfiles
+
+  test:
+    needs: taskotter
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "runs only when taskfiles are in sync"
 ```
 
 ### Pinned store tag

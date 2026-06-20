@@ -18,5 +18,5 @@
 - Core packages: `internal/config`, `internal/store`, `internal/resolver`, `internal/syncer` (split across model/load/plan/diff/apply/fs), `internal/app`, `internal/git`, `internal/github`.
 - `DefaultBranch()` falls back through symbolic-ref → rev-parse → remote set-head → remote show when `origin/HEAD` is missing (common on GHA Git 2.50+); `Stage()` uses `git add -f` for gitignored `.taskotter/metadata.yml`.
 - Docker container actions expose hyphenated `INPUT_*` env vars; `internal/config` reads both hyphen and underscore forms and falls back to `GITHUB_TOKEN`.
-- CI in `.github/workflows/test.yml` runs gofmt, `go vet`, `go test -race`, binary/Docker builds, and integration tests under `tests/integration/`; integration sets `setup-go` `cache: false`; the `itself` job intentionally fails when TaskOtter `changed: true` (with `::error` annotations) until the sync PR is merged.
+- CI in `.github/workflows/test.yml` runs gofmt, `go vet`, `go test -race`, binary/Docker builds, and integration tests under `tests/integration/`; integration sets `setup-go` `cache: false`; the `itself` job uses `fail-on-changes: true` so the action fails with `::error` annotations when a sync PR is opened until it is merged.
 - Test fixtures mirror the store layout under `tests/fixtures/store/`.

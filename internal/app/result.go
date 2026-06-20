@@ -108,6 +108,30 @@ func empty(v string) string {
 	return v
 }
 
+func SyncRequired(result *Result) bool {
+	return result.Changed
+}
+
+func ReportSyncRequired(result *Result) {
+	var summary string
+	if result.PullRequestURL != "" {
+		prNumber := result.PullRequestNumber
+		if prNumber == "" {
+			prNumber = "unknown"
+		}
+		summary = fmt.Sprintf("TaskOtter opened sync PR #%s: %s", prNumber, result.PullRequestURL)
+	} else {
+		summary = "TaskOtter synced taskfile changes but did not return a pull request URL."
+	}
+	fmt.Fprintf(os.Stderr, "::error title=TaskOtter sync required::%s Merge the sync pull request to update taskfiles, then re-run this workflow.\n", summary)
+	fmt.Fprintln(os.Stderr, "::notice title=What happened::TaskOtter compared managed files with the store and found drift. This job fails intentionally until the sync PR is merged.")
+}
+
+func ReportSyncUpToDate(result *Result) {
+	fmt.Fprintf(os.Stdout, "::notice title=TaskOtter sync up to date::Managed taskfiles match the store. No sync pull request was created.\n")
+	fmt.Fprintf(os.Stdout, "Store source SHA: %s\n", result.SourceSHA)
+}
+
 func WriteActionOutputs(cfg *config.Config, result *Result) error {
 	values := map[string]string{
 		"changed":               fmt.Sprintf("%t", result.Changed),
