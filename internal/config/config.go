@@ -78,7 +78,10 @@ func LoadFromEnv() (*Config, error) {
 	includesDocRaw := strings.TrimSpace(os.Getenv("INPUT_INCLUDES_DOC"))
 	storeVersion := strings.TrimSpace(os.Getenv("INPUT_STORE_VERSION"))
 	targetFolderRaw := strings.TrimSpace(os.Getenv("INPUT_TARGET_FOLDER"))
-	token := os.Getenv("INPUT_GITHUB_TOKEN")
+	token := strings.TrimSpace(os.Getenv("INPUT_GITHUB_TOKEN"))
+	if token == "" {
+		token = strings.TrimSpace(os.Getenv("GITHUB_TOKEN"))
+	}
 	workspace := os.Getenv("GITHUB_WORKSPACE")
 	repository := os.Getenv("GITHUB_REPOSITORY")
 	githubOutput := os.Getenv("GITHUB_OUTPUT")

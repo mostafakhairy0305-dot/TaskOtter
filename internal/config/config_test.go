@@ -47,6 +47,21 @@ func TestLoadFromEnvDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadFromEnvGitHubTokenFallback(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_GITHUB_TOKEN"] = ""
+	env["GITHUB_TOKEN"] = "fallback-token"
+	setEnv(t, env)
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+	if cfg.GitHubToken != "fallback-token" {
+		t.Fatalf("GitHubToken = %q, want fallback-token", cfg.GitHubToken)
+	}
+}
+
 func TestParseTasksMultilineAndDedupe(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)

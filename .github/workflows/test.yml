@@ -10,9 +10,14 @@ permissions:
 jobs:
   itself:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: TaskOtter
         id: taskotter
@@ -20,11 +25,11 @@ jobs:
         with:
           github-token: ${{ github.token }}
           tasks: |
-            - go
-            - hadolint
-            - yamllint
-            - actionlint
-            - zizmor
+            go
+            hadolint
+            yamllint
+            actionlint
+            zizmor
           node-package-manager: bun
           includes-doc: true
           target-folder: taskfiles
