@@ -99,6 +99,7 @@ type Config struct {
 	NodePackageManager PackageManager
 	NodeVersionManager VersionManager
 	IncludesDoc        bool
+	SyncRoot           bool
 	FailOnChanges      bool
 	StoreVersion       string
 	TargetFolder       string
@@ -106,6 +107,7 @@ type Config struct {
 	Workspace          string
 	Repository         string
 	GitHubOutput       string
+	BaseBranch         string
 	ConfigurationHash  string
 	BranchName         string
 }
@@ -117,6 +119,7 @@ type hashPayload struct {
 	TargetFolder       string   `json:"target_folder"`        //nolint:tagliatelle // hash payload matches lock file keys
 	StoreVersion       string   `json:"store_version"`        //nolint:tagliatelle // hash payload matches lock file keys
 	IncludesDoc        bool     `json:"includes_doc"`         //nolint:tagliatelle // hash payload matches lock file keys
+	SyncRoot           bool     `json:"sync_root"`            //nolint:tagliatelle // hash payload matches lock file keys
 }
 
 // LoadFromEnv reads and validates TaskOtter configuration from GitHub Actions environment variables.
@@ -140,6 +143,7 @@ func LoadFromEnv() (*Config, error) {
 		TargetFolder:       parsed.normalizedTarget,
 		StoreVersion:       raw.storeVersion,
 		IncludesDoc:        parsed.includesDoc,
+		SyncRoot:           parsed.syncRoot,
 	})
 
 	return &Config{
@@ -148,6 +152,7 @@ func LoadFromEnv() (*Config, error) {
 		NodePackageManager: parsed.packageManager,
 		NodeVersionManager: parsed.versionManager,
 		IncludesDoc:        parsed.includesDoc,
+		SyncRoot:           parsed.syncRoot,
 		FailOnChanges:      parsed.failOnChanges,
 		StoreVersion:       raw.storeVersion,
 		TargetFolder:       parsed.normalizedTarget,
@@ -155,6 +160,7 @@ func LoadFromEnv() (*Config, error) {
 		Workspace:          raw.workspace,
 		Repository:         raw.repository,
 		GitHubOutput:       raw.githubOutput,
+		BaseBranch:         resolveBaseBranch(raw.githubBaseRef, raw.githubRef),
 		ConfigurationHash:  hash,
 		BranchName:         branch,
 	}, nil
@@ -166,6 +172,7 @@ type parsedEnvInputs struct {
 	packageManager   PackageManager
 	versionManager   VersionManager
 	includesDoc      bool
+	syncRoot         bool
 	failOnChanges    bool
 	normalizedTarget string
 }
@@ -184,6 +191,11 @@ func parseEnvInputs(raw rawEnvConfig) (parsedEnvInputs, error) {
 	jsRuntime, packageManager, versionManager := jsSettingsFromConfig(jsCfg)
 
 	includesDoc, err := parseIncludesDoc(raw.includesDocRaw)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
+	syncRoot, err := parseSyncRoot(raw.syncRootRaw)
 	if err != nil {
 		return parsedEnvInputs{}, err
 	}
@@ -214,6 +226,7 @@ func parseEnvInputs(raw rawEnvConfig) (parsedEnvInputs, error) {
 		packageManager:   packageManager,
 		versionManager:   versionManager,
 		includesDoc:      includesDoc,
+		syncRoot:         syncRoot,
 		failOnChanges:    failOnChanges,
 		normalizedTarget: normalizedTarget,
 	}, nil
@@ -223,6 +236,7 @@ type rawEnvConfig struct {
 	tasksRaw         string
 	jsRaw            string
 	includesDocRaw   string
+	syncRootRaw      string
 	failOnChangesRaw string
 	storeVersion     string
 	targetFolderRaw  string
@@ -230,6 +244,8 @@ type rawEnvConfig struct {
 	workspace        string
 	repository       string
 	githubOutput     string
+	githubRef        string
+	githubBaseRef    string
 }
 
 func loadRawEnv() rawEnvConfig {
@@ -242,6 +258,7 @@ func loadRawEnv() rawEnvConfig {
 		tasksRaw:         actionInput("tasks"),
 		jsRaw:            actionInput("js"),
 		includesDocRaw:   actionInput("includes-doc"),
+		syncRootRaw:      actionInput("sync-root"),
 		failOnChangesRaw: actionInput("fail-on-changes"),
 		storeVersion:     actionInput("store-version"),
 		targetFolderRaw:  actionInput("target-folder"),
@@ -249,7 +266,25 @@ func loadRawEnv() rawEnvConfig {
 		workspace:        os.Getenv("GITHUB_WORKSPACE"),
 		repository:       os.Getenv("GITHUB_REPOSITORY"),
 		githubOutput:     os.Getenv("GITHUB_OUTPUT"),
+		githubRef:        os.Getenv("GITHUB_REF"),
+		githubBaseRef:    os.Getenv("GITHUB_BASE_REF"),
 	}
+}
+
+// resolveBaseBranch returns the branch the workflow is operating against.
+// Pull request events expose their target branch through GITHUB_BASE_REF;
+// push, schedule, and workflow_dispatch events use a refs/heads/... GITHUB_REF.
+func resolveBaseBranch(githubBaseRef, githubRef string) string {
+	if branch := strings.TrimSpace(githubBaseRef); branch != "" {
+		return branch
+	}
+
+	const branchRefPrefix = "refs/heads/"
+	if branch, ok := strings.CutPrefix(strings.TrimSpace(githubRef), branchRefPrefix); ok {
+		return strings.TrimSpace(branch)
+	}
+
+	return ""
 }
 
 func validateRuntimeEnv(workspace, token string) error {
@@ -307,6 +342,10 @@ func parseTasks(raw string) ([]string, error) {
 
 func parseIncludesDoc(raw string) (bool, error) {
 	return parseBoolInput("includes-doc", raw, true)
+}
+
+func parseSyncRoot(raw string) (bool, error) {
+	return parseBoolInput("sync-root", raw, true)
 }
 
 func parseFailOnChanges(raw string) (bool, error) {

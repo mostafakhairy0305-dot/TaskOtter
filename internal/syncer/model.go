@@ -39,6 +39,7 @@ type LockFile struct {
 		NodePackageManager string   `yaml:"node_package_manager"` //nolint:tagliatelle // lock file on-disk format
 		NodeVersionManager string   `yaml:"node_version_manager"` //nolint:tagliatelle // lock file on-disk format
 		IncludesDoc        bool     `yaml:"includes_doc"`         //nolint:tagliatelle // lock file on-disk format
+		SyncRoot           bool     `yaml:"sync_root"`            //nolint:tagliatelle // lock file on-disk format
 	} `yaml:"configuration"`
 	ResolvedModules struct {
 		Requested    orderedRequested `yaml:"requested"`

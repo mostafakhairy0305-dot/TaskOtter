@@ -38,12 +38,7 @@ func BuildPlan(syncInput SyncInput) (*Plan, error) {
 		return nil, err
 	}
 
-	rootBytes, rootExisted, err := readRootTaskfile(workspace)
-	if err != nil {
-		return nil, err
-	}
-
-	newRoot, err := buildRootTaskfile(syncInput, oldLock, moduleContents, rootBytes)
+	rootBytes, rootExisted, newRoot, err := planRootTaskfile(syncInput, oldLock, moduleContents)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +67,37 @@ func BuildPlan(syncInput SyncInput) (*Plan, error) {
 		StagePaths:      nil,
 	}
 
-	return finalizePlanDiff(plan, workspace, rootBytes, rootExisted, meta, syncInput.Config.MetadataPath())
+	return finalizePlanDiff(
+		plan,
+		workspace,
+		rootBytes,
+		rootExisted,
+		syncInput.Config.SyncRoot,
+		meta,
+		syncInput.Config.MetadataPath(),
+	)
+}
+
+func planRootTaskfile(
+	syncInput SyncInput,
+	oldLock *LockFile,
+	moduleContents map[string]map[string]FileEntry,
+) ([]byte, bool, []byte, error) {
+	if !syncInput.Config.SyncRoot {
+		return nil, false, nil, nil
+	}
+
+	rootBytes, rootExisted, err := readRootTaskfile(syncInput.Config.Workspace)
+	if err != nil {
+		return nil, false, nil, err
+	}
+
+	newRoot, err := buildRootTaskfile(syncInput, oldLock, moduleContents, rootBytes)
+	if err != nil {
+		return nil, false, nil, err
+	}
+
+	return rootBytes, rootExisted, newRoot, nil
 }
 
 func readRootTaskfile(workspace string) ([]byte, bool, error) {
@@ -130,6 +155,7 @@ func finalizePlanDiff(
 	workspace string,
 	rootBytes []byte,
 	rootExisted bool,
+	syncRoot bool,
 	meta Metadata,
 	metadataPath string,
 ) (*Plan, error) {
@@ -142,6 +168,7 @@ func finalizePlanDiff(
 		plan,
 		workspace,
 		oldRootForDiff,
+		syncRoot,
 		metadataPath,
 		mustMarshalMetadata(meta),
 	)
@@ -153,7 +180,7 @@ func finalizePlanDiff(
 	plan.Updated = updated
 	plan.Removed = removed
 	plan.Changed = len(added) > 0 || len(updated) > 0 || len(removed) > 0
-	plan.StagePaths = buildStagePaths(plan, metadataPath)
+	plan.StagePaths = buildStagePaths(plan, metadataPath, syncRoot)
 
 	return plan, nil
 }
@@ -338,6 +365,7 @@ func buildLock(syncInput SyncInput, files []ManagedFile) LockFile {
 	lock.Configuration.NodePackageManager = string(syncInput.Config.NodePackageManager)
 	lock.Configuration.NodeVersionManager = string(syncInput.Config.NodeVersionManager)
 	lock.Configuration.IncludesDoc = syncInput.Config.IncludesDoc
+	lock.Configuration.SyncRoot = syncInput.Config.SyncRoot
 	lock.ResolvedModules.Requested = orderedRequested(syncInput.Requested)
 	lock.ResolvedModules.Dependencies = append([]ModuleRecord{}, syncInput.Dependencies...)
 	lock.ManagedFiles = files

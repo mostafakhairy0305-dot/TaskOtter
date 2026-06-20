@@ -53,6 +53,7 @@ func TestBuildPRBody(t *testing.T) {
 		NodePackageManager: config.PMPnpm,
 		NodeVersionManager: config.VMFnm,
 		IncludesDoc:        true,
+		SyncRoot:           true,
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       "taskfiles",
@@ -60,6 +61,7 @@ func TestBuildPRBody(t *testing.T) {
 		Workspace:          "",
 		Repository:         "",
 		GitHubOutput:       "",
+		BaseBranch:         "",
 		ConfigurationHash:  "",
 		BranchName:         "",
 	}

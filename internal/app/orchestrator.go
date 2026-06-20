@@ -148,9 +148,13 @@ func (o *Orchestrator) runGitPreconditions(ctx context.Context, cfg *config.Conf
 		return "", errUnrelatedChanges
 	}
 
+	if cfg.BaseBranch != "" {
+		return cfg.BaseBranch, nil
+	}
+
 	defaultBranch, err := o.GitOps.DefaultBranch(ctx)
 	if err != nil {
-		return "", fmt.Errorf("resolve default branch: %w", err)
+		return "", fmt.Errorf("resolve pull request base branch: %w", err)
 	}
 
 	return defaultBranch, nil

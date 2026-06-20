@@ -15,6 +15,7 @@ import (
 
 const (
 	testMainBranch   = "main"
+	testRepository   = "owner/repo"
 	testTargetFolder = "taskfiles"
 )
 
@@ -135,6 +136,7 @@ func testConfig(workspace string) *config.Config {
 		NodePackageManager: "",
 		NodeVersionManager: "",
 		IncludesDoc:        true,
+		SyncRoot:           true,
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       testTargetFolder,
@@ -142,6 +144,7 @@ func testConfig(workspace string) *config.Config {
 		Workspace:          workspace,
 		Repository:         "",
 		GitHubOutput:       "",
+		BaseBranch:         "",
 		ConfigurationHash:  "",
 		BranchName:         "",
 	}
@@ -212,7 +215,7 @@ func TestOrchestratorUpdatesExistingPR(t *testing.T) {
 
 	workspace := workspaceWithRootTaskfile(t)
 	cfg := testConfig(workspace)
-	cfg.Repository = "owner/repo"
+	cfg.Repository = testRepository
 
 	pullReq := &mockPR{
 		find:        &gh.PullRequest{Number: 7, URL: "https://example/pr/7"},
@@ -263,7 +266,7 @@ func TestOrchestratorCreatesPRWithResolvedBase(t *testing.T) {
 
 	workspace := workspaceWithRootTaskfile(t)
 	cfg := testConfig(workspace)
-	cfg.Repository = "owner/repo"
+	cfg.Repository = testRepository
 
 	pullReq := &mockPR{
 		find:        nil,
@@ -297,6 +300,50 @@ func TestOrchestratorCreatesPRWithResolvedBase(t *testing.T) {
 	}
 }
 
+func TestOrchestratorCreatesPRAgainstTriggerBranch(t *testing.T) {
+	t.Parallel()
+
+	workspace := workspaceWithRootTaskfile(t)
+	cfg := testConfig(workspace)
+	cfg.Repository = "owner/repo"
+	cfg.BaseBranch = "release/2026"
+
+	pullReq := &mockPR{
+		find:        nil,
+		create:      nil,
+		updated:     0,
+		lastBase:    "",
+		lastHead:    "",
+		createdBase: "",
+	}
+	gitOps := &mockGitOps{unrelated: false, defaultBranch: "", defaultBranchCalls: 0}
+
+	orchestrator := &app.Orchestrator{
+		Logger:      nil,
+		StoreClient: &localStore{root: fixtureRoot(t)},
+		GitOps:      gitOps,
+		PRClient:    pullReq,
+	}
+
+	err := os.MkdirAll(filepath.Join(workspace, ".git"), 0o755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = orchestrator.Run(context.Background(), cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if pullReq.createdBase != "release/2026" {
+		t.Fatalf("created PR base = %q, want release/2026", pullReq.createdBase)
+	}
+
+	if gitOps.defaultBranchCalls != 0 {
+		t.Fatalf("DefaultBranch called %d times, want 0", gitOps.defaultBranchCalls)
+	}
+}
+
 func TestNewOrchestratorInvalidRepository(t *testing.T) {
 	t.Parallel()
 
@@ -306,6 +353,7 @@ func TestNewOrchestratorInvalidRepository(t *testing.T) {
 		NodePackageManager: "",
 		NodeVersionManager: "",
 		IncludesDoc:        false,
+		SyncRoot:           false,
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       "",
@@ -313,6 +361,7 @@ func TestNewOrchestratorInvalidRepository(t *testing.T) {
 		Workspace:          "",
 		Repository:         "not-a-valid-repo",
 		GitHubOutput:       "",
+		BaseBranch:         "",
 		ConfigurationHash:  "",
 		BranchName:         "",
 	}

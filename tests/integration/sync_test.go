@@ -55,6 +55,7 @@ includes: {}
 		NodePackageManager: "",
 		NodeVersionManager: "",
 		IncludesDoc:        true,
+		SyncRoot:           true,
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       "taskfiles",
@@ -62,6 +63,7 @@ includes: {}
 		Workspace:          workspace,
 		Repository:         "",
 		GitHubOutput:       "",
+		BaseBranch:         "",
 		ConfigurationHash:  "",
 		BranchName:         "",
 	}

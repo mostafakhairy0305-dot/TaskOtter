@@ -152,6 +152,7 @@ func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref StoreRef) string {
 	fmt.Fprintf(&body, "- Default branch: `%s`\n", ref.DefaultBranch)
 	fmt.Fprintf(&body, "- Target folder: `%s`\n", cfg.TargetFolder)
 	fmt.Fprintf(&body, "- Documentation included: `%t`\n", cfg.IncludesDoc)
+	fmt.Fprintf(&body, "- Root Taskfile synchronized: `%t`\n", cfg.SyncRoot)
 	fmt.Fprintf(&body, "- JS runtime: `%s`\n", emptyDash(string(cfg.JSRuntime)))
 
 	if cfg.JSRuntime == config.JSRuntimeNodeJS {

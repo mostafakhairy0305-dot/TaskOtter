@@ -35,10 +35,12 @@ func buildStagedFiles(plan *Plan, syncInput SyncInput) ([]stagedFile, error) {
 		}
 	}
 
-	staged = append(staged, stagedFile{
-		finalRel: rootTaskfileName,
-		entry:    FileEntry{Data: plan.RootTaskfile, Mode: fileModeRegular},
-	})
+	if syncInput.Config.SyncRoot {
+		staged = append(staged, stagedFile{
+			finalRel: rootTaskfileName,
+			entry:    FileEntry{Data: plan.RootTaskfile, Mode: fileModeRegular},
+		})
+	}
 
 	lockBytes, err := yaml.Marshal(plan.Lock)
 	if err != nil {

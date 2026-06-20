@@ -141,13 +141,13 @@ func TestBuildPlanCreatesRootTaskfile(t *testing.T) {
 		t.Fatal("expected changes on initial sync")
 	}
 
-	if !containsString(plan.Added, "Taskfile.yml") {
+	if !containsRootTaskfile(plan.Added) {
 		t.Fatalf("expected root Taskfile.yml in added files, got added=%v", plan.Added)
 	}
 }
 
-func containsString(list []string, target string) bool {
-	return slices.Contains(list, target)
+func containsRootTaskfile(list []string) bool {
+	return slices.Contains(list, "Taskfile.yml")
 }
 
 func TestUnmanagedDestinationConflict(t *testing.T) {

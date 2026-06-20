@@ -4,7 +4,9 @@
 
 # TaskOtter
 
-Docker-based GitHub Action that synchronizes task modules from the [TaskOtter store](https://github.com/mostafakhairy0305-dot/TaskOtter-store) into your repository, resolves transitive dependencies, normalizes destination folder names, updates your root `Taskfile.yml`, and opens or updates a deterministic pull request when changes exist.
+Docker-based GitHub Action that synchronizes task modules from the [TaskOtter store](https://github.com/mostafakhairy0305-dot/TaskOtter-store) into your repository, resolves transitive dependencies, normalizes destination folder names, optionally updates your root `Taskfile.yml`, and opens or updates a deterministic pull request when changes exist.
+
+Sync pull requests target the branch that invoked TaskOtter. For pull-request workflows, they target that workflow's base branch.
 
 ## Features
 
@@ -34,6 +36,7 @@ permissions:
 | `github-token` | yes | — | Token for pushing the sync branch and managing pull requests |
 | `js` | no | empty | YAML block for Node task resolution (see below) |
 | `includes-doc` | no | `true` | Copy `README.md` and `docs/` when `true` |
+| `sync-root` | no | `true` | Create or update the repository root `Taskfile.yml` when `true` |
 | `store-version` | no | empty | Store Git tag (for example `v1.4.0`); empty uses default branch HEAD |
 | `target-folder` | no | `taskfiles` | Repository-relative destination directory |
 | `fail-on-changes` | no | `false` | Exit with failure after opening or updating a sync pull request (for CI drift checks) |
@@ -198,7 +201,7 @@ jobs:
 
 ## Prerequisites
 
-TaskOtter creates a root `Taskfile.yml` when one is missing, then adds managed `includes` entries for synced modules. If a root Taskfile already exists, TaskOtter updates only its managed includes and leaves other content unchanged.
+With the default `sync-root: true`, TaskOtter creates a root `Taskfile.yml` when one is missing, then adds managed `includes` entries for synced modules. If a root Taskfile already exists, TaskOtter updates only its managed includes and leaves other content unchanged. Set `sync-root: false` to synchronize modules and TaskOtter state without reading, creating, or modifying the root `Taskfile.yml`.
 
 ## Behavior
 
@@ -243,7 +246,7 @@ taskfiles/fnm/Taskfile.yml         ← fnm
 | Node task without package manager | Fail |
 | Invalid or unsafe `store-version` | Fail |
 | Unsafe `target-folder` | Fail |
-| Missing root `Taskfile.yml` | Create minimal root Taskfile and include in PR |
+| Missing root `Taskfile.yml` with `sync-root: true` | Create minimal root Taskfile and include in PR |
 | Unmanaged existing destination directory | Fail |
 | Destination name collision | Fail |
 

@@ -8,6 +8,11 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 )
 
+const (
+	testBaseBranch  = "release/2026"
+	testInvalidBool = "yes"
+)
+
 func setEnv(t *testing.T, kv map[string]string) {
 	t.Helper()
 
@@ -21,11 +26,47 @@ func baseEnv(workspace string) map[string]string {
 		"INPUT_TASKS":         "go",
 		"INPUT_JS":            "",
 		"INPUT_INCLUDES_DOC":  "",
+		"INPUT_SYNC_ROOT":     "",
 		"INPUT_STORE_VERSION": "",
 		"INPUT_TARGET_FOLDER": "",
 		"INPUT_GITHUB_TOKEN":  "token",
 		"GITHUB_WORKSPACE":    workspace,
 		"GITHUB_REPOSITORY":   "owner/repo",
+		"GITHUB_REF":          "",
+		"GITHUB_BASE_REF":     "",
+	}
+}
+
+func TestLoadFromEnvUsesTriggerBranchAsPRBase(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["GITHUB_REF"] = "refs/heads/" + testBaseBranch
+	setEnv(t, env)
+
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+
+	if cfg.BaseBranch != testBaseBranch {
+		t.Fatalf("BaseBranch = %q, want %s", cfg.BaseBranch, testBaseBranch)
+	}
+}
+
+func TestLoadFromEnvUsesPullRequestTargetAsPRBase(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["GITHUB_REF"] = "refs/pull/42/merge"
+	env["GITHUB_BASE_REF"] = testBaseBranch
+	setEnv(t, env)
+
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+
+	if cfg.BaseBranch != testBaseBranch {
+		t.Fatalf("BaseBranch = %q, want %s", cfg.BaseBranch, testBaseBranch)
 	}
 }
 
@@ -44,6 +85,10 @@ func TestLoadFromEnvDefaults(t *testing.T) {
 
 	if !cfg.IncludesDoc {
 		t.Fatal("IncludesDoc should default to true")
+	}
+
+	if !cfg.SyncRoot {
+		t.Fatal("SyncRoot should default to true")
 	}
 
 	if len(cfg.Tasks) != 1 || cfg.Tasks[0] != "go" {
@@ -75,6 +120,7 @@ func TestLoadFromEnvDockerInputEnvNames(t *testing.T) {
 	env["INPUT_GITHUB-TOKEN"] = "docker-token"
 	env["INPUT_JS"] = "runtime: nodejs\npackage-manager: pnpm\nversion-manager: fnm\n"
 	env["INPUT_INCLUDES-DOC"] = "false"
+	env["INPUT_SYNC-ROOT"] = "false"
 	env["INPUT_TARGET-FOLDER"] = "custom/taskfiles"
 	setEnv(t, env)
 
@@ -97,6 +143,10 @@ func TestLoadFromEnvDockerInputEnvNames(t *testing.T) {
 
 	if cfg.IncludesDoc {
 		t.Fatal("IncludesDoc = true, want false")
+	}
+
+	if cfg.SyncRoot {
+		t.Fatal("SyncRoot = true, want false")
 	}
 
 	if cfg.TargetFolder != "custom/taskfiles" {
@@ -167,12 +217,24 @@ func TestInvalidPackageManager(t *testing.T) {
 func TestInvalidIncludesDoc(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)
-	env["INPUT_INCLUDES_DOC"] = "yes"
+	env["INPUT_INCLUDES_DOC"] = testInvalidBool
 	setEnv(t, env)
 
 	_, err := config.LoadFromEnv()
 	if err == nil {
 		t.Fatal("expected invalid includes-doc error")
+	}
+}
+
+func TestInvalidSyncRoot(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_SYNC_ROOT"] = testInvalidBool
+	setEnv(t, env)
+
+	_, err := config.LoadFromEnv()
+	if err == nil {
+		t.Fatal("expected invalid sync-root error")
 	}
 }
 
@@ -209,7 +271,7 @@ func TestFailOnChangesTrue(t *testing.T) {
 func TestInvalidFailOnChanges(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)
-	env["INPUT_FAIL-ON-CHANGES"] = "yes"
+	env["INPUT_FAIL-ON-CHANGES"] = testInvalidBool
 	setEnv(t, env)
 
 	_, err := config.LoadFromEnv()

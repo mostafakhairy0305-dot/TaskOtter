@@ -47,6 +47,7 @@ func diffFiles(
 	plan *Plan,
 	workspace string,
 	oldRoot []byte,
+	syncRoot bool,
 	metadataPath string,
 	plannedMeta []byte,
 ) ([]string, []string, []string, error) {
@@ -70,7 +71,9 @@ func diffFiles(
 		return nil, nil, nil, err
 	}
 
-	added, updated = diffRootTaskfile(oldRoot, plan.RootTaskfile, added, updated)
+	if syncRoot {
+		added, updated = diffRootTaskfile(oldRoot, plan.RootTaskfile, added, updated)
+	}
 
 	lockPath := plan.Metadata.LockFile
 
@@ -170,7 +173,7 @@ func diffMetadataFile(
 	return added, append(updated, metadataPath), nil
 }
 
-func buildStagePaths(plan *Plan, metadataPath string) []string {
+func buildStagePaths(plan *Plan, metadataPath string, syncRoot bool) []string {
 	paths := make(map[string]struct{})
 	for _, managed := range plan.ManagedFiles {
 		paths[managed.Path] = struct{}{}
@@ -180,7 +183,10 @@ func buildStagePaths(plan *Plan, metadataPath string) []string {
 		paths[rm] = struct{}{}
 	}
 
-	paths[rootTaskfileName] = struct{}{}
+	if syncRoot {
+		paths[rootTaskfileName] = struct{}{}
+	}
+
 	paths[plan.Metadata.LockFile] = struct{}{}
 	paths[metadataPath] = struct{}{}
 

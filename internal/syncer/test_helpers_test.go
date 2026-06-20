@@ -41,6 +41,7 @@ func testConfig(workspace string, mutate func(*config.Config)) *config.Config {
 		NodePackageManager: "",
 		NodeVersionManager: "",
 		IncludesDoc:        false,
+		SyncRoot:           true,
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       config.DefaultTargetFolder,
@@ -48,6 +49,7 @@ func testConfig(workspace string, mutate func(*config.Config)) *config.Config {
 		Workspace:          workspace,
 		Repository:         "",
 		GitHubOutput:       "",
+		BaseBranch:         "",
 		ConfigurationHash:  "",
 		BranchName:         "",
 	}

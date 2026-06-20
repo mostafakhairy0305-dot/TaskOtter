@@ -84,6 +84,58 @@ func TestApplyPlanWritesFiles(t *testing.T) {
 	}
 }
 
+func TestApplyPlanSkipsRootTaskfileWhenDisabled(t *testing.T) {
+	t.Parallel()
+
+	workspace := t.TempDir()
+	rootPath := filepath.Join(workspace, "Taskfile.yml")
+	rootContent := "this is intentionally not valid Taskfile YAML: ["
+
+	err := os.WriteFile(rootPath, []byte(rootContent), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := testConfig(workspace, func(cfg *config.Config) {
+		cfg.Tasks = []string{"go"}
+		cfg.IncludesDoc = true
+		cfg.SyncRoot = false
+	})
+
+	syncInput, plan := preparePlan(t, workspace, cfg)
+
+	if containsRootTaskfile(plan.Added) || containsRootTaskfile(plan.Updated) {
+		t.Fatalf("root Taskfile.yml should not be in the diff: added=%v updated=%v", plan.Added, plan.Updated)
+	}
+
+	if containsRootTaskfile(plan.StagePaths) {
+		t.Fatalf("root Taskfile.yml should not be staged: %v", plan.StagePaths)
+	}
+
+	if plan.Lock.Configuration.SyncRoot {
+		t.Fatal("lock SyncRoot = true, want false")
+	}
+
+	err = runApplyPlan(t, plan, syncInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := os.ReadFile(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(data) != rootContent {
+		t.Fatalf("root Taskfile.yml changed to %q, want %q", data, rootContent)
+	}
+
+	_, err = os.Stat(filepath.Join(workspace, config.DefaultTargetFolder, "go", "Taskfile.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestApplyPlanPreservesExecutableMode(t *testing.T) {
 	t.Parallel()
 

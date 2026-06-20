@@ -21,6 +21,10 @@ inputs:
     description: Whether to copy module documentation (README.md and docs/).
     required: false
     default: 'true'
+  sync-root:
+    description: Whether to create or update the repository root Taskfile.yml.
+    required: false
+    default: 'true'
   store-version:
     description: Specific Git tag from the store. Empty uses the default branch HEAD.
     required: false
