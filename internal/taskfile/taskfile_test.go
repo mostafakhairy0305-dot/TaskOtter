@@ -34,6 +34,21 @@ tasks:
 	}
 }
 
+func TestUpdateRootTaskfileFromTemplate(t *testing.T) {
+	out, err := taskfile.UpdateRootTaskfile(taskfile.NewRootTemplate(), taskfile.RootUpdateInput{
+		Tasks:        []string{"go"},
+		TargetFolder: "taskfiles",
+		DestByTask:   map[string]string{"go": "go"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(out)
+	if !strings.Contains(text, "taskfiles/go/Taskfile.yml") {
+		t.Fatalf("missing go include: %s", text)
+	}
+}
+
 func TestUpdateRootTaskfile(t *testing.T) {
 	root := []byte(`version: "3"
 includes:

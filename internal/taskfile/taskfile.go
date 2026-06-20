@@ -8,6 +8,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const rootTemplate = "version: \"3\"\n"
+
+// NewRootTemplate returns the minimal root Taskfile used when none exists yet.
+func NewRootTemplate() []byte {
+	return []byte(rootTemplate)
+}
+
 type RewriteError struct {
 	Message string
 }

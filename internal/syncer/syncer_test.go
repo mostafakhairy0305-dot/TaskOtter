@@ -87,6 +87,54 @@ func TestBuildPlanInitialSync(t *testing.T) {
 	}
 }
 
+func TestBuildPlanCreatesRootTaskfile(t *testing.T) {
+	workspace := t.TempDir()
+	snap := fixtureStore(t)
+
+	cfg := &config.Config{
+		Tasks:        []string{"go"},
+		IncludesDoc:  true,
+		TargetFolder: "taskfiles",
+		Workspace:    workspace,
+	}
+
+	resolutions, err := resolver.ResolveAll(cfg.Tasks, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sources := make([]string, 0, len(resolutions))
+	for _, res := range resolutions {
+		sources = append(sources, res.SourceModule)
+	}
+	depSources, err := dependency.ResolveTransitive(sources, snap.Deps)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in, err := app.PrepareSyncInput(cfg, snap, resolutions, depSources)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := syncer.BuildPlan(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !plan.Changed {
+		t.Fatal("expected changes on initial sync")
+	}
+	if !containsString(plan.Added, "Taskfile.yml") {
+		t.Fatalf("expected root Taskfile.yml in added files, got added=%v", plan.Added)
+	}
+}
+
+func containsString(list []string, target string) bool {
+	for _, v := range list {
+		if v == target {
+			return true
+		}
+	}
+	return false
+}
+
 func TestUnmanagedDestinationConflict(t *testing.T) {
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)

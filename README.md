@@ -160,7 +160,7 @@ jobs:
 
 ## Prerequisites
 
-Your repository must already contain a root `Taskfile.yml`. TaskOtter updates managed `includes` entries but does not create a new root Taskfile.
+TaskOtter creates a root `Taskfile.yml` when one is missing, then adds managed `includes` entries for synced modules. If a root Taskfile already exists, TaskOtter updates only its managed includes and leaves other content unchanged.
 
 ## Behavior
 
@@ -205,7 +205,7 @@ taskfiles/fnm/Taskfile.yml         ← fnm
 | Node task without package manager | Fail |
 | Invalid or unsafe `store-version` | Fail |
 | Unsafe `target-folder` | Fail |
-| Missing root `Taskfile.yml` | Fail |
+| Missing root `Taskfile.yml` | Create minimal root Taskfile and include in PR |
 | Unmanaged existing destination directory | Fail |
 | Destination name collision | Fail |
 

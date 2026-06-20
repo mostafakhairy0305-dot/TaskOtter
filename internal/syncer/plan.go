@@ -36,11 +36,14 @@ func BuildPlan(in SyncInput) (*Plan, error) {
 
 	rootPath := pathutil.WorkspacePath(workspace, "Taskfile.yml")
 	rootBytes, err := os.ReadFile(rootPath)
+	rootExisted := true
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, &SyncError{Message: "root Taskfile.yml does not exist"}
+			rootBytes = taskfile.NewRootTemplate()
+			rootExisted = false
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	managedTasks := in.Config.Tasks
@@ -77,7 +80,12 @@ func BuildPlan(in SyncInput) (*Plan, error) {
 		OldTargetFolder: oldTarget,
 	}
 
-	plan.Added, plan.Updated, plan.Removed, err = diffFiles(plan, workspace, rootBytes, in.Config.MetadataPath(), mustMarshalMetadata(meta))
+	oldRootForDiff := rootBytes
+	if !rootExisted {
+		oldRootForDiff = nil
+	}
+
+	plan.Added, plan.Updated, plan.Removed, err = diffFiles(plan, workspace, oldRootForDiff, in.Config.MetadataPath(), mustMarshalMetadata(meta))
 	if err != nil {
 		return nil, err
 	}
