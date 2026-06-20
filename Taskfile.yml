@@ -10,11 +10,11 @@ includes:
             GO_VERSION_URL: https://go.dev/VERSION?m=text
             GO_DOWNLOAD_BASE_URL: https://go.dev/dl
             GO_VERSION: ""
-            GOLANGCI_LINT_VERSION: ""
-            GOFUMPT_VERSION: ""
-            GOIMPORTS_VERSION: ""
+            GOLANGCI_LINT_VERSION: "v2.1.6"
+            GOFUMPT_VERSION: "v0.8.0"
+            GOIMPORTS_VERSION: "v0.36.0"
             GOVULNCHECK_VERSION: "v1.1.4"
-            GOSEC_VERSION: ""
+            GOSEC_VERSION: "v2.22.7"
             GLOBAL_GO_BIN:
                 sh: |
                     gobin="${GOBIN:-}"
