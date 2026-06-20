@@ -33,7 +33,14 @@ func NewClient(workspace string) *Client {
 }
 
 func (c *Client) EnsureSafeDirectory(ctx context.Context) error {
-	return c.run(ctx, "config", "--global", "--add", "safe.directory", c.workspace)
+	_ = ctx
+	// Safe directory is applied per command via -c; global/local config files are
+	// not writable in GitHub Actions Docker containers (non-root user, read-only HOME).
+	return nil
+}
+
+func (c *Client) gitArgs(args ...string) []string {
+	return append([]string{"-c", "safe.directory=" + c.workspace}, args...)
 }
 
 func (c *Client) DefaultBranch(ctx context.Context) (string, error) {
@@ -139,7 +146,7 @@ func (c *Client) Push(ctx context.Context, branch string, forceWithLease bool) e
 }
 
 func (c *Client) run(ctx context.Context, args ...string) error {
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", c.gitArgs(args...)...)
 	cmd.Dir = c.workspace
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -150,7 +157,7 @@ func (c *Client) run(ctx context.Context, args ...string) error {
 }
 
 func (c *Client) output(ctx context.Context, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", c.gitArgs(args...)...)
 	cmd.Dir = c.workspace
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

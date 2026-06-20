@@ -30,6 +30,7 @@ jobs:
             yamllint
             actionlint
             zizmor
+            gh
           js: |
             runtime: bun
           includes-doc: true
