@@ -52,13 +52,56 @@ func (c *Client) gitArgs(args ...string) []string {
 	}, args...)
 }
 
-func (c *Client) DefaultBranch(ctx context.Context) (string, error) {
+func normalizeBranch(name string) string {
+	branch := strings.TrimSpace(name)
+	return strings.TrimPrefix(branch, "origin/")
+}
+
+func (c *Client) defaultBranchFromOriginHEAD(ctx context.Context) (string, error) {
 	out, err := c.output(ctx, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
-	if err != nil {
-		return "", fmt.Errorf("detect default branch: %w", err)
+	if err == nil {
+		if branch := normalizeBranch(out); branch != "" && branch != "HEAD" {
+			return branch, nil
+		}
 	}
-	branch := strings.TrimSpace(out)
-	return strings.TrimPrefix(branch, "origin/"), nil
+	out, err = c.output(ctx, "rev-parse", "--abbrev-ref", "refs/remotes/origin/HEAD")
+	if err == nil {
+		if branch := normalizeBranch(out); branch != "" && branch != "HEAD" {
+			return branch, nil
+		}
+	}
+	return "", fmt.Errorf("origin HEAD not available")
+}
+
+func (c *Client) defaultBranchFromRemoteShow(ctx context.Context) (string, error) {
+	out, err := c.output(ctx, "remote", "show", "origin")
+	if err != nil {
+		return "", err
+	}
+	const prefix = "HEAD branch: "
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, prefix) {
+			if branch := strings.TrimSpace(strings.TrimPrefix(line, prefix)); branch != "" {
+				return branch, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("HEAD branch not found in remote show output")
+}
+
+func (c *Client) DefaultBranch(ctx context.Context) (string, error) {
+	if branch, err := c.defaultBranchFromOriginHEAD(ctx); err == nil {
+		return branch, nil
+	}
+	_ = c.run(ctx, "remote", "set-head", "origin", "-a")
+	if branch, err := c.defaultBranchFromOriginHEAD(ctx); err == nil {
+		return branch, nil
+	}
+	if branch, err := c.defaultBranchFromRemoteShow(ctx); err == nil {
+		return branch, nil
+	}
+	return "", fmt.Errorf("detect default branch: none of the detection methods succeeded")
 }
 
 func (c *Client) HasUnrelatedChanges(ctx context.Context, allowed map[string]struct{}) (bool, error) {
