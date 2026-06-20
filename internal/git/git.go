@@ -57,20 +57,65 @@ func normalizeBranch(name string) string {
 	return strings.TrimPrefix(branch, "origin/")
 }
 
+func isPlausibleDefaultBranch(branch string) bool {
+	branch = strings.TrimSpace(branch)
+	if branch == "" || branch == "HEAD" || branch == "origin" {
+		return false
+	}
+	if len(branch) >= 7 && isHexString(branch) {
+		return false
+	}
+	return true
+}
+
+func isHexString(value string) bool {
+	for _, r := range value {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') && (r < 'A' || r > 'F') {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *Client) defaultBranchFromOriginHEAD(ctx context.Context) (string, error) {
 	out, err := c.output(ctx, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
 	if err == nil {
-		if branch := normalizeBranch(out); branch != "" && branch != "HEAD" {
+		if branch := normalizeBranch(out); isPlausibleDefaultBranch(branch) {
 			return branch, nil
 		}
 	}
 	out, err = c.output(ctx, "rev-parse", "--abbrev-ref", "refs/remotes/origin/HEAD")
 	if err == nil {
-		if branch := normalizeBranch(out); branch != "" && branch != "HEAD" {
+		if branch := normalizeBranch(out); isPlausibleDefaultBranch(branch) {
 			return branch, nil
 		}
 	}
+	if branch, err := c.defaultBranchFromOriginHEADCommit(ctx); err == nil {
+		return branch, nil
+	}
 	return "", fmt.Errorf("origin HEAD not available")
+}
+
+func (c *Client) defaultBranchFromOriginHEADCommit(ctx context.Context) (string, error) {
+	sha, err := c.output(ctx, "rev-parse", "refs/remotes/origin/HEAD")
+	if err != nil {
+		return "", err
+	}
+	sha = strings.TrimSpace(sha)
+	refs, err := c.output(ctx, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin/", "--points-at", sha)
+	if err != nil {
+		return "", err
+	}
+	for _, line := range strings.Split(strings.TrimSpace(refs), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || line == "origin/HEAD" {
+			continue
+		}
+		if branch := normalizeBranch(line); isPlausibleDefaultBranch(branch) {
+			return branch, nil
+		}
+	}
+	return "", fmt.Errorf("no remote branch at origin HEAD commit")
 }
 
 func (c *Client) defaultBranchFromRemoteShow(ctx context.Context) (string, error) {
