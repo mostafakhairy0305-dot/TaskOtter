@@ -25,6 +25,8 @@ linters:
     rules:
       - path: _test\.go
         linters: [gosec, bodyclose, noctx, errcheck, wrapcheck, funlen]
+      - path: internal/config/.*_test\.go
+        linters: [paralleltest]
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

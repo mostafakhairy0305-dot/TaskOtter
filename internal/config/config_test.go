@@ -30,7 +30,6 @@ func baseEnv(workspace string) map[string]string {
 }
 
 func TestLoadFromEnvDefaults(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	setEnv(t, baseEnv(dir))
 
@@ -53,7 +52,6 @@ func TestLoadFromEnvDefaults(t *testing.T) {
 }
 
 func TestLoadFromEnvGitHubTokenFallback(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_GITHUB_TOKEN"] = ""
@@ -71,7 +69,6 @@ func TestLoadFromEnvGitHubTokenFallback(t *testing.T) {
 }
 
 func TestLoadFromEnvDockerInputEnvNames(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_GITHUB_TOKEN"] = ""
@@ -108,7 +105,6 @@ func TestLoadFromEnvDockerInputEnvNames(t *testing.T) {
 }
 
 func TestParseTasksMultilineAndDedupe(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_TASKS"] = "eslint\nprettier,\ngo\ngo\n"
@@ -132,7 +128,6 @@ func TestParseTasksMultilineAndDedupe(t *testing.T) {
 }
 
 func TestInvalidTaskName(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_TASKS"] = "../evil"
@@ -145,7 +140,6 @@ func TestInvalidTaskName(t *testing.T) {
 }
 
 func TestBunWithVersionManagerRejected(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_TASKS"] = "eslint"
@@ -159,7 +153,6 @@ func TestBunWithVersionManagerRejected(t *testing.T) {
 }
 
 func TestInvalidPackageManager(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_JS"] = "runtime: nodejs\npackage-manager: cargo\n"
@@ -172,7 +165,6 @@ func TestInvalidPackageManager(t *testing.T) {
 }
 
 func TestInvalidIncludesDoc(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_INCLUDES_DOC"] = "yes"
@@ -185,7 +177,6 @@ func TestInvalidIncludesDoc(t *testing.T) {
 }
 
 func TestFailOnChangesDefaultsFalse(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	setEnv(t, baseEnv(dir))
 
@@ -200,7 +191,6 @@ func TestFailOnChangesDefaultsFalse(t *testing.T) {
 }
 
 func TestFailOnChangesTrue(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_FAIL-ON-CHANGES"] = "true"
@@ -217,7 +207,6 @@ func TestFailOnChangesTrue(t *testing.T) {
 }
 
 func TestInvalidFailOnChanges(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_FAIL-ON-CHANGES"] = "yes"
@@ -230,7 +219,6 @@ func TestInvalidFailOnChanges(t *testing.T) {
 }
 
 func TestUnsafeStoreVersion(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	env := baseEnv(dir)
 	env["INPUT_STORE_VERSION"] = "refs/heads/main"
@@ -243,7 +231,6 @@ func TestUnsafeStoreVersion(t *testing.T) {
 }
 
 func TestTargetFolderValidation(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 
 	cases := []struct {
@@ -259,8 +246,6 @@ func TestTargetFolderValidation(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
 			env := baseEnv(dir)
 			env["INPUT_TARGET_FOLDER"] = testCase.value
 			setEnv(t, env)
@@ -278,7 +263,6 @@ func TestTargetFolderValidation(t *testing.T) {
 }
 
 func TestTargetFolderSymlinkEscape(t *testing.T) {
-	t.Parallel()
 	workspace := t.TempDir()
 	outside := t.TempDir()
 
