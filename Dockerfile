@@ -11,10 +11,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /taskotter .
 
 FROM alpine:3.20
 
-RUN apk add --no-cache ca-certificates git && \
-    addgroup -S taskotter && adduser -S taskotter -G taskotter
+RUN apk add --no-cache ca-certificates git
 
 COPY --from=builder /taskotter /taskotter
 
-USER taskotter
 ENTRYPOINT ["/taskotter"]

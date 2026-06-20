@@ -12,6 +12,11 @@ import (
 
 const SyncCommitMessage = "chore(taskotter): sync taskfiles"
 
+const (
+	commitUserName  = "TaskOtter"
+	commitUserEmail = "taskotter@users.noreply.github.com"
+)
+
 type GitOps interface {
 	EnsureSafeDirectory(ctx context.Context) error
 	HasUnrelatedChanges(ctx context.Context, allowed map[string]struct{}) (bool, error)
@@ -40,7 +45,11 @@ func (c *Client) EnsureSafeDirectory(ctx context.Context) error {
 }
 
 func (c *Client) gitArgs(args ...string) []string {
-	return append([]string{"-c", "safe.directory=" + c.workspace}, args...)
+	return append([]string{
+		"-c", "safe.directory=" + c.workspace,
+		"-c", "user.email=" + commitUserEmail,
+		"-c", "user.name=" + commitUserName,
+	}, args...)
 }
 
 func (c *Client) DefaultBranch(ctx context.Context) (string, error) {
@@ -177,12 +186,10 @@ func AllowedPathSet(paths []string) map[string]struct{} {
 }
 
 func WriteLocalIdentity(ctx context.Context, c GitOps) error {
-	if client, ok := c.(*Client); ok {
-		if err := client.run(ctx, "config", "user.email", "taskotter@users.noreply.github.com"); err != nil {
-			return err
-		}
-		return client.run(ctx, "config", "user.name", "TaskOtter")
-	}
+	_ = ctx
+	_ = c
+	// Commit identity is applied per command via -c; config files are not writable
+	// in GitHub Actions Docker containers.
 	return nil
 }
 
