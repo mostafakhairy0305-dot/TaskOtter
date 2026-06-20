@@ -62,6 +62,37 @@ func TestLoadFromEnvGitHubTokenFallback(t *testing.T) {
 	}
 }
 
+func TestLoadFromEnvDockerInputEnvNames(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_GITHUB_TOKEN"] = ""
+	env["INPUT_GITHUB-TOKEN"] = "docker-token"
+	env["INPUT_NODE-PACKAGE-MANAGER"] = "pnpm"
+	env["INPUT_NODE-VERSION-MANAGER"] = "fnm"
+	env["INPUT_INCLUDES-DOC"] = "false"
+	env["INPUT_TARGET-FOLDER"] = "custom/taskfiles"
+	setEnv(t, env)
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+	if cfg.GitHubToken != "docker-token" {
+		t.Fatalf("GitHubToken = %q, want docker-token", cfg.GitHubToken)
+	}
+	if cfg.NodePackageManager != config.PMPnpm {
+		t.Fatalf("NodePackageManager = %q, want pnpm", cfg.NodePackageManager)
+	}
+	if cfg.NodeVersionManager != config.VMFnm {
+		t.Fatalf("NodeVersionManager = %q, want fnm", cfg.NodeVersionManager)
+	}
+	if cfg.IncludesDoc {
+		t.Fatal("IncludesDoc = true, want false")
+	}
+	if cfg.TargetFolder != "custom/taskfiles" {
+		t.Fatalf("TargetFolder = %q, want custom/taskfiles", cfg.TargetFolder)
+	}
+}
+
 func TestParseTasksMultilineAndDedupe(t *testing.T) {
 	dir := t.TempDir()
 	env := baseEnv(dir)

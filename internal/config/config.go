@@ -31,6 +31,36 @@ func (e *ValidationError) Error() string {
 	return e.Message
 }
 
+// actionInput reads a GitHub Actions input from the environment.
+// Docker container actions expose INPUT_<NAME> with hyphens preserved
+// (for example INPUT_GITHUB-TOKEN). Other runners may use underscores
+// (for example INPUT_GITHUB_TOKEN).
+func actionInput(name string) string {
+	upper := strings.ToUpper(name)
+	for _, key := range []string{
+		"INPUT_" + upper,
+		"INPUT_" + strings.ReplaceAll(upper, "-", "_"),
+	} {
+		if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func missingActionInput(name string) *ValidationError {
+	upper := strings.ToUpper(name)
+	return &ValidationError{
+		Field: name,
+		Message: fmt.Sprintf(
+			"is required (set %q in the workflow step; checked env vars INPUT_%s, INPUT_%s)",
+			name,
+			upper,
+			strings.ReplaceAll(upper, "-", "_"),
+		),
+	}
+}
+
 type PackageManager string
 
 const (
@@ -72,13 +102,13 @@ type hashPayload struct {
 }
 
 func LoadFromEnv() (*Config, error) {
-	tasksRaw := os.Getenv("INPUT_TASKS")
-	pmRaw := strings.TrimSpace(os.Getenv("INPUT_NODE_PACKAGE_MANAGER"))
-	vmRaw := strings.TrimSpace(os.Getenv("INPUT_NODE_VERSION_MANAGER"))
-	includesDocRaw := strings.TrimSpace(os.Getenv("INPUT_INCLUDES_DOC"))
-	storeVersion := strings.TrimSpace(os.Getenv("INPUT_STORE_VERSION"))
-	targetFolderRaw := strings.TrimSpace(os.Getenv("INPUT_TARGET_FOLDER"))
-	token := strings.TrimSpace(os.Getenv("INPUT_GITHUB_TOKEN"))
+	tasksRaw := actionInput("tasks")
+	pmRaw := actionInput("node-package-manager")
+	vmRaw := actionInput("node-version-manager")
+	includesDocRaw := actionInput("includes-doc")
+	storeVersion := actionInput("store-version")
+	targetFolderRaw := actionInput("target-folder")
+	token := actionInput("github-token")
 	if token == "" {
 		token = strings.TrimSpace(os.Getenv("GITHUB_TOKEN"))
 	}
@@ -90,7 +120,7 @@ func LoadFromEnv() (*Config, error) {
 		return nil, &ValidationError{Field: "GITHUB_WORKSPACE", Message: "is required"}
 	}
 	if token == "" {
-		return nil, &ValidationError{Field: "github-token", Message: "is required"}
+		return nil, missingActionInput("github-token")
 	}
 
 	tasks, err := parseTasks(tasksRaw)
