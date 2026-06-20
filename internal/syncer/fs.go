@@ -16,6 +16,7 @@ import (
 //nolint:gochecknoglobals // test hook
 var CopyFileToHook func(path string, entry FileEntry) error
 
+//nolint:gochecknoglobals // protects CopyFileToHook reads during concurrent copyFileTo calls
 var copyFileHookMu sync.RWMutex
 
 // SetCopyFileToHookForTest installs a test hook. Pair with ClearCopyFileToHookForTest in t.Cleanup.
@@ -82,7 +83,9 @@ func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
 
 func copyFileTo(path string, entry FileEntry) error {
 	copyFileHookMu.RLock()
+
 	hook := CopyFileToHook
+
 	copyFileHookMu.RUnlock()
 
 	if hook != nil {

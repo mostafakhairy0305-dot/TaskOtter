@@ -138,8 +138,8 @@ func (c *Client) HasUnrelatedChanges(ctx context.Context, allowed map[string]str
 		return false, err
 	}
 
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(strings.TrimSpace(out), "\n")
+	for line := range lines {
 		if line == "" {
 			continue
 		}
@@ -312,7 +312,7 @@ func (c *Client) defaultBranchFromOriginHEADCommit(ctx context.Context) (string,
 		return "", err
 	}
 
-	for _, line := range strings.Split(strings.TrimSpace(refs), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(refs), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || line == "origin/HEAD" {
 			continue
@@ -334,7 +334,7 @@ func (c *Client) defaultBranchFromRemoteShow(ctx context.Context) (string, error
 
 	const prefix = "HEAD branch: "
 
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
 		if after, ok := strings.CutPrefix(line, prefix); ok {
 			if branch := strings.TrimSpace(after); branch != "" {

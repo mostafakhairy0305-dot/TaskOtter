@@ -150,7 +150,7 @@ func ensureTargetInsideWorkspace(evalWorkspace, normalized, raw string) error {
 
 func validatePathComponents(evalWorkspace, normalized, raw string) error {
 	current := evalWorkspace
-	for _, part := range strings.Split(normalized, "/") {
+	for part := range strings.SplitSeq(normalized, "/") {
 		current = filepath.Join(current, part)
 
 		info, err := os.Lstat(current)

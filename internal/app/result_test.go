@@ -12,6 +12,7 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
 
+//nolint:gochecknoglobals // serializes stderr capture across parallel tests
 var stderrCaptureMu sync.Mutex
 
 func emptyRefInfo() store.RefInfo {

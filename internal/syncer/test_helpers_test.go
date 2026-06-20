@@ -10,6 +10,7 @@ import (
 
 const testModuleEslint = "eslint"
 
+//nolint:gochecknoglobals // serializes applyPlan hook mutations across parallel tests
 var applyPlanTestMu sync.Mutex
 
 func runApplyPlan(t *testing.T, plan *syncer.Plan, syncInput syncer.SyncInput) error {

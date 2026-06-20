@@ -100,10 +100,10 @@ func (c *Client) FindOpenPR(ctx context.Context, branch, base string) (*PullRequ
 // CreatePR opens a new pull request from branch into base.
 func (c *Client) CreatePR(ctx context.Context, branch, base, body string) (*PullRequest, error) {
 	newPR := &github.NewPullRequest{
-		Title:               github.Ptr(prTitle),
-		Head:                github.Ptr(branch),
-		Base:                github.Ptr(base),
-		Body:                github.Ptr(body),
+		Title:               new(prTitle),
+		Head:                new(branch),
+		Base:                new(base),
+		Body:                new(body),
 		HeadRepo:            nil,
 		Issue:               nil,
 		MaintainerCanModify: nil,
@@ -122,7 +122,7 @@ func (c *Client) CreatePR(ctx context.Context, branch, base, body string) (*Pull
 func (c *Client) UpdatePRBody(ctx context.Context, number int, body string) error {
 	var edit github.PullRequest
 
-	edit.Body = github.Ptr(body)
+	edit.Body = new(body)
 
 	_, _, err := c.api.PullRequests.Edit(ctx, c.owner, c.repo, number, &edit)
 	if err != nil {
