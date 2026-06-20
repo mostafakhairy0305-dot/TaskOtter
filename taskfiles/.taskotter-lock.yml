@@ -1,127 +1,132 @@
----
 source:
-  repository: mostafakhairy0305-dot/TaskOtter-store
-  requested_version: ''
-  source_ref: refs/heads/main
-  resolved_commit: 24ebe461b63cab4d00b1484e030f29fae1625026
-  default_branch: main
+    repository: mostafakhairy0305-dot/TaskOtter-store
+    requested_version: ""
+    source_ref: refs/heads/main
+    resolved_commit: 17ce3d40f6c7a46a8053c79c320b8f905eed5280
+    default_branch: main
 configuration:
-  target_folder: taskfiles
-  tasks: [go, hadolint, yamllint, actionlint, zizmor, gh]
-  node_package_manager: bun
-  node_version_manager: ''
-  includes_doc: true
+    target_folder: taskfiles
+    tasks:
+        - go
+        - hadolint
+        - yamllint
+        - actionlint
+        - zizmor
+        - gh
+    node_package_manager: bun
+    node_version_manager: ""
+    includes_doc: true
 resolved_modules:
-  requested:
-    actionlint:
-      source_module: actionlint
+    requested:
+        actionlint:
+            source_module: actionlint
+            destination_module: actionlint
+            path: taskfiles/actionlint
+        gh:
+            source_module: gh
+            destination_module: gh
+            path: taskfiles/gh
+        go:
+            source_module: go
+            destination_module: go
+            path: taskfiles/go
+        hadolint:
+            source_module: hadolint
+            destination_module: hadolint
+            path: taskfiles/hadolint
+        yamllint:
+            source_module: yamllint
+            destination_module: yamllint
+            path: taskfiles/yamllint
+        zizmor:
+            source_module: zizmor
+            destination_module: zizmor
+            path: taskfiles/zizmor
+    dependencies:
+        - source_module: jq
+          destination_module: jq
+          path: taskfiles/jq
+        - source_module: uv
+          destination_module: uv
+          path: taskfiles/uv
+managed_files:
+    - source_module: actionlint
       destination_module: actionlint
-      path: taskfiles/actionlint
-    gh:
-      source_module: gh
+      source_path: taskfiles/actionlint/README.md
+      path: taskfiles/actionlint/README.md
+      sha256: 39cbde1cfea24597cb997c550e136b6b02faaedd88e0e3c840905108b411e338
+    - source_module: actionlint
+      destination_module: actionlint
+      source_path: taskfiles/actionlint/Taskfile.yml
+      path: taskfiles/actionlint/Taskfile.yml
+      sha256: 082f9cde9e91197e55599b4ea272b81bac618e5dcda50559d4946886dec9d2d1
+    - source_module: gh
       destination_module: gh
-      path: taskfiles/gh
-    go:
-      source_module: go
+      source_path: taskfiles/gh/README.md
+      path: taskfiles/gh/README.md
+      sha256: ffc2dbb74dd12cac167fa38877dab0d2ca6bb7b75ac49255ca5422ce2cfd10ff
+    - source_module: gh
+      destination_module: gh
+      source_path: taskfiles/gh/Taskfile.yml
+      path: taskfiles/gh/Taskfile.yml
+      sha256: 658414ba9ed7da489dfa2bb121c7776567e4305884af2b16d54b079586f87024
+    - source_module: go
       destination_module: go
-      path: taskfiles/go
-    hadolint:
-      source_module: hadolint
+      source_path: taskfiles/go/README.md
+      path: taskfiles/go/README.md
+      sha256: 6a969aa03a65c7edae020f49de241fb7e385a44a6c52c2ae1ebbc4e111daec38
+    - source_module: go
+      destination_module: go
+      source_path: taskfiles/go/Taskfile.yml
+      path: taskfiles/go/Taskfile.yml
+      sha256: 12b18ea566544810e361c2e29f1d4ae1400bca29e6b4ce643b652e8897f98397
+    - source_module: hadolint
       destination_module: hadolint
-      path: taskfiles/hadolint
-    yamllint:
-      source_module: yamllint
-      destination_module: yamllint
-      path: taskfiles/yamllint
-    zizmor:
-      source_module: zizmor
-      destination_module: zizmor
-      path: taskfiles/zizmor
-  dependencies:
+      source_path: taskfiles/hadolint/README.md
+      path: taskfiles/hadolint/README.md
+      sha256: 827274cf089c5aa2a65181951482810072c6a56a9d693b3b5a7b7591e5415259
+    - source_module: hadolint
+      destination_module: hadolint
+      source_path: taskfiles/hadolint/Taskfile.yml
+      path: taskfiles/hadolint/Taskfile.yml
+      sha256: 8b6248c070f089d7799d0d4833644e307bd3fb2e45378bfbed54b6b5e65c1b0c
     - source_module: jq
       destination_module: jq
-      path: taskfiles/jq
+      source_path: taskfiles/jq/README.md
+      path: taskfiles/jq/README.md
+      sha256: 8405eb6db5cdeec80e6f5c7cec989194ceb4175a3625f0bdd6a8d446ae3fc708
+    - source_module: jq
+      destination_module: jq
+      source_path: taskfiles/jq/Taskfile.yml
+      path: taskfiles/jq/Taskfile.yml
+      sha256: 1b29d2b6a65874e4226ed16056a106eb6ab5e6d11bb2390c1e26ed0df599af38
     - source_module: uv
       destination_module: uv
-      path: taskfiles/uv
-managed_files:
-  - source_module: actionlint
-    destination_module: actionlint
-    source_path: taskfiles/actionlint/README.md
-    path: taskfiles/actionlint/README.md
-    sha256: 39cbde1cfea24597cb997c550e136b6b02faaedd88e0e3c840905108b411e338
-  - source_module: actionlint
-    destination_module: actionlint
-    source_path: taskfiles/actionlint/Taskfile.yml
-    path: taskfiles/actionlint/Taskfile.yml
-    sha256: 082f9cde9e91197e55599b4ea272b81bac618e5dcda50559d4946886dec9d2d1
-  - source_module: gh
-    destination_module: gh
-    source_path: taskfiles/gh/README.md
-    path: taskfiles/gh/README.md
-    sha256: ffc2dbb74dd12cac167fa38877dab0d2ca6bb7b75ac49255ca5422ce2cfd10ff
-  - source_module: gh
-    destination_module: gh
-    source_path: taskfiles/gh/Taskfile.yml
-    path: taskfiles/gh/Taskfile.yml
-    sha256: 658414ba9ed7da489dfa2bb121c7776567e4305884af2b16d54b079586f87024
-  - source_module: go
-    destination_module: go
-    source_path: taskfiles/go/README.md
-    path: taskfiles/go/README.md
-    sha256: 6a969aa03a65c7edae020f49de241fb7e385a44a6c52c2ae1ebbc4e111daec38
-  - source_module: go
-    destination_module: go
-    source_path: taskfiles/go/Taskfile.yml
-    path: taskfiles/go/Taskfile.yml
-    sha256: 12b18ea566544810e361c2e29f1d4ae1400bca29e6b4ce643b652e8897f98397
-  - source_module: hadolint
-    destination_module: hadolint
-    source_path: taskfiles/hadolint/README.md
-    path: taskfiles/hadolint/README.md
-    sha256: 827274cf089c5aa2a65181951482810072c6a56a9d693b3b5a7b7591e5415259
-  - source_module: hadolint
-    destination_module: hadolint
-    source_path: taskfiles/hadolint/Taskfile.yml
-    path: taskfiles/hadolint/Taskfile.yml
-    sha256: 8b6248c070f089d7799d0d4833644e307bd3fb2e45378bfbed54b6b5e65c1b0c
-  - source_module: jq
-    destination_module: jq
-    source_path: taskfiles/jq/README.md
-    path: taskfiles/jq/README.md
-    sha256: 8405eb6db5cdeec80e6f5c7cec989194ceb4175a3625f0bdd6a8d446ae3fc708
-  - source_module: jq
-    destination_module: jq
-    source_path: taskfiles/jq/Taskfile.yml
-    path: taskfiles/jq/Taskfile.yml
-    sha256: 1b29d2b6a65874e4226ed16056a106eb6ab5e6d11bb2390c1e26ed0df599af38
-  - source_module: uv
-    destination_module: uv
-    source_path: taskfiles/uv/README.md
-    path: taskfiles/uv/README.md
-    sha256: 1a560a13bd56ff284cf3f13d0041543f5652eda5a12b5f9c4b5cd90199e375d7
-  - source_module: uv
-    destination_module: uv
-    source_path: taskfiles/uv/Taskfile.yml
-    path: taskfiles/uv/Taskfile.yml
-    sha256: 6512d6fa37ef276f8dcff287b60d3b98a93fdbd176b3b9d06fae083b90e9fd38
-  - source_module: yamllint
-    destination_module: yamllint
-    source_path: taskfiles/yamllint/README.md
-    path: taskfiles/yamllint/README.md
-    sha256: ecabb202284e3b14d9f4d023d6ec6294938f174593db6bad06bfa070f78a321b
-  - source_module: yamllint
-    destination_module: yamllint
-    source_path: taskfiles/yamllint/Taskfile.yml
-    path: taskfiles/yamllint/Taskfile.yml
-    sha256: 3fb4c763b7600e5c018f7ad3e55137a5b3cc208512c25217a5034d038a9bf509
-  - source_module: zizmor
-    destination_module: zizmor
-    source_path: taskfiles/zizmor/README.md
-    path: taskfiles/zizmor/README.md
-    sha256: eebd4e956e9217de172fa60fde263d36eb81225a73659e88c2651f831ab74b2e
-  - source_module: zizmor
-    destination_module: zizmor
-    source_path: taskfiles/zizmor/Taskfile.yml
-    path: taskfiles/zizmor/Taskfile.yml
-    sha256: 32ceef94048e24d1ff5addf805d9e6deafd9c2fadec1b98c30c85beb678df7c3
+      source_path: taskfiles/uv/README.md
+      path: taskfiles/uv/README.md
+      sha256: 1a560a13bd56ff284cf3f13d0041543f5652eda5a12b5f9c4b5cd90199e375d7
+    - source_module: uv
+      destination_module: uv
+      source_path: taskfiles/uv/Taskfile.yml
+      path: taskfiles/uv/Taskfile.yml
+      sha256: 6512d6fa37ef276f8dcff287b60d3b98a93fdbd176b3b9d06fae083b90e9fd38
+    - source_module: yamllint
+      destination_module: yamllint
+      source_path: taskfiles/yamllint/README.md
+      path: taskfiles/yamllint/README.md
+      sha256: ecabb202284e3b14d9f4d023d6ec6294938f174593db6bad06bfa070f78a321b
+    - source_module: yamllint
+      destination_module: yamllint
+      source_path: taskfiles/yamllint/Taskfile.yml
+      path: taskfiles/yamllint/Taskfile.yml
+      sha256: 3fb4c763b7600e5c018f7ad3e55137a5b3cc208512c25217a5034d038a9bf509
+    - source_module: zizmor
+      destination_module: zizmor
+      source_path: taskfiles/zizmor/README.md
+      path: taskfiles/zizmor/README.md
+      sha256: eebd4e956e9217de172fa60fde263d36eb81225a73659e88c2651f831ab74b2e
+    - source_module: zizmor
+      destination_module: zizmor
+      source_path: taskfiles/zizmor/Taskfile.yml
+      path: taskfiles/zizmor/Taskfile.yml
+      sha256: 32ceef94048e24d1ff5addf805d9e6deafd9c2fadec1b98c30c85beb678df7c3
