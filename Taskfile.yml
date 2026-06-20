@@ -13,7 +13,7 @@ includes:
             GOLANGCI_LINT_VERSION: ""
             GOFUMPT_VERSION: ""
             GOIMPORTS_VERSION: ""
-            GOVULNCHECK_VERSION: ""
+            GOVULNCHECK_VERSION: "v1.1.4"
             GOSEC_VERSION: ""
             GLOBAL_GO_BIN:
                 sh: |
@@ -97,6 +97,6 @@ tasks:
             - go:fmt:check
     ci:
         desc: Run all CI checks
-        deps:
-            - fmt:check
-            - lint
+        cmds:
+            - task: fmt:check
+            - task: lint
