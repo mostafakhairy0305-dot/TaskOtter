@@ -1,0 +1,75 @@
+version: "3"
+includes:
+    go:
+        taskfile: taskfiles/go/Taskfile.yml
+        vars:
+            INSTALL_DIR_UNIX: "/usr/local"
+            GO_ROOT_UNIX: "{{.INSTALL_DIR_UNIX}}/go"
+            GO_BIN_UNIX: "{{.GO_ROOT_UNIX}}/bin"
+            GO_CMD_UNIX: "{{.GO_BIN_UNIX}}/go"
+            GO_VERSION_URL: https://go.dev/VERSION?m=text
+            GO_DOWNLOAD_BASE_URL: https://go.dev/dl
+            GO_VERSION: ""
+            GOLANGCI_LINT_VERSION: ""
+            GOFUMPT_VERSION: ""
+            GOIMPORTS_VERSION: ""
+            GOVULNCHECK_VERSION: ""
+            GOSEC_VERSION: ""
+            GLOBAL_GO_BIN:
+                sh: |
+                    gobin="${GOBIN:-}"
+                    if [ -z "$gobin" ] && command -v go >/dev/null 2>&1; then
+                      gobin="$(go env GOBIN)"
+                    fi
+                    if [ -z "$gobin" ]; then
+                      gopath="${GOPATH:-}"
+                      if [ -z "$gopath" ] && command -v go >/dev/null 2>&1; then
+                        gopath="$(go env GOPATH)"
+                      fi
+                      gobin="${gopath:-$HOME/go}/bin"
+                    fi
+                    printf '%s' "$gobin"
+    hadolint:
+        taskfile: taskfiles/hadolint/Taskfile.yml
+        vars:
+            CONFIG: ""
+            DOCKERFILE: "Dockerfile"
+            EXTRA_ARGS: ""
+            HADOLINT_VERSION: "2.14.0"
+    yamllint:
+        taskfile: taskfiles/yamllint/Taskfile.yml
+        vars:
+            UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
+            TARGETS: "."
+            CONFIG: ""
+            EXTRA_ARGS: ""
+            YAMLLINT_VERSION: ""
+            YAMLFIX_VERSION: ""
+    actionlint:
+        taskfile: taskfiles/actionlint/Taskfile.yml
+        vars:
+            ACTIONLINT_VERSION: "1.7.12"
+            EXTRA_ARGS: ""
+            TARGETS: ""
+    zizmor:
+        taskfile: taskfiles/zizmor/Taskfile.yml
+        vars:
+            # NOTE: Keep EXTRA_ARGS empty here. Task v3 merges included Taskfiles'
+            # file-level vars into one shared scope, so a non-empty default would leak
+            # into sibling includes (buf, hadolint, ...) and get passed as a bogus flag.
+            # The offline default lives in the namespaced ZIZMOR_EXTRA_ARGS instead.
+            EXTRA_ARGS: ""
+            ZIZMOR_EXTRA_ARGS: "--offline"
+            TARGETS: ".github"
+            ZIZMOR_VERSION: "1.25.2"
+    gh:
+        taskfile: taskfiles/gh/Taskfile.yml
+        vars:
+            VISIBILITY: "public"
+            BASE: "main"
+            MERGE_METHOD: "merge"
+            CLONE_DIR: "."
+            DOWNLOAD_DIR: "."
+            DATA: "{}"
+            PAT_TOKEN: ""
+            VERSION: ""
