@@ -1,0 +1,70 @@
+package store_test
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
+)
+
+func TestResolveRefDefaultBranch(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/mostafakhairy0305-dot/TaskOtter-store":
+			_, _ = w.Write([]byte(`{"default_branch":"main"}`))
+		case "/repos/mostafakhairy0305-dot/TaskOtter-store/commits/main":
+			_, _ = w.Write([]byte(`{"sha":"abc123def456"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	client := store.NewClientWithHTTP("token", srv.Client()).WithBaseURL(srv.URL)
+	ref, err := client.ResolveRef(context.Background(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ref.SourceRef != "refs/heads/main" {
+		t.Fatalf("SourceRef = %q", ref.SourceRef)
+	}
+	if ref.ResolvedCommit != "abc123def456" {
+		t.Fatalf("ResolvedCommit = %q", ref.ResolvedCommit)
+	}
+}
+
+func TestResolveMissingTag(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/mostafakhairy0305-dot/TaskOtter-store":
+			_, _ = w.Write([]byte(`{"default_branch":"main"}`))
+		case "/repos/mostafakhairy0305-dot/TaskOtter-store/git/ref/tags/v9.9.9":
+			http.NotFound(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	client := store.NewClientWithHTTP("token", srv.Client()).WithBaseURL(srv.URL)
+	_, err := client.ResolveRef(context.Background(), "v9.9.9")
+	if err == nil {
+		t.Fatal("expected missing tag error")
+	}
+}
+
+func TestLocalSnapshotLoadsFixture(t *testing.T) {
+	root := "../../tests/fixtures/store"
+	snap, err := store.LocalSnapshot(root, store.RefInfo{DefaultBranch: "main"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := snap.Catalog["go"]; !ok {
+		t.Fatal("expected go module in catalog")
+	}
+	if len(snap.Deps["eslint-pnpm-fnm"]) != 1 {
+		t.Fatalf("unexpected deps: %#v", snap.Deps["eslint-pnpm-fnm"])
+	}
+}

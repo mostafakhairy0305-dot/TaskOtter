@@ -1,0 +1,13 @@
+# TaskOtter files
+.taskotter/
+
+# Go
+/bin/
+/dist/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store

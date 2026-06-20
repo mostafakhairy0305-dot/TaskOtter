@@ -1,0 +1,41 @@
+name: Sync TaskOtter Tasks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Synchronize TaskOtter modules
+        id: taskotter
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          tasks: |
+            eslint
+            prettier
+            typescript
+            go
+          node-package-manager: pnpm
+          node-version-manager: fnm
+          includes-doc: true
+          target-folder: taskfiles
+
+      - name: Print result
+        shell: bash
+        run: |
+          echo "Changed: ${{ steps.taskotter.outputs.changed }}"
+          echo "Source SHA: ${{ steps.taskotter.outputs.source-sha }}"
+          echo "Pull request: ${{ steps.taskotter.outputs.pull-request-url }}"

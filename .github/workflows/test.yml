@@ -1,0 +1,56 @@
+name: Test TaskOtter Sync Action
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build binary
+        run: go build -o /dev/null ./cmd/taskotter-sync
+
+      - name: Build Docker image
+        run: docker build -t taskotter-sync:test .
+
+      - name: Validate action metadata
+        run: |
+          test -f action.yml
+          grep -q 'using: docker' action.yml
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Integration tests
+        run: go test -race ./tests/integration/...

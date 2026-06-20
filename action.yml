@@ -1,0 +1,55 @@
+name: TaskOtter Sync
+description: Synchronize TaskOtter taskfiles from the TaskOtter store into your repository.
+author: mostafakhairy0305-dot
+
+inputs:
+  tasks:
+    description: Comma-separated or multiline list of logical TaskOtter task names.
+    required: true
+  node-package-manager:
+    description: Node package manager for Node-specific tasks (npm, yarn, pnpm, or bun).
+    required: false
+    default: ""
+  node-version-manager:
+    description: Node version manager for npm, yarn, or pnpm tasks (fnm or nvm).
+    required: false
+    default: ""
+  includes-doc:
+    description: Whether to copy module documentation (README.md and docs/).
+    required: false
+    default: "true"
+  store-version:
+    description: Specific Git tag from the TaskOtter store. Empty uses the default branch HEAD.
+    required: false
+    default: ""
+  target-folder:
+    description: Repository-relative destination directory for synchronized modules.
+    required: false
+    default: taskfiles
+  github-token:
+    description: Token used to push the sync branch and create or update a pull request.
+    required: true
+
+outputs:
+  changed:
+    description: Whether repository changes were generated.
+  store-version:
+    description: Requested store tag, or empty when the latest default branch was used.
+  source-ref:
+    description: Resolved source reference (refs/tags/... or refs/heads/...).
+  source-sha:
+    description: Immutable source commit SHA.
+  target-folder:
+    description: Normalized target folder path.
+  resolved-tasks:
+    description: JSON map of requested tasks with source and destination modules.
+  resolved-dependencies:
+    description: JSON array of resolved dependency modules.
+  pull-request-number:
+    description: Created or updated pull request number.
+  pull-request-url:
+    description: Created or updated pull request URL.
+
+runs:
+  using: docker
+  image: Dockerfile
