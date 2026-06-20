@@ -1,10 +1,37 @@
 package syncer_test
 
 import (
+	"sync"
+	"testing"
+
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
 const testModuleEslint = "eslint"
+
+var applyPlanTestMu sync.Mutex
+
+func runApplyPlan(t *testing.T, plan *syncer.Plan, syncInput syncer.SyncInput) error {
+	t.Helper()
+
+	applyPlanTestMu.Lock()
+	defer applyPlanTestMu.Unlock()
+
+	return syncer.ApplyPlan(plan, syncInput)
+}
+
+func withCopyFileHook(t *testing.T, hook func(path string, entry syncer.FileEntry) error, run func()) {
+	t.Helper()
+
+	applyPlanTestMu.Lock()
+	syncer.SetCopyFileToHookForTest(hook)
+	t.Cleanup(func() {
+		syncer.ClearCopyFileToHookForTest()
+		applyPlanTestMu.Unlock()
+	})
+	run()
+}
 
 func testConfig(workspace string, mutate func(*config.Config)) *config.Config {
 	cfg := &config.Config{

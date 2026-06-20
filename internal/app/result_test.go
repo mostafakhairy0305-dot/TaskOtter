@@ -5,11 +5,14 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/store"
 )
+
+var stderrCaptureMu sync.Mutex
 
 func emptyRefInfo() store.RefInfo {
 	return store.RefInfo{
@@ -23,6 +26,9 @@ func emptyRefInfo() store.RefInfo {
 
 func captureStderr(t *testing.T, runFn func()) string {
 	t.Helper()
+
+	stderrCaptureMu.Lock()
+	defer stderrCaptureMu.Unlock()
 
 	old := os.Stderr
 

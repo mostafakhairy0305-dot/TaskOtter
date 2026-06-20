@@ -138,7 +138,7 @@ func TestMetadataOnlyChangeMarksChanged(t *testing.T) {
 
 	syncInput, plan := preparePlan(t, workspace, cfg)
 
-	err := syncer.ApplyPlan(plan, syncInput)
+	err := runApplyPlan(t, plan, syncInput)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +163,7 @@ func TestSHAOnlyLockChangeNotChanged(t *testing.T) {
 
 	syncInput, plan := preparePlan(t, workspace, cfg)
 
-	err := syncer.ApplyPlan(plan, syncInput)
+	err := runApplyPlan(t, plan, syncInput)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +208,7 @@ func TestConfigurationChangeMarksUpdated(t *testing.T) {
 
 	syncInput, plan := preparePlan(t, workspace, cfg)
 
-	err := syncer.ApplyPlan(plan, syncInput)
+	err := runApplyPlan(t, plan, syncInput)
 	if err != nil {
 		t.Fatal(err)
 	}

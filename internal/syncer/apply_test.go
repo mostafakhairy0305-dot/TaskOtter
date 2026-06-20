@@ -68,7 +68,7 @@ func TestApplyPlanWritesFiles(t *testing.T) {
 
 	syncInput, plan := preparePlan(t, workspace, cfg)
 
-	err := syncer.ApplyPlan(plan, syncInput)
+	err := runApplyPlan(t, plan, syncInput)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,12 +115,12 @@ func TestApplyPlanPreservesExecutableMode(t *testing.T) {
 
 	syncInput, plan := preparePlan(t, workspace, cfg)
 
-	err = syncer.ApplyPlan(plan, syncInput)
+	err = runApplyPlan(t, plan, syncInput)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	info, err := os.Stat(filepath.Join(workspace, config.DefaultTargetFolder, "go/setup.sh"))
+	info, err = os.Stat(filepath.Join(workspace, config.DefaultTargetFolder, "go/setup.sh"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func TestApplyPlanPromoteBeforeDelete(t *testing.T) {
 
 	var promoted int
 
-	syncer.SetCopyFileToHookForTest(func(path string, entry syncer.FileEntry) error {
+	withCopyFileHook(t, func(path string, entry syncer.FileEntry) error {
 		if strings.Contains(path, filepath.Join(".taskotter", "staging")) {
 			return writeFileEntry(path, entry)
 		}
@@ -177,14 +177,12 @@ func TestApplyPlanPromoteBeforeDelete(t *testing.T) {
 		}
 
 		return writeFileEntry(path, entry)
+	}, func() {
+		err = syncer.ApplyPlan(plan, syncInput)
+		if err == nil {
+			t.Fatal("expected promote failure")
+		}
 	})
-
-	t.Cleanup(syncer.ClearCopyFileToHookForTest)
-
-	err = syncer.ApplyPlan(plan, syncInput)
-	if err == nil {
-		t.Fatal("expected promote failure")
-	}
 
 	_, err = os.Stat(obsolete)
 	if err != nil {
@@ -206,7 +204,8 @@ func TestApplyPlanWriteOrder(t *testing.T) {
 	var order []string
 
 	stagingMarker := filepath.Join(".taskotter", "staging")
-	syncer.SetCopyFileToHookForTest(func(path string, entry syncer.FileEntry) error {
+
+	withCopyFileHook(t, func(path string, entry syncer.FileEntry) error {
 		if strings.Contains(path, stagingMarker) {
 			return writeFileEntry(path, entry)
 		}
@@ -219,14 +218,12 @@ func TestApplyPlanWriteOrder(t *testing.T) {
 		order = append(order, filepath.ToSlash(rel))
 
 		return writeFileEntry(path, entry)
+	}, func() {
+		err := syncer.ApplyPlan(plan, syncInput)
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
-
-	t.Cleanup(syncer.ClearCopyFileToHookForTest)
-
-	err := syncer.ApplyPlan(plan, syncInput)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	lockIdx := indexOfSuffix(order, ".taskotter-lock.yml")
 	metaIdx := indexOfSuffix(order, "metadata.yml")
