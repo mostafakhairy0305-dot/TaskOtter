@@ -8,8 +8,8 @@ import (
 
 	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/app"
 	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/config"
-	gh "github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/github"
 	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/git"
+	gh "github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/github"
 	"github.com/mostafakhairy0305-dot/taskotter-sync-action/internal/store"
 )
 
@@ -48,9 +48,9 @@ func (m *mockGitOps) BranchExists(context.Context, string) (bool, error) {
 func (m *mockGitOps) LastCommitMessage(context.Context, string) (string, error) {
 	return "", nil
 }
-func (m *mockGitOps) Stage(context.Context, []string) error       { return nil }
-func (m *mockGitOps) Commit(context.Context, string) error          { return nil }
-func (m *mockGitOps) Push(context.Context, string, bool) error      { return nil }
+func (m *mockGitOps) Stage(context.Context, []string) error    { return nil }
+func (m *mockGitOps) Commit(context.Context, string) error     { return nil }
+func (m *mockGitOps) Push(context.Context, string, bool) error { return nil }
 func (m *mockGitOps) DefaultBranch(context.Context) (string, error) {
 	m.defaultBranchCalls++
 	if m.defaultBranch != "" {

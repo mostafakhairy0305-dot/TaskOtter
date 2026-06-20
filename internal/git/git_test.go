@@ -12,7 +12,7 @@ type mockGitOps struct {
 	lastMessage  string
 }
 
-func (m *mockGitOps) EnsureSafeDirectory(context.Context) error              { return nil }
+func (m *mockGitOps) EnsureSafeDirectory(context.Context) error { return nil }
 func (m *mockGitOps) HasUnrelatedChanges(context.Context, map[string]struct{}) (bool, error) {
 	return false, nil
 }
@@ -23,10 +23,10 @@ func (m *mockGitOps) BranchExists(context.Context, string) (bool, error) {
 func (m *mockGitOps) LastCommitMessage(context.Context, string) (string, error) {
 	return m.lastMessage, nil
 }
-func (m *mockGitOps) Stage(context.Context, []string) error              { return nil }
-func (m *mockGitOps) Commit(context.Context, string) error                 { return nil }
-func (m *mockGitOps) Push(context.Context, string, bool) error           { return nil }
-func (m *mockGitOps) DefaultBranch(context.Context) (string, error)      { return "main", nil }
+func (m *mockGitOps) Stage(context.Context, []string) error         { return nil }
+func (m *mockGitOps) Commit(context.Context, string) error          { return nil }
+func (m *mockGitOps) Push(context.Context, string, bool) error      { return nil }
+func (m *mockGitOps) DefaultBranch(context.Context) (string, error) { return "main", nil }
 
 func TestEnsureBranchOwnedAllowsNewBranch(t *testing.T) {
 	if err := git.EnsureBranchOwned(context.Background(), &mockGitOps{branchExists: false}, "taskotter/sync-abc"); err != nil {
