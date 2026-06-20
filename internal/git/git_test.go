@@ -24,6 +24,7 @@ func (m *mockGitOps) CheckoutBranch(context.Context, string, bool) error { retur
 func (m *mockGitOps) BranchExists(context.Context, string) (bool, error) {
 	return m.branchExists, nil
 }
+
 func (m *mockGitOps) LastCommitMessage(context.Context, string) (string, error) {
 	return m.lastMessage, nil
 }

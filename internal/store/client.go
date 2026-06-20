@@ -127,7 +127,7 @@ func (c *Client) DownloadSnapshot(ctx context.Context, ref RefInfo) (*Snapshot, 
 	if err != nil {
 		return nil, fmt.Errorf("download store archive: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		return nil, fmt.Errorf("authentication failed downloading store archive (HTTP %d)", resp.StatusCode)
@@ -228,7 +228,7 @@ func (c *Client) getJSON(ctx context.Context, path string, v any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("GitHub API %s failed with HTTP %d", path, resp.StatusCode)
 	}
@@ -277,7 +277,7 @@ func (c *Client) resolveTag(ctx context.Context, tag string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusNotFound {
 		return "", fmt.Errorf("store tag %q does not exist", tag)
 	}

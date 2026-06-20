@@ -168,7 +168,11 @@ func (o *Orchestrator) run(ctx context.Context, cfg *config.Config) (*Result, er
 	if snapErr != nil {
 		return nil, snapErr
 	}
-	defer snapshot.Close()
+	defer func() {
+		if closeErr := snapshot.Close(); closeErr != nil {
+			o.Logger.Printf("close store snapshot: %v", closeErr)
+		}
+	}()
 
 	o.Logger.Group("Load module catalog", func() {
 		o.Logger.Printf("Catalog modules: %d", len(snapshot.Catalog))

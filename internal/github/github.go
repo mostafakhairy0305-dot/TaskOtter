@@ -100,17 +100,17 @@ func StoreRefFrom(ref store.RefInfo) storeRef {
 func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref storeRef) string {
 	var b strings.Builder
 	b.WriteString("## TaskOtter\n\n")
-	b.WriteString(fmt.Sprintf("- Source: `%s`\n", config.StoreRepository))
-	b.WriteString(fmt.Sprintf("- Requested version: `%s`\n", emptyDash(cfg.StoreVersion)))
-	b.WriteString(fmt.Sprintf("- Source reference: `%s`\n", ref.SourceRef))
-	b.WriteString(fmt.Sprintf("- Resolved commit: `%s`\n", ref.ResolvedCommit))
-	b.WriteString(fmt.Sprintf("- Default branch: `%s`\n", ref.DefaultBranch))
-	b.WriteString(fmt.Sprintf("- Target folder: `%s`\n", cfg.TargetFolder))
-	b.WriteString(fmt.Sprintf("- Documentation included: `%t`\n", cfg.IncludesDoc))
-	b.WriteString(fmt.Sprintf("- JS runtime: `%s`\n", emptyDash(string(cfg.JSRuntime))))
+	fmt.Fprintf(&b, "- Source: `%s`\n", config.StoreRepository)
+	fmt.Fprintf(&b, "- Requested version: `%s`\n", emptyDash(cfg.StoreVersion))
+	fmt.Fprintf(&b, "- Source reference: `%s`\n", ref.SourceRef)
+	fmt.Fprintf(&b, "- Resolved commit: `%s`\n", ref.ResolvedCommit)
+	fmt.Fprintf(&b, "- Default branch: `%s`\n", ref.DefaultBranch)
+	fmt.Fprintf(&b, "- Target folder: `%s`\n", cfg.TargetFolder)
+	fmt.Fprintf(&b, "- Documentation included: `%t`\n", cfg.IncludesDoc)
+	fmt.Fprintf(&b, "- JS runtime: `%s`\n", emptyDash(string(cfg.JSRuntime)))
 	if cfg.JSRuntime == config.JSRuntimeNodeJS {
-		b.WriteString(fmt.Sprintf("- Package manager: `%s`\n", cfg.NodePackageManager))
-		b.WriteString(fmt.Sprintf("- Version manager: `%s`\n", cfg.NodeVersionManager))
+		fmt.Fprintf(&b, "- Package manager: `%s`\n", cfg.NodePackageManager)
+		fmt.Fprintf(&b, "- Version manager: `%s`\n", cfg.NodeVersionManager)
 	}
 	b.WriteString("\n")
 
@@ -119,28 +119,28 @@ func BuildPRBody(cfg *config.Config, plan *syncer.Plan, ref storeRef) string {
 	b.WriteString("|---|---|---|\n")
 	for _, task := range cfg.Tasks {
 		rec := plan.Requested[task]
-		b.WriteString(fmt.Sprintf("| %s | `%s` | `%s` |\n", task, rec.SourceModule, rec.Path))
+		fmt.Fprintf(&b, "| %s | `%s` | `%s` |\n", task, rec.SourceModule, rec.Path)
 	}
 
 	b.WriteString("\n### Dependencies\n\n")
 	b.WriteString("| Source module | Destination |\n")
 	b.WriteString("|---|---|\n")
 	for _, dep := range plan.Dependencies {
-		b.WriteString(fmt.Sprintf("| `%s` | `%s` |\n", dep.SourceModule, dep.Path))
+		fmt.Fprintf(&b, "| `%s` | `%s` |\n", dep.SourceModule, dep.Path)
 	}
 
 	b.WriteString("\n### File changes\n\n")
-	b.WriteString(fmt.Sprintf("- Added: %d\n", len(plan.Added)))
+	fmt.Fprintf(&b, "- Added: %d\n", len(plan.Added))
 	for _, p := range plan.Added {
-		b.WriteString(fmt.Sprintf("  - `%s`\n", p))
+		fmt.Fprintf(&b, "  - `%s`\n", p)
 	}
-	b.WriteString(fmt.Sprintf("- Updated: %d\n", len(plan.Updated)))
+	fmt.Fprintf(&b, "- Updated: %d\n", len(plan.Updated))
 	for _, p := range plan.Updated {
-		b.WriteString(fmt.Sprintf("  - `%s`\n", p))
+		fmt.Fprintf(&b, "  - `%s`\n", p)
 	}
-	b.WriteString(fmt.Sprintf("- Removed: %d\n", len(plan.Removed)))
+	fmt.Fprintf(&b, "- Removed: %d\n", len(plan.Removed))
 	for _, p := range plan.Removed {
-		b.WriteString(fmt.Sprintf("  - `%s`\n", p))
+		fmt.Fprintf(&b, "  - `%s`\n", p)
 	}
 	return b.String()
 }

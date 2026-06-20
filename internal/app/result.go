@@ -123,13 +123,13 @@ func ReportSyncRequired(result *Result) {
 	} else {
 		summary = "TaskOtter synced taskfile changes but did not return a pull request URL."
 	}
-	fmt.Fprintf(os.Stderr, "::error title=TaskOtter sync required::%s Merge the sync pull request to update taskfiles, then re-run this workflow.\n", summary)
-	fmt.Fprintln(os.Stderr, "::notice title=What happened::TaskOtter compared managed files with the store and found drift. This job fails intentionally until the sync PR is merged.")
+	_, _ = fmt.Fprintf(os.Stderr, "::error title=TaskOtter sync required::%s Merge the sync pull request to update taskfiles, then re-run this workflow.\n", summary)
+	_, _ = fmt.Fprintln(os.Stderr, "::notice title=What happened::TaskOtter compared managed files with the store and found drift. This job fails intentionally until the sync PR is merged.")
 }
 
 func ReportSyncUpToDate(result *Result) {
-	fmt.Fprintf(os.Stdout, "::notice title=TaskOtter sync up to date::Managed taskfiles match the store. No sync pull request was created.\n")
-	fmt.Fprintf(os.Stdout, "Store source SHA: %s\n", result.SourceSHA)
+	_, _ = fmt.Fprintf(os.Stdout, "::notice title=TaskOtter sync up to date::Managed taskfiles match the store. No sync pull request was created.\n")
+	_, _ = fmt.Fprintf(os.Stdout, "Store source SHA: %s\n", result.SourceSHA)
 }
 
 func WriteActionOutputs(cfg *config.Config, result *Result) error {
@@ -153,7 +153,7 @@ func WriteActionOutputs(cfg *config.Config, result *Result) error {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		fmt.Fprintf(os.Stdout, "%s=%s\n", k, values[k])
+		_, _ = fmt.Fprintf(os.Stdout, "%s=%s\n", k, values[k])
 	}
 	return nil
 }

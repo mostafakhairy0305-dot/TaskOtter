@@ -1,0 +1,36 @@
+---
+version: '2'
+run:
+  timeout: 10m
+linters:
+  default: all
+  disable: [wsl, gomodguard]
+  settings:
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: ^log$
+              desc: use log/slog instead
+            - pkg: ^fmt$
+              desc: use fmt in development, but not in production code
+    ireturn:
+      allow: [anon, empty, error, generic, stdlib]
+    exhaustruct:
+      exclude:
+        - ^github\.com/aws/aws-sdk-go-v2/.*$
+        - ^github\.com/gorilla/websocket\.Upgrader$
+        - ^net/url\.URL$
+        - ^github\.com/mostafa-khairy-zofirm/tracker-server/internal/infrastructure/cache\.Config$
+  exclusions:
+    paths: [.*\.pb\.go]
+    rules:
+      - path: _test\.go
+        linters: [gosec, bodyclose, noctx, errcheck, wrapcheck, funlen]
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

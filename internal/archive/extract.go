@@ -33,7 +33,7 @@ func ExtractTarGz(reader io.Reader, destDir string) (string, error) {
 	if err != nil {
 		return "", &ExtractError{Message: fmt.Sprintf("invalid gzip archive: %v", err)}
 	}
-	defer gz.Close()
+	defer func() { _ = gz.Close() }()
 
 	tr := tar.NewReader(gz)
 	var total int64
@@ -87,7 +87,7 @@ func ExtractTarGz(reader io.Reader, destDir string) (string, error) {
 			if err := os.MkdirAll(target, 0o755); err != nil {
 				return "", err
 			}
-		case tar.TypeReg, tar.TypeRegA:
+		case tar.TypeReg:
 			if header.Size > MaxFileBytes {
 				return "", &ExtractError{Message: fmt.Sprintf("file %q exceeds size limit", header.Name)}
 			}
@@ -163,18 +163,20 @@ func writeRegularFile(path string, r io.Reader, size int64, mode int64) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	limited := io.LimitReader(r, MaxFileBytes+1)
 	written, err := io.Copy(f, limited)
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 	if written > MaxFileBytes {
+		_ = f.Close()
 		return &ExtractError{Message: fmt.Sprintf("file %q exceeds size limit during copy", path)}
 	}
 	if size >= 0 && written != size {
+		_ = f.Close()
 		return &ExtractError{Message: fmt.Sprintf("short read for %q", path)}
 	}
-	return nil
+	return f.Close()
 }

@@ -45,6 +45,7 @@ func (m *mockGitOps) CheckoutBranch(context.Context, string, bool) error { retur
 func (m *mockGitOps) BranchExists(context.Context, string) (bool, error) {
 	return false, nil
 }
+
 func (m *mockGitOps) LastCommitMessage(context.Context, string) (string, error) {
 	return "", nil
 }
@@ -73,6 +74,7 @@ func (m *mockPR) FindOpenPR(_ context.Context, branch, base string) (*gh.PullReq
 	m.lastBase = base
 	return m.find, nil
 }
+
 func (m *mockPR) CreatePR(_ context.Context, branch, base, _ string) (*gh.PullRequest, error) {
 	m.createdBase = base
 	if m.create != nil {
@@ -80,6 +82,7 @@ func (m *mockPR) CreatePR(_ context.Context, branch, base, _ string) (*gh.PullRe
 	}
 	return &gh.PullRequest{Number: 99, URL: "https://example/pr/99"}, nil
 }
+
 func (m *mockPR) UpdatePRBody(context.Context, int, string) error {
 	m.updated++
 	return nil
@@ -231,5 +234,7 @@ func TestNewOrchestratorInvalidRepository(t *testing.T) {
 	}
 }
 
-var _ git.GitOps = (*mockGitOps)(nil)
-var _ gh.PRClient = (*mockPR)(nil)
+var (
+	_ git.GitOps  = (*mockGitOps)(nil)
+	_ gh.PRClient = (*mockPR)(nil)
+)

@@ -1,11 +1,10 @@
+---
 name: TaskOtter Sync
 description: Synchronize taskfiles from the TaskOtter store into your repository.
 author: mostafakhairy0305-dot
-
 branding:
   icon: package
   color: blue
-
 inputs:
   tasks:
     description: Comma-separated or multiline list of logical task names.
@@ -17,15 +16,15 @@ inputs:
       When runtime is nodejs: package-manager npm | yarn | pnpm (default npm),
       version-manager fnm | nvm (default fnm).
     required: false
-    default: ""
+    default: ''
   includes-doc:
     description: Whether to copy module documentation (README.md and docs/).
     required: false
-    default: "true"
+    default: 'true'
   store-version:
     description: Specific Git tag from the store. Empty uses the default branch HEAD.
     required: false
-    default: ""
+    default: ''
   target-folder:
     description: Repository-relative destination directory for synchronized modules.
     required: false
@@ -38,13 +37,13 @@ inputs:
       When true, exit with a failure after opening or updating a sync pull request.
       Use in CI jobs that should block until the sync PR is merged.
     required: false
-    default: "false"
-
+    default: 'false'
 outputs:
   changed:
     description: Whether repository changes were generated.
   store-version:
-    description: Requested store tag, or empty when the latest default branch was used.
+    description: Requested store tag, or empty when the latest default branch was
+      used.
   source-ref:
     description: Resolved source reference (refs/tags/... or refs/heads/...).
   source-sha:
@@ -59,7 +58,6 @@ outputs:
     description: Created or updated pull request number.
   pull-request-url:
     description: Created or updated pull request URL.
-
 runs:
   using: docker
   image: Dockerfile
