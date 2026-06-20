@@ -42,6 +42,14 @@ jobs:
           echo "Changed: ${{ steps.taskotter.outputs.changed }}"
           echo "Source SHA: ${{ steps.taskotter.outputs.source-sha }}"
           echo "Pull request: ${{ steps.taskotter.outputs.pull-request-url }}"
+
+      - name: Fail if sync created a pull request
+        if: steps.taskotter.outputs.changed == 'true'
+        shell: bash
+        run: |
+          echo "TaskOtter synced changes and created or updated a pull request."
+          echo "Pull request: ${{ steps.taskotter.outputs.pull-request-url }}"
+          exit 1
   test:
     runs-on: ubuntu-latest
     needs: itself
