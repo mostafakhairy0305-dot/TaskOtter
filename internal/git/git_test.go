@@ -119,6 +119,40 @@ func TestDefaultBranchDirectRef(t *testing.T) {
 	}
 }
 
+func TestStageForceAddsGitignoredMetadata(t *testing.T) {
+	root := t.TempDir()
+	cloneDir := filepath.Join(root, "clone")
+	if err := os.MkdirAll(cloneDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, cloneDir, "init", "-b", "main")
+	runGit(t, cloneDir, "config", "user.email", "test@test.com")
+	runGit(t, cloneDir, "config", "user.name", "Test")
+	if err := os.WriteFile(filepath.Join(cloneDir, ".gitignore"), []byte(".taskotter/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(cloneDir, ".taskotter"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(cloneDir, ".taskotter/metadata.yml"), []byte("target_folder: taskfiles\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(cloneDir, "README.md"), []byte("init\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, cloneDir, "add", "README.md", ".gitignore")
+	runGit(t, cloneDir, "commit", "-m", "init")
+
+	client := git.NewClient(cloneDir)
+	if err := client.Stage(context.Background(), []string{".taskotter/metadata.yml"}); err != nil {
+		t.Fatal(err)
+	}
+	out := runGit(t, cloneDir, "status", "--porcelain")
+	if !strings.Contains(out, ".taskotter/metadata.yml") {
+		t.Fatalf("expected staged metadata, got status:\n%s", out)
+	}
+}
+
 func TestEnsureBranchOwnedAllowsNewBranch(t *testing.T) {
 	if err := git.EnsureBranchOwned(context.Background(), &mockGitOps{branchExists: false}, "taskotter/sync-abc"); err != nil {
 		t.Fatal(err)

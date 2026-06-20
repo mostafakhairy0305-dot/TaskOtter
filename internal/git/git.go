@@ -174,7 +174,7 @@ func (c *Client) Stage(ctx context.Context, paths []string) error {
 	if len(paths) == 0 {
 		return nil
 	}
-	args := append([]string{"add", "--"}, paths...)
+	args := append([]string{"add", "-f", "--"}, paths...)
 	return c.run(ctx, args...)
 }
 
