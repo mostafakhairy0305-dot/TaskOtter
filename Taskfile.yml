@@ -1,0 +1,14 @@
+version: "3"
+includes:
+    go:
+        taskfile: taskfiles/go/Taskfile.yml
+    hadolint:
+        taskfile: taskfiles/hadolint/Taskfile.yml
+    yamllint:
+        taskfile: taskfiles/yamllint/Taskfile.yml
+    actionlint:
+        taskfile: taskfiles/actionlint/Taskfile.yml
+    zizmor:
+        taskfile: taskfiles/zizmor/Taskfile.yml
+    gh:
+        taskfile: taskfiles/gh/Taskfile.yml
