@@ -29,49 +29,36 @@ includes:
                       gobin="${gopath:-$HOME/go}/bin"
                     fi
                     printf '%s' "$gobin"
-    hadolint:
-        taskfile: taskfiles/hadolint/Taskfile.yml
+    eslint:
+        taskfile: taskfiles/eslint/Taskfile.yml
         vars:
-            CONFIG: ""
-            DOCKERFILE: "Dockerfile"
-            EXTRA_ARGS: ""
-            HADOLINT_VERSION: "2.14.0"
-    yamllint:
-        taskfile: taskfiles/yamllint/Taskfile.yml
-        vars:
-            UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
-            TARGETS: "."
-            CONFIG: ""
-            EXTRA_ARGS: ""
-            YAMLLINT_VERSION: ""
-            YAMLFIX_VERSION: ""
-    actionlint:
-        taskfile: taskfiles/actionlint/Taskfile.yml
-        vars:
-            ACTIONLINT_VERSION: "1.7.12"
-            EXTRA_ARGS: ""
             TARGETS: ""
-    zizmor:
-        taskfile: taskfiles/zizmor/Taskfile.yml
-        vars:
-            # NOTE: Keep EXTRA_ARGS empty here. Task v3 merges included Taskfiles'
-            # file-level vars into one shared scope, so a non-empty default would leak
-            # into sibling includes (buf, hadolint, ...) and get passed as a bogus flag.
-            # The offline default lives in the namespaced ZIZMOR_EXTRA_ARGS instead.
+            ESLINT_DEFAULT_TARGETS: "src/**/*.{js,jsx,ts,tsx}"
+            CONFIG: ""
+            CACHE: ""
+            ESLINT_DEFAULT_CACHE: "true"
             EXTRA_ARGS: ""
-            ZIZMOR_EXTRA_ARGS: "--offline"
-            TARGETS: ".github"
-            ZIZMOR_VERSION: "1.25.2"
-    gh:
-        taskfile: taskfiles/gh/Taskfile.yml
+            VERSION: ""
+    prettier:
+        taskfile: taskfiles/prettier/Taskfile.yml
         vars:
-            VISIBILITY: "public"
-            BASE: "main"
-            MERGE_METHOD: "merge"
-            CLONE_DIR: "."
-            DOWNLOAD_DIR: "."
-            DATA: "{}"
-            PAT_TOKEN: ""
+            TARGETS: ""
+            PRETTIER_DEFAULT_TARGETS: "."
+            CONFIG: ""
+            IGNORE_PATH: ""
+            PRETTIER_DEFAULT_IGNORE_PATH: ".prettierignore"
+            EXTRA_ARGS: ""
+            VERSION: ""
+    typescript:
+        taskfile: taskfiles/typescript/Taskfile.yml
+        vars:
+            FILE: src/index.ts
+            OUTFILE: dist/index.js
+            OUT_DIR: dist
+            TSCONFIG: tsconfig.json
+            TSX_FLAGS: ""
+            TSC_FLAGS: ""
+            TRACE_DIR: .tsc-trace
             VERSION: ""
 tasks:
     lint:
