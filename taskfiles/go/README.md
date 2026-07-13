@@ -127,10 +127,30 @@ task go:install:gofumpt GOFUMPT_VERSION=v0.8.0
 task go:install:goimports GOIMPORTS_VERSION=v0.36.0
 task go:install:govulncheck GOVULNCHECK_VERSION=v1.1.4
 task go:install:gosec GOSEC_VERSION=v2.22.7
+task go:install:spm-go SPM_GO_VERSION=v1.4.0
 ```
 
 An empty tool version defaults to `latest`. Supplying a tool version forces its
 installer to run even when the executable already exists.
+
+## Package metrics (spm-go)
+
+[`spm-go`](https://github.com/fdaines/spm-go) reports package-level metrics for
+the Go module in the current directory. Each command has its own task, and any
+spm-go flags (`--format json|console|csv`, `--verbose`, `--html`,
+`--main-package`) are passed after `--`:
+
+```sh
+task go:spm-go:packages
+task go:spm-go:dependencies -- --verbose
+task go:spm-go:all -- --format json --html
+task go:spm-go:instability
+task go:spm-go:abstractness
+task go:spm-go:distance
+```
+
+Each task auto-installs spm-go via `go install github.com/fdaines/spm-go`. These
+metrics are informational, so they are not part of the aggregate `lint` task.
 
 ## Public Tasks
 
@@ -146,6 +166,7 @@ installer to run even when the executable already exists.
 | `install:goimports`         | Install goimports into the global Go bin               | `GLOBAL_GO_BIN`, `GOIMPORTS_VERSION` |
 | `install:govulncheck`       | Install govulncheck into the global Go bin             | `GLOBAL_GO_BIN`, `GOVULNCHECK_VERSION` |
 | `install:gosec`             | Install gosec into the global Go bin                   | `GLOBAL_GO_BIN`, `GOSEC_VERSION` |
+| `install:spm-go`            | Install spm-go into the global Go bin                  | `GLOBAL_GO_BIN`, `SPM_GO_VERSION` |
 | `lint`                      | Run all Go lint and security checks                    | none               |
 | `lint:fix`                  | Auto-fix Go lint and formatting issues                 | none               |
 | `golangci-lint:lint`        | Lint all Go packages with golangci-lint                | none               |
@@ -155,6 +176,12 @@ installer to run even when the executable already exists.
 | `goimports:lint`            | Check Go imports with goimports                        | none               |
 | `govulncheck:lint`          | Scan Go packages for known vulnerabilities             | none               |
 | `gosec:lint`                | Scan Go packages for security issues                   | none               |
+| `spm-go:packages`           | List packages and file counts with spm-go              | none               |
+| `spm-go:dependencies`       | List package dependencies with spm-go                  | none               |
+| `spm-go:instability`        | Analyze package instability with spm-go                | none               |
+| `spm-go:abstractness`       | Analyze package abstractness with spm-go               | none               |
+| `spm-go:distance`           | Analyze distance from the main sequence with spm-go    | none               |
+| `spm-go:all`                | Display all spm-go metrics for each package            | none               |
 | `upgrade`                   | Upgrade Go to the selected or latest stable release    | `INSTALL_DIR_UNIX`, `GO_VERSION` |
 | `version`                   | Show the installed Go version                          | none               |
 | `which`                     | Show the path to the Go binary                         | none               |
@@ -176,6 +203,7 @@ installer to run even when the executable already exists.
 | `GOIMPORTS_VERSION`    | empty (`latest`)                | Optional goimports module version                                     |
 | `GOVULNCHECK_VERSION`  | empty (`latest`)                | Optional govulncheck module version                                   |
 | `GOSEC_VERSION`        | empty (`latest`)                | Optional gosec module version                                         |
+| `SPM_GO_VERSION`       | empty (`latest`)                | Optional spm-go module version                                        |
 | `GLOBAL_GO_BIN`        | `GOBIN` or `GOPATH/bin`         | Destination and lookup directory for installed Go development tools   |
 
 ## Notes

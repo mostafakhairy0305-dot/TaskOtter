@@ -2,132 +2,130 @@ source:
     repository: mostafakhairy0305-dot/TaskOtter-store
     requested_version: ""
     source_ref: refs/heads/main
-    resolved_commit: 17ce3d40f6c7a46a8053c79c320b8f905eed5280
+    resolved_commit: 761fe2915f5c0527a20bbbf8159e9aa3b1e201a7
     default_branch: main
 configuration:
     target_folder: taskfiles
     tasks:
+        - eslint
+        - prettier
+        - typescript
         - go
-        - hadolint
-        - yamllint
-        - actionlint
-        - zizmor
-        - gh
-    node_package_manager: bun
-    node_version_manager: ""
+    node_package_manager: pnpm
+    node_version_manager: fnm
     includes_doc: true
     sync_root: true
 resolved_modules:
     requested:
-        actionlint:
-            source_module: actionlint
-            destination_module: actionlint
-            path: taskfiles/actionlint
-        gh:
-            source_module: gh
-            destination_module: gh
-            path: taskfiles/gh
+        eslint:
+            source_module: eslint-pnpm-fnm
+            destination_module: eslint
+            path: taskfiles/eslint
         go:
             source_module: go
             destination_module: go
             path: taskfiles/go
-        hadolint:
-            source_module: hadolint
-            destination_module: hadolint
-            path: taskfiles/hadolint
-        yamllint:
-            source_module: yamllint
-            destination_module: yamllint
-            path: taskfiles/yamllint
-        zizmor:
-            source_module: zizmor
-            destination_module: zizmor
-            path: taskfiles/zizmor
+        prettier:
+            source_module: prettier-pnpm-fnm
+            destination_module: prettier
+            path: taskfiles/prettier
+        typescript:
+            source_module: typescript-pnpm-fnm
+            destination_module: typescript
+            path: taskfiles/typescript
     dependencies:
-        - source_module: jq
-          destination_module: jq
-          path: taskfiles/jq
-        - source_module: uv
-          destination_module: uv
-          path: taskfiles/uv
+        - source_module: corepack-fnm
+          destination_module: corepack
+          path: taskfiles/corepack
+        - source_module: fnm
+          destination_module: fnm
+          path: taskfiles/fnm
+        - source_module: pnpm-fnm
+          destination_module: pnpm
+          path: taskfiles/pnpm
 managed_files:
-    - source_module: actionlint
-      destination_module: actionlint
-      source_path: taskfiles/actionlint/README.md
-      path: taskfiles/actionlint/README.md
-      sha256: 39cbde1cfea24597cb997c550e136b6b02faaedd88e0e3c840905108b411e338
-    - source_module: actionlint
-      destination_module: actionlint
-      source_path: taskfiles/actionlint/Taskfile.yml
-      path: taskfiles/actionlint/Taskfile.yml
-      sha256: 082f9cde9e91197e55599b4ea272b81bac618e5dcda50559d4946886dec9d2d1
-    - source_module: gh
-      destination_module: gh
-      source_path: taskfiles/gh/README.md
-      path: taskfiles/gh/README.md
-      sha256: ffc2dbb74dd12cac167fa38877dab0d2ca6bb7b75ac49255ca5422ce2cfd10ff
-    - source_module: gh
-      destination_module: gh
-      source_path: taskfiles/gh/Taskfile.yml
-      path: taskfiles/gh/Taskfile.yml
-      sha256: 658414ba9ed7da489dfa2bb121c7776567e4305884af2b16d54b079586f87024
+    - source_module: corepack-fnm
+      destination_module: corepack
+      source_path: taskfiles/corepack-fnm/README.md
+      path: taskfiles/corepack/README.md
+      sha256: 2faf6562ae3c941d297fa8b2e110e692327a66e3fc82fc8df1459188c30f66db
+    - source_module: corepack-fnm
+      destination_module: corepack
+      source_path: taskfiles/corepack-fnm/Taskfile.yml
+      path: taskfiles/corepack/Taskfile.yml
+      sha256: 09d84952d7f780ecdb15dbb4d23b1523c6c792360cbfef92f84b2479ecc5f78c
+    - source_module: corepack-fnm
+      destination_module: corepack
+      source_path: taskfiles/corepack-fnm/package.json
+      path: taskfiles/corepack/package.json
+      sha256: 86063995cc8c95a047d6a60737e57922bc4fbe77989a6bf4b4f2e4cfceb8a548
+    - source_module: eslint-pnpm-fnm
+      destination_module: eslint
+      source_path: taskfiles/eslint-pnpm-fnm/README.md
+      path: taskfiles/eslint/README.md
+      sha256: e948594d619913b1bb55719445ad06b65859e07f250c6599268462033725653f
+    - source_module: eslint-pnpm-fnm
+      destination_module: eslint
+      source_path: taskfiles/eslint-pnpm-fnm/Taskfile.yml
+      path: taskfiles/eslint/Taskfile.yml
+      sha256: ea9ef01ed2e7b14e7a835b193e23fc90a2f40b5e2503f74c520b8cdb8283bf00
+    - source_module: fnm
+      destination_module: fnm
+      source_path: taskfiles/fnm/README.md
+      path: taskfiles/fnm/README.md
+      sha256: e5f273fc6bc5b18f250791da8294cdfbf18402e17764c6a7cbdd6d5baaf1cbc8
+    - source_module: fnm
+      destination_module: fnm
+      source_path: taskfiles/fnm/Taskfile.yml
+      path: taskfiles/fnm/Taskfile.yml
+      sha256: d3eb467e39afc81b2c0c926ca69fbe7d9d8f9549bd4b6589e83bb4cf3b40e2dc
     - source_module: go
       destination_module: go
       source_path: taskfiles/go/README.md
       path: taskfiles/go/README.md
-      sha256: 6a969aa03a65c7edae020f49de241fb7e385a44a6c52c2ae1ebbc4e111daec38
+      sha256: 8286280ae593972209ad192594b4dc45bf4e999ace5fb9c4bbc99cf8f1f89912
     - source_module: go
       destination_module: go
       source_path: taskfiles/go/Taskfile.yml
       path: taskfiles/go/Taskfile.yml
-      sha256: 12b18ea566544810e361c2e29f1d4ae1400bca29e6b4ce643b652e8897f98397
-    - source_module: hadolint
-      destination_module: hadolint
-      source_path: taskfiles/hadolint/README.md
-      path: taskfiles/hadolint/README.md
-      sha256: 827274cf089c5aa2a65181951482810072c6a56a9d693b3b5a7b7591e5415259
-    - source_module: hadolint
-      destination_module: hadolint
-      source_path: taskfiles/hadolint/Taskfile.yml
-      path: taskfiles/hadolint/Taskfile.yml
-      sha256: 8b6248c070f089d7799d0d4833644e307bd3fb2e45378bfbed54b6b5e65c1b0c
-    - source_module: jq
-      destination_module: jq
-      source_path: taskfiles/jq/README.md
-      path: taskfiles/jq/README.md
-      sha256: 8405eb6db5cdeec80e6f5c7cec989194ceb4175a3625f0bdd6a8d446ae3fc708
-    - source_module: jq
-      destination_module: jq
-      source_path: taskfiles/jq/Taskfile.yml
-      path: taskfiles/jq/Taskfile.yml
-      sha256: 1b29d2b6a65874e4226ed16056a106eb6ab5e6d11bb2390c1e26ed0df599af38
-    - source_module: uv
-      destination_module: uv
-      source_path: taskfiles/uv/README.md
-      path: taskfiles/uv/README.md
-      sha256: 1a560a13bd56ff284cf3f13d0041543f5652eda5a12b5f9c4b5cd90199e375d7
-    - source_module: uv
-      destination_module: uv
-      source_path: taskfiles/uv/Taskfile.yml
-      path: taskfiles/uv/Taskfile.yml
-      sha256: 6512d6fa37ef276f8dcff287b60d3b98a93fdbd176b3b9d06fae083b90e9fd38
-    - source_module: yamllint
-      destination_module: yamllint
-      source_path: taskfiles/yamllint/README.md
-      path: taskfiles/yamllint/README.md
-      sha256: ecabb202284e3b14d9f4d023d6ec6294938f174593db6bad06bfa070f78a321b
-    - source_module: yamllint
-      destination_module: yamllint
-      source_path: taskfiles/yamllint/Taskfile.yml
-      path: taskfiles/yamllint/Taskfile.yml
-      sha256: 3fb4c763b7600e5c018f7ad3e55137a5b3cc208512c25217a5034d038a9bf509
-    - source_module: zizmor
-      destination_module: zizmor
-      source_path: taskfiles/zizmor/README.md
-      path: taskfiles/zizmor/README.md
-      sha256: eebd4e956e9217de172fa60fde263d36eb81225a73659e88c2651f831ab74b2e
-    - source_module: zizmor
-      destination_module: zizmor
-      source_path: taskfiles/zizmor/Taskfile.yml
-      path: taskfiles/zizmor/Taskfile.yml
-      sha256: 32ceef94048e24d1ff5addf805d9e6deafd9c2fadec1b98c30c85beb678df7c3
+      sha256: 45d795203bfd474354a7e67c4a872dc3c767a2f0dc506c8534f6185e7021d4a9
+    - source_module: pnpm-fnm
+      destination_module: pnpm
+      source_path: taskfiles/pnpm-fnm/README.md
+      path: taskfiles/pnpm/README.md
+      sha256: d3047583a957d78349988fe604321422fd9f06f464ce723ce23d616227e1fa6d
+    - source_module: pnpm-fnm
+      destination_module: pnpm
+      source_path: taskfiles/pnpm-fnm/Taskfile.yml
+      path: taskfiles/pnpm/Taskfile.yml
+      sha256: 3ea2aa3ea2c6561b2e1d71e1767c40c1f0bdc1350332e85eb42272aa59439c0c
+    - source_module: pnpm-fnm
+      destination_module: pnpm
+      source_path: taskfiles/pnpm-fnm/package.json
+      path: taskfiles/pnpm/package.json
+      sha256: aa7865cb9acb01417865ca73bf54ceccc3882c75e5673f2e99e83d05698a7f5f
+    - source_module: pnpm-fnm
+      destination_module: pnpm
+      source_path: taskfiles/pnpm-fnm/pnpm-lock.yaml
+      path: taskfiles/pnpm/pnpm-lock.yaml
+      sha256: 8c0792605915ff6a60653d54868ee6362ecb3a8f79b09b1c2c7691c685ed4477
+    - source_module: prettier-pnpm-fnm
+      destination_module: prettier
+      source_path: taskfiles/prettier-pnpm-fnm/README.md
+      path: taskfiles/prettier/README.md
+      sha256: 9c03c6e3e9885bc4444e3d111fa270d76224604dbdbdc50c968fb513da35b871
+    - source_module: prettier-pnpm-fnm
+      destination_module: prettier
+      source_path: taskfiles/prettier-pnpm-fnm/Taskfile.yml
+      path: taskfiles/prettier/Taskfile.yml
+      sha256: 2765f093178e6bd2004d9e1d1288cfd5d0251c1de60a2f75b652e9a96a9ded7a
+    - source_module: typescript-pnpm-fnm
+      destination_module: typescript
+      source_path: taskfiles/typescript-pnpm-fnm/README.md
+      path: taskfiles/typescript/README.md
+      sha256: d364a9934c297cd4500cdb6d5c92228fdceedb725aafaa2b00ede400fce91d88
+    - source_module: typescript-pnpm-fnm
+      destination_module: typescript
+      source_path: taskfiles/typescript-pnpm-fnm/Taskfile.yml
+      path: taskfiles/typescript/Taskfile.yml
+      sha256: 4ae6f5f278b46f076da4c009c78331c554acd7475a7d394a894899863d12bfe0
