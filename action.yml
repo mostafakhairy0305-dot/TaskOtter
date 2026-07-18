@@ -33,6 +33,13 @@ inputs:
     description: Repository-relative destination directory for synchronized modules.
     required: false
     default: taskfiles
+  root-taskfile:
+    description: |
+      Repository-relative path for the generated aggregator Taskfile. Defaults to
+      <target-folder>/Taskfile.yml. Include paths are rewritten relative to this
+      file's directory.
+    required: false
+    default: ''
   github-token:
     description: Token used to push the sync branch and create or update a pull request.
     required: true

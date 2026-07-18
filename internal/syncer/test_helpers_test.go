@@ -45,6 +45,7 @@ func testConfig(workspace string, mutate func(*config.Config)) *config.Config {
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       config.DefaultTargetFolder,
+		RootTaskfile:       "Taskfile.yml",
 		GitHubToken:        "",
 		Workspace:          workspace,
 		Repository:         "",

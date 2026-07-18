@@ -83,6 +83,10 @@ func TestLoadFromEnvDefaults(t *testing.T) {
 		t.Fatalf("TargetFolder = %q, want taskfiles", cfg.TargetFolder)
 	}
 
+	if cfg.RootTaskfile != "taskfiles/Taskfile.yml" {
+		t.Fatalf("RootTaskfile = %q, want taskfiles/Taskfile.yml", cfg.RootTaskfile)
+	}
+
 	if !cfg.IncludesDoc {
 		t.Fatal("IncludesDoc should default to true")
 	}
@@ -93,6 +97,50 @@ func TestLoadFromEnvDefaults(t *testing.T) {
 
 	if len(cfg.Tasks) != 1 || cfg.Tasks[0] != "go" {
 		t.Fatalf("Tasks = %#v", cfg.Tasks)
+	}
+}
+
+func TestRootTaskfileCustomPath(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_ROOT_TASKFILE"] = "build/Taskfile.yml"
+	setEnv(t, env)
+
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+
+	if cfg.RootTaskfile != "build/Taskfile.yml" {
+		t.Fatalf("RootTaskfile = %q, want build/Taskfile.yml", cfg.RootTaskfile)
+	}
+}
+
+func TestRootTaskfileFollowsTargetFolder(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_TARGET_FOLDER"] = "tools/tasks"
+	setEnv(t, env)
+
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+
+	if cfg.RootTaskfile != "tools/tasks/Taskfile.yml" {
+		t.Fatalf("RootTaskfile = %q, want tools/tasks/Taskfile.yml", cfg.RootTaskfile)
+	}
+}
+
+func TestRootTaskfileMustBeYAML(t *testing.T) {
+	dir := t.TempDir()
+	env := baseEnv(dir)
+	env["INPUT_ROOT_TASKFILE"] = "build/Taskfile.txt"
+	setEnv(t, env)
+
+	_, err := config.LoadFromEnv()
+	if err == nil {
+		t.Fatal("expected error for non-YAML root-taskfile path")
 	}
 }
 

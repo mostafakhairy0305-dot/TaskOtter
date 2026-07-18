@@ -63,20 +63,21 @@ type FileEntry struct {
 
 // Plan describes the sync diff and generated artifacts for one run.
 type Plan struct {
-	Requested       map[string]ModuleRecord
-	Dependencies    []ModuleRecord
-	ManagedFiles    []ManagedFile
-	ModuleContents  map[string]map[string]FileEntry
-	RootTaskfile    []byte
-	Lock            LockFile
-	Metadata        Metadata
-	Added           []string
-	Updated         []string
-	Removed         []string
-	Changed         bool
-	OldLock         *LockFile
-	OldTargetFolder string
-	StagePaths      []string
+	Requested        map[string]ModuleRecord
+	Dependencies     []ModuleRecord
+	ManagedFiles     []ManagedFile
+	ModuleContents   map[string]map[string]FileEntry
+	RootTaskfile     []byte
+	RootTaskfilePath string
+	Lock             LockFile
+	Metadata         Metadata
+	Added            []string
+	Updated          []string
+	Removed          []string
+	Changed          bool
+	OldLock          *LockFile
+	OldTargetFolder  string
+	StagePaths       []string
 }
 
 // SyncInput is the resolved store snapshot and module mapping for BuildPlan.

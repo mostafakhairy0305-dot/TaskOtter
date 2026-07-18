@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/app"
@@ -59,6 +60,7 @@ includes: {}
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       "taskfiles",
+		RootTaskfile:       "taskfiles/Taskfile.yml",
 		GitHubToken:        "",
 		Workspace:          workspace,
 		Repository:         "",
@@ -87,5 +89,21 @@ includes: {}
 	_, err = os.Stat(filepath.Join(workspace, "taskfiles/go/Taskfile.yml"))
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	// The aggregator Taskfile lands inside the target folder (default
+	// <target-folder>/Taskfile.yml) and references modules with folder-relative
+	// include paths rather than repeating the target folder prefix.
+	rootData, err := os.ReadFile(filepath.Join(workspace, "taskfiles/Taskfile.yml"))
+	if err != nil {
+		t.Fatalf("aggregator Taskfile not written to target folder: %v", err)
+	}
+
+	if !strings.Contains(string(rootData), "taskfile: go/Taskfile.yml") {
+		t.Fatalf("expected folder-relative include, got:\n%s", rootData)
+	}
+
+	if strings.Contains(string(rootData), "taskfiles/go/Taskfile.yml") {
+		t.Fatalf("include should not repeat the target folder, got:\n%s", rootData)
 	}
 }

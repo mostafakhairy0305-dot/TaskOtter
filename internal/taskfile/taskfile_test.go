@@ -48,10 +48,11 @@ func TestUpdateRootTaskfileFromTemplate(t *testing.T) {
 	t.Parallel()
 
 	out, err := taskfile.UpdateRootTaskfile(taskfile.NewRootTemplate(), taskfile.RootUpdateInput{
-		Tasks:        []string{"go"},
-		TargetFolder: targetFolderTaskfiles,
-		DestByTask:   map[string]string{"go": "go"},
-		ManagedTasks: nil,
+		Tasks:           []string{"go"},
+		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: "",
+		DestByTask:      map[string]string{"go": "go"},
+		ManagedTasks:    nil,
 		ModuleTaskfiles: map[string][]byte{
 			"go": []byte(`version: "3"
 vars:
@@ -78,6 +79,31 @@ vars:
 	}
 }
 
+func TestUpdateRootTaskfileFolderRelativeIncludes(t *testing.T) {
+	t.Parallel()
+
+	out, err := taskfile.UpdateRootTaskfile(taskfile.NewRootTemplate(), taskfile.RootUpdateInput{
+		Tasks:           []string{"go"},
+		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: targetFolderTaskfiles,
+		DestByTask:      map[string]string{"go": "go"},
+		ManagedTasks:    nil,
+		ModuleTaskfiles: nil,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	text := string(out)
+	if !strings.Contains(text, "taskfile: go/Taskfile.yml") {
+		t.Fatalf("expected folder-relative include, got: %s", text)
+	}
+
+	if strings.Contains(text, "taskfiles/go/Taskfile.yml") {
+		t.Fatalf("include should not repeat the target folder: %s", text)
+	}
+}
+
 func TestUpdateRootTaskfilePreservesExistingIncludeVars(t *testing.T) {
 	t.Parallel()
 
@@ -95,10 +121,11 @@ vars:
 `)
 
 	out, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
-		Tasks:        []string{"go"},
-		TargetFolder: targetFolderTaskfiles,
-		DestByTask:   map[string]string{"go": "go"},
-		ManagedTasks: []string{"go"},
+		Tasks:           []string{"go"},
+		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: "",
+		DestByTask:      map[string]string{"go": "go"},
+		ManagedTasks:    []string{"go"},
 		ModuleTaskfiles: map[string][]byte{
 			"go": module,
 		},
@@ -133,6 +160,7 @@ tasks:
 	out, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
 		Tasks:           []string{"go", taskESLint},
 		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: "",
 		DestByTask:      map[string]string{"go": "go", taskESLint: taskESLint},
 		ManagedTasks:    []string{},
 		ModuleTaskfiles: nil,
@@ -171,6 +199,7 @@ tasks:
 	_, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
 		Tasks:           []string{taskESLint},
 		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: "",
 		DestByTask:      map[string]string{taskESLint: taskESLint},
 		ManagedTasks:    []string{taskESLint},
 		ModuleTaskfiles: nil,
@@ -192,6 +221,7 @@ includes:
 	_, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
 		Tasks:           []string{"go"},
 		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: "",
 		DestByTask:      map[string]string{"go": "go"},
 		ManagedTasks:    []string{},
 		ModuleTaskfiles: nil,
@@ -212,6 +242,7 @@ includes:
 	_, err := taskfile.UpdateRootTaskfile(root, taskfile.RootUpdateInput{
 		Tasks:           []string{"go"},
 		TargetFolder:    targetFolderTaskfiles,
+		RootTaskfileDir: "",
 		DestByTask:      map[string]string{"go": "go"},
 		ManagedTasks:    []string{},
 		ModuleTaskfiles: nil,

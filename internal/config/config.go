@@ -103,6 +103,7 @@ type Config struct {
 	FailOnChanges      bool
 	StoreVersion       string
 	TargetFolder       string
+	RootTaskfile       string
 	GitHubToken        string
 	Workspace          string
 	Repository         string
@@ -156,6 +157,7 @@ func LoadFromEnv() (*Config, error) {
 		FailOnChanges:      parsed.failOnChanges,
 		StoreVersion:       raw.storeVersion,
 		TargetFolder:       parsed.normalizedTarget,
+		RootTaskfile:       parsed.rootTaskfile,
 		GitHubToken:        raw.token,
 		Workspace:          raw.workspace,
 		Repository:         raw.repository,
@@ -175,6 +177,7 @@ type parsedEnvInputs struct {
 	syncRoot         bool
 	failOnChanges    bool
 	normalizedTarget string
+	rootTaskfile     string
 }
 
 func parseEnvInputs(raw rawEnvConfig) (parsedEnvInputs, error) {
@@ -220,6 +223,11 @@ func parseEnvInputs(raw rawEnvConfig) (parsedEnvInputs, error) {
 		return parsedEnvInputs{}, fmt.Errorf("validate target folder: %w", err)
 	}
 
+	rootTaskfile, err := resolveRootTaskfile(raw.rootTaskfileRaw, normalizedTarget, raw.workspace)
+	if err != nil {
+		return parsedEnvInputs{}, err
+	}
+
 	return parsedEnvInputs{
 		tasks:            tasks,
 		jsRuntime:        jsRuntime,
@@ -229,7 +237,32 @@ func parseEnvInputs(raw rawEnvConfig) (parsedEnvInputs, error) {
 		syncRoot:         syncRoot,
 		failOnChanges:    failOnChanges,
 		normalizedTarget: normalizedTarget,
+		rootTaskfile:     rootTaskfile,
 	}, nil
+}
+
+// resolveRootTaskfile determines where the generated aggregator Taskfile is
+// written. When unset it defaults to <targetFolder>/Taskfile.yml; otherwise the
+// caller-provided workspace-relative path is validated and must be a YAML file.
+func resolveRootTaskfile(raw, targetFolder, workspace string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return pathutil.JoinRelative(targetFolder, "Taskfile.yml"), nil
+	}
+
+	normalized, err := pathutil.ValidateRelativePath(workspace, raw)
+	if err != nil {
+		return "", fmt.Errorf("validate root-taskfile: %w", err)
+	}
+
+	if !strings.HasSuffix(normalized, ".yml") && !strings.HasSuffix(normalized, ".yaml") {
+		return "", &ValidationError{
+			Field:   "root-taskfile",
+			Message: fmt.Sprintf("must be a .yml or .yaml file path, got %q", raw),
+		}
+	}
+
+	return normalized, nil
 }
 
 type rawEnvConfig struct {
@@ -240,6 +273,7 @@ type rawEnvConfig struct {
 	failOnChangesRaw string
 	storeVersion     string
 	targetFolderRaw  string
+	rootTaskfileRaw  string
 	token            string
 	workspace        string
 	repository       string
@@ -262,6 +296,7 @@ func loadRawEnv() rawEnvConfig {
 		failOnChangesRaw: actionInput("fail-on-changes"),
 		storeVersion:     actionInput("store-version"),
 		targetFolderRaw:  actionInput("target-folder"),
+		rootTaskfileRaw:  actionInput("root-taskfile"),
 		token:            token,
 		workspace:        os.Getenv("GITHUB_WORKSPACE"),
 		repository:       os.Getenv("GITHUB_REPOSITORY"),

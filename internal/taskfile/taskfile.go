@@ -8,11 +8,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/yamlfmt"
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	rootTemplate            = "version: \"3\"\n"
+	rootTemplate            = "---\nversion: \"3\"\n"
 	yamlMappingPairKeyValue = 2
 )
 
@@ -52,7 +53,7 @@ func RewriteIncludes(content []byte, sourceToDest map[string]string) ([]byte, er
 		rewriteIncludesNode(includesNode, sourceToDest)
 	}
 
-	out, err := yaml.Marshal(&node)
+	out, err := yamlfmt.Marshal(&node)
 	if err != nil {
 		return nil, &RewriteError{Message: fmt.Sprintf("marshal Taskfile YAML: %v", err)}
 	}
@@ -135,9 +136,29 @@ func findMappingValue(mapNode *yaml.Node, key string) *yaml.Node {
 type RootUpdateInput struct {
 	Tasks           []string
 	TargetFolder    string
+	RootTaskfileDir string
 	DestByTask      map[string]string
 	ManagedTasks    []string
 	ModuleTaskfiles map[string][]byte
+}
+
+// moduleIncludePath returns the include taskfile path for a synced module,
+// expressed relative to the directory that holds the aggregator Taskfile.
+// When the aggregator sits at the workspace root the path is workspace-relative
+// (for example taskfiles/go/Taskfile.yml); when it sits inside the target
+// folder the path collapses to the module directory (for example go/Taskfile.yml).
+func moduleIncludePath(rootDir, targetFolder, dest string) string {
+	target := filepath.ToSlash(filepath.Join(targetFolder, dest, "Taskfile.yml"))
+	if rootDir == "" || rootDir == "." {
+		return target
+	}
+
+	rel, err := filepath.Rel(filepath.FromSlash(rootDir), filepath.FromSlash(target))
+	if err != nil {
+		return target
+	}
+
+	return filepath.ToSlash(rel)
 }
 
 // UpdateRootTaskfile merges managed module includes into the root Taskfile.
@@ -165,7 +186,7 @@ func UpdateRootTaskfile(content []byte, input RootUpdateInput) ([]byte, error) {
 		return nil, err
 	}
 
-	out, err := yaml.Marshal(&node)
+	out, err := yamlfmt.Marshal(&node)
 	if err != nil {
 		return nil, fmt.Errorf("marshal root Taskfile YAML: %w", err)
 	}
@@ -236,7 +257,7 @@ func upsertManagedIncludes(
 			return &RewriteError{Message: fmt.Sprintf("missing destination for task %q", task)}
 		}
 
-		path := filepath.ToSlash(filepath.Join(input.TargetFolder, dest, "Taskfile.yml"))
+		path := moduleIncludePath(input.RootTaskfileDir, input.TargetFolder, dest)
 
 		moduleVars, err := extractVarsNode(input.ModuleTaskfiles[task])
 		if err != nil && !errors.Is(err, errNoModuleVars) {

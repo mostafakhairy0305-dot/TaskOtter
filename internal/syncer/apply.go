@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/yamlfmt"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,12 +38,12 @@ func buildStagedFiles(plan *Plan, syncInput SyncInput) ([]stagedFile, error) {
 
 	if syncInput.Config.SyncRoot {
 		staged = append(staged, stagedFile{
-			finalRel: rootTaskfileName,
+			finalRel: plan.RootTaskfilePath,
 			entry:    FileEntry{Data: plan.RootTaskfile, Mode: fileModeRegular},
 		})
 	}
 
-	lockBytes, err := yaml.Marshal(plan.Lock)
+	lockBytes, err := yamlfmt.Marshal(plan.Lock)
 	if err != nil {
 		return nil, fmt.Errorf("marshal lock file: %w", err)
 	}
@@ -52,7 +53,7 @@ func buildStagedFiles(plan *Plan, syncInput SyncInput) ([]stagedFile, error) {
 		entry:    FileEntry{Data: lockBytes, Mode: fileModeRegular},
 	})
 
-	metaBytes, err := yaml.Marshal(plan.Metadata)
+	metaBytes, err := yamlfmt.Marshal(plan.Metadata)
 	if err != nil {
 		return nil, fmt.Errorf("marshal metadata: %w", err)
 	}
@@ -97,7 +98,7 @@ func ApplyPlan(plan *Plan, syncInput SyncInput) error {
 		}
 	}
 
-	err = validateGeneratedYAML(staged)
+	err = validateGeneratedYAML(staged, plan.RootTaskfilePath)
 	if err != nil {
 		return err
 	}
@@ -119,10 +120,10 @@ func ApplyPlan(plan *Plan, syncInput SyncInput) error {
 	return removeObsolete(plan, workspace)
 }
 
-func validateGeneratedYAML(staged []stagedFile) error {
+func validateGeneratedYAML(staged []stagedFile, rootPath string) error {
 	for _, stagedEntry := range staged {
 		switch {
-		case stagedEntry.finalRel == rootTaskfileName:
+		case stagedEntry.finalRel == rootPath:
 			var node yaml.Node
 
 			err := yaml.Unmarshal(stagedEntry.entry.Data, &node)

@@ -1,6 +1,6 @@
 module github.com/mostafakhairy0305-dot/TaskOtter
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/google/go-github/v69 v69.2.0

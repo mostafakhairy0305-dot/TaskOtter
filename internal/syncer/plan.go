@@ -6,17 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/pathutil"
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/taskfile"
-	"gopkg.in/yaml.v3"
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/yamlfmt"
 )
 
 func mustMarshalMetadata(meta Metadata) []byte {
-	data, err := yaml.Marshal(meta)
+	data, err := yamlfmt.Marshal(meta)
 	if err != nil {
 		return nil
 	}
@@ -51,20 +52,21 @@ func BuildPlan(syncInput SyncInput) (*Plan, error) {
 	}
 
 	plan := &Plan{
-		Requested:       syncInput.Requested,
-		Dependencies:    syncInput.Dependencies,
-		ManagedFiles:    plannedFiles,
-		ModuleContents:  moduleContents,
-		RootTaskfile:    newRoot,
-		Lock:            lock,
-		Metadata:        meta,
-		Added:           nil,
-		Updated:         nil,
-		Removed:         nil,
-		Changed:         false,
-		OldLock:         oldLock,
-		OldTargetFolder: oldTarget,
-		StagePaths:      nil,
+		Requested:        syncInput.Requested,
+		Dependencies:     syncInput.Dependencies,
+		ManagedFiles:     plannedFiles,
+		ModuleContents:   moduleContents,
+		RootTaskfile:     newRoot,
+		RootTaskfilePath: syncInput.Config.RootTaskfile,
+		Lock:             lock,
+		Metadata:         meta,
+		Added:            nil,
+		Updated:          nil,
+		Removed:          nil,
+		Changed:          false,
+		OldLock:          oldLock,
+		OldTargetFolder:  oldTarget,
+		StagePaths:       nil,
 	}
 
 	return finalizePlanDiff(
@@ -87,7 +89,7 @@ func planRootTaskfile(
 		return nil, false, nil, nil
 	}
 
-	rootBytes, rootExisted, err := readRootTaskfile(syncInput.Config.Workspace)
+	rootBytes, rootExisted, err := readRootTaskfile(syncInput.Config.Workspace, syncInput.Config.RootTaskfile)
 	if err != nil {
 		return nil, false, nil, err
 	}
@@ -100,8 +102,8 @@ func planRootTaskfile(
 	return rootBytes, rootExisted, newRoot, nil
 }
 
-func readRootTaskfile(workspace string) ([]byte, bool, error) {
-	rootBytes, err := pathutil.ReadRelativeFile(workspace, rootTaskfileName)
+func readRootTaskfile(workspace, rootPath string) ([]byte, bool, error) {
+	rootBytes, err := pathutil.ReadRelativeFile(workspace, rootPath)
 	if err == nil {
 		return rootBytes, true, nil
 	}
@@ -139,6 +141,7 @@ func buildRootTaskfile(
 	newRoot, err := taskfile.UpdateRootTaskfile(rootBytes, taskfile.RootUpdateInput{
 		Tasks:           syncInput.Config.Tasks,
 		TargetFolder:    syncInput.Config.TargetFolder,
+		RootTaskfileDir: path.Dir(syncInput.Config.RootTaskfile),
 		DestByTask:      syncInput.DestByTask,
 		ManagedTasks:    managedTasks,
 		ModuleTaskfiles: moduleTaskfiles,
