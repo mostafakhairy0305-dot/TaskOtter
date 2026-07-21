@@ -74,7 +74,13 @@ func TestHasFolderPrefix(t *testing.T) {
 	for _, testCase := range cases {
 		got := pathutil.HasFolderPrefix(testCase.path, testCase.folder)
 		if got != testCase.want {
-			t.Fatalf("HasFolderPrefix(%q, %q) = %t, want %t", testCase.path, testCase.folder, got, testCase.want)
+			t.Fatalf(
+				"HasFolderPrefix(%q, %q) = %t, want %t",
+				testCase.path,
+				testCase.folder,
+				got,
+				testCase.want,
+			)
 		}
 	}
 }

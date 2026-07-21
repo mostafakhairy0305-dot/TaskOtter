@@ -72,7 +72,13 @@ func diffFiles(
 	}
 
 	if syncRoot {
-		added, updated = diffRootTaskfile(oldRoot, plan.RootTaskfile, plan.RootTaskfilePath, added, updated)
+		added, updated = diffRootTaskfile(
+			oldRoot,
+			plan.RootTaskfile,
+			plan.RootTaskfilePath,
+			added,
+			updated,
+		)
 	}
 
 	lockPath := plan.Metadata.LockFile
@@ -94,7 +100,10 @@ func diffFiles(
 	return added, updated, removed, nil
 }
 
-func diffManagedFilePaths(current map[string]ManagedFile, workspace string) ([]string, []string, error) {
+func diffManagedFilePaths(
+	current map[string]ManagedFile,
+	workspace string,
+) ([]string, []string, error) {
 	var added, updated []string
 
 	for path, managed := range current {
@@ -118,7 +127,11 @@ func diffManagedFilePaths(current map[string]ManagedFile, workspace string) ([]s
 	return added, updated, nil
 }
 
-func diffRootTaskfile(oldRoot, newRoot []byte, rootPath string, added, updated []string) ([]string, []string) {
+func diffRootTaskfile(
+	oldRoot, newRoot []byte,
+	rootPath string,
+	added, updated []string,
+) ([]string, []string) {
 	if bytes.Equal(oldRoot, newRoot) {
 		return added, updated
 	}
@@ -130,7 +143,11 @@ func diffRootTaskfile(oldRoot, newRoot []byte, rootPath string, added, updated [
 	return added, append(updated, rootPath)
 }
 
-func diffLockFile(plan *Plan, workspace, lockPath string, added, updated []string) ([]string, []string, error) {
+func diffLockFile(
+	plan *Plan,
+	workspace, lockPath string,
+	added, updated []string,
+) ([]string, []string, error) {
 	oldLockBytes, readErr := pathutil.ReadRelativeFile(workspace, lockPath)
 	if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
 		return nil, nil, fmt.Errorf("read lock file %q: %w", lockPath, readErr)
@@ -190,7 +207,8 @@ func buildStagePaths(plan *Plan, metadataPath string, syncRoot bool) []string {
 	paths[plan.Metadata.LockFile] = struct{}{}
 	paths[metadataPath] = struct{}{}
 
-	if plan.OldLock != nil && plan.OldTargetFolder != "" && plan.OldTargetFolder != plan.Metadata.TargetFolder {
+	if plan.OldLock != nil && plan.OldTargetFolder != "" &&
+		plan.OldTargetFolder != plan.Metadata.TargetFolder {
 		for _, managed := range plan.OldLock.ManagedFiles {
 			if pathutil.HasFolderPrefix(managed.Path, plan.OldTargetFolder) {
 				paths[managed.Path] = struct{}{}

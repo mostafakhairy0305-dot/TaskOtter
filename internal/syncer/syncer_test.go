@@ -71,7 +71,12 @@ func TestBuildPlanInitialSync(t *testing.T) {
 		cfg.IncludesDoc = true
 	})
 
-	resolutions, err := resolver.ResolveAll(cfg.Tasks, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	resolutions, err := resolver.ResolveAll(
+		cfg.Tasks,
+		snap.Catalog,
+		cfg.NodePackageManager,
+		cfg.NodeVersionManager,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +117,12 @@ func TestBuildPlanCreatesRootTaskfile(t *testing.T) {
 		cfg.IncludesDoc = true
 	})
 
-	resolutions, err := resolver.ResolveAll(cfg.Tasks, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	resolutions, err := resolver.ResolveAll(
+		cfg.Tasks,
+		snap.Catalog,
+		cfg.NodePackageManager,
+		cfg.NodeVersionManager,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,13 +160,15 @@ func containsRootTaskfile(list []string) bool {
 	return slices.Contains(list, testTaskfileName)
 }
 
-func TestUnmanagedDestinationConflict(t *testing.T) {
-	t.Parallel()
+// writeUnmanagedFile drops a file TaskOtter never wrote into the eslint
+// destination module, so planning must refuse to take it over.
+func writeUnmanagedFile(t *testing.T, workspace string) {
+	t.Helper()
 
-	workspace := t.TempDir()
-	writeRootTaskfile(t, workspace)
-
-	err := os.MkdirAll(filepath.Join(workspace, config.DefaultTargetFolder, testModuleEslint), 0o755)
+	err := os.MkdirAll(
+		filepath.Join(workspace, config.DefaultTargetFolder, testModuleEslint),
+		0o755,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,6 +181,15 @@ func TestUnmanagedDestinationConflict(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestUnmanagedDestinationConflict(t *testing.T) {
+	t.Parallel()
+
+	workspace := t.TempDir()
+	writeRootTaskfile(t, workspace)
+
+	writeUnmanagedFile(t, workspace)
 
 	snap := fixtureStore(t)
 	cfg := testConfig(workspace, func(cfg *config.Config) {
@@ -178,7 +199,12 @@ func TestUnmanagedDestinationConflict(t *testing.T) {
 		cfg.IncludesDoc = true
 	})
 
-	res, err := resolver.Resolve(testModuleEslint, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	res, err := resolver.Resolve(
+		testModuleEslint,
+		snap.Catalog,
+		cfg.NodePackageManager,
+		cfg.NodeVersionManager,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +248,12 @@ func TestIncludesDocFalseSkipsReadme(t *testing.T) {
 		cfg.IncludesDoc = false
 	})
 
-	res, err := resolver.Resolve(testModuleEslint, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	res, err := resolver.Resolve(
+		testModuleEslint,
+		snap.Catalog,
+		cfg.NodePackageManager,
+		cfg.NodeVersionManager,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

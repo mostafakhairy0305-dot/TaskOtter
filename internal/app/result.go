@@ -104,7 +104,13 @@ func buildResult(cfg *config.Config, plan *syncer.Plan, ref store.RefInfo) (*Res
 	return result, nil
 }
 
-func printSummary(log *logging.Logger, cfg *config.Config, plan *syncer.Plan, result *Result, prURL string) {
+func printSummary(
+	log *logging.Logger,
+	cfg *config.Config,
+	plan *syncer.Plan,
+	result *Result,
+	prURL string,
+) {
 	log.Printf("Requested tasks: %v", cfg.Tasks)
 
 	for _, task := range cfg.Tasks {

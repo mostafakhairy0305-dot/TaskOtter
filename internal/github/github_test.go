@@ -40,14 +40,8 @@ func TestWriteOutputsMultilineJSON(t *testing.T) {
 	}
 }
 
-func TestBuildPRBody(t *testing.T) {
-	t.Parallel()
-
-	var lock syncer.LockFile
-
-	var metadata syncer.Metadata
-
-	cfg := &config.Config{
+func prBodyConfig() *config.Config {
+	return &config.Config{
 		Tasks:              []string{taskESLint},
 		JSRuntime:          config.JSRuntimeNodeJS,
 		NodePackageManager: config.PMPnpm,
@@ -66,9 +60,23 @@ func TestBuildPRBody(t *testing.T) {
 		ConfigurationHash:  "",
 		BranchName:         "",
 	}
+}
+
+func TestBuildPRBody(t *testing.T) {
+	t.Parallel()
+
+	var lock syncer.LockFile
+
+	var metadata syncer.Metadata
+
+	cfg := prBodyConfig()
 	plan := &syncer.Plan{
 		Requested: map[string]syncer.ModuleRecord{
-			taskESLint: {SourceModule: "eslint-pnpm-fnm", DestinationModule: taskESLint, Path: "taskfiles/eslint"},
+			taskESLint: {
+				SourceModule:      "eslint-pnpm-fnm",
+				DestinationModule: taskESLint,
+				Path:              "taskfiles/eslint",
+			},
 		},
 		Dependencies: []syncer.ModuleRecord{
 			{SourceModule: "pnpm-fnm", DestinationModule: "pnpm", Path: "taskfiles/pnpm"},

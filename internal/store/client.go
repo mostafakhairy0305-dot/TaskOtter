@@ -162,7 +162,9 @@ func (c *Client) ResolveRef(ctx context.Context, requestedVersion string) (RefIn
 
 // DownloadSnapshot downloads and extracts a store archive for the given ref.
 func (c *Client) DownloadSnapshot(ctx context.Context, ref RefInfo) (*Snapshot, error) {
-	downloadURL := c.apiURL(fmt.Sprintf("/repos/%s/%s/tarball/%s", storeOwner, storeRepo, ref.ResolvedCommit))
+	downloadURL := c.apiURL(
+		fmt.Sprintf("/repos/%s/%s/tarball/%s", storeOwner, storeRepo, ref.ResolvedCommit),
+	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	if err != nil {

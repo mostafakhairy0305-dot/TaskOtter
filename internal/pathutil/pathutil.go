@@ -59,7 +59,11 @@ func ValidateTaskName(name string) error {
 	}
 
 	if strings.ContainsAny(name, "/\\") || strings.Contains(name, "..") {
-		return &PathError{Field: fieldTasks, Value: name, Message: fmt.Sprintf("unsafe task name %q", name)}
+		return &PathError{
+			Field:   fieldTasks,
+			Value:   name,
+			Message: fmt.Sprintf("unsafe task name %q", name),
+		}
 	}
 
 	if !taskNameRe.MatchString(name) {
@@ -110,24 +114,44 @@ func ValidateTargetFolder(raw, workspace string) (string, error) {
 
 func normalizeTargetFolder(raw string) (string, error) {
 	if filepath.IsAbs(raw) || strings.HasPrefix(raw, "/") || windowsAbsPath.MatchString(raw) {
-		return "", &PathError{Field: fieldTargetFolder, Value: raw, Message: "must be a relative path"}
+		return "", &PathError{
+			Field:   fieldTargetFolder,
+			Value:   raw,
+			Message: "must be a relative path",
+		}
 	}
 
 	normalized := NormalizeSlashes(raw)
 	if normalized == "" {
-		return "", &PathError{Field: fieldTargetFolder, Value: raw, Message: "must not be empty after normalization"}
+		return "", &PathError{
+			Field:   fieldTargetFolder,
+			Value:   raw,
+			Message: "must not be empty after normalization",
+		}
 	}
 
 	if slices.Contains(strings.Split(normalized, "/"), "..") {
-		return "", &PathError{Field: fieldTargetFolder, Value: raw, Message: "must not contain .. path components"}
+		return "", &PathError{
+			Field:   fieldTargetFolder,
+			Value:   raw,
+			Message: "must not contain .. path components",
+		}
 	}
 
 	if normalized == ".git" || strings.HasPrefix(normalized, ".git/") {
-		return "", &PathError{Field: fieldTargetFolder, Value: raw, Message: "must not point to .git"}
+		return "", &PathError{
+			Field:   fieldTargetFolder,
+			Value:   raw,
+			Message: "must not point to .git",
+		}
 	}
 
 	if normalized == ".github/actions" || strings.HasPrefix(normalized, ".github/actions/") {
-		return "", &PathError{Field: fieldTargetFolder, Value: raw, Message: "must not point inside .github/actions"}
+		return "", &PathError{
+			Field:   fieldTargetFolder,
+			Value:   raw,
+			Message: "must not point inside .github/actions",
+		}
 	}
 
 	return normalized, nil
@@ -142,7 +166,11 @@ func ensureTargetInsideWorkspace(evalWorkspace, normalized, raw string) error {
 	}
 
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return &PathError{Field: fieldTargetFolder, Value: raw, Message: "path resolves outside workspace"}
+		return &PathError{
+			Field:   fieldTargetFolder,
+			Value:   raw,
+			Message: "path resolves outside workspace",
+		}
 	}
 
 	return nil
@@ -165,12 +193,21 @@ func validatePathComponents(evalWorkspace, normalized, raw string) error {
 		if info.Mode()&os.ModeSymlink != 0 {
 			linkTarget, err := filepath.EvalSymlinks(current)
 			if err != nil {
-				return &PathError{Field: fieldTargetFolder, Value: raw, Message: "invalid symlink target"}
+				return &PathError{
+					Field:   fieldTargetFolder,
+					Value:   raw,
+					Message: "invalid symlink target",
+				}
 			}
 
 			linkRel, err := filepath.Rel(evalWorkspace, linkTarget)
-			if err != nil || linkRel == ".." || strings.HasPrefix(linkRel, ".."+string(os.PathSeparator)) {
-				return &PathError{Field: fieldTargetFolder, Value: raw, Message: "must not escape through symlinks"}
+			if err != nil || linkRel == ".." ||
+				strings.HasPrefix(linkRel, ".."+string(os.PathSeparator)) {
+				return &PathError{
+					Field:   fieldTargetFolder,
+					Value:   raw,
+					Message: "must not escape through symlinks",
+				}
 			}
 
 			current = linkTarget
@@ -230,7 +267,11 @@ func ValidateRelativePath(root, rel string) (string, error) {
 func normalizeRelativePath(rel string) (string, error) {
 	rel = strings.TrimSpace(rel)
 	if rel == "" {
-		return "", &PathError{Field: fieldPath, Value: rel, Message: "relative path must not be empty"}
+		return "", &PathError{
+			Field:   fieldPath,
+			Value:   rel,
+			Message: "relative path must not be empty",
+		}
 	}
 
 	if filepath.IsAbs(rel) || strings.HasPrefix(rel, "/") || windowsAbsPath.MatchString(rel) {
@@ -239,11 +280,19 @@ func normalizeRelativePath(rel string) (string, error) {
 
 	normalized := NormalizeSlashes(rel)
 	if normalized == "" {
-		return "", &PathError{Field: fieldPath, Value: rel, Message: "must not be empty after normalization"}
+		return "", &PathError{
+			Field:   fieldPath,
+			Value:   rel,
+			Message: "must not be empty after normalization",
+		}
 	}
 
 	if slices.Contains(strings.Split(normalized, "/"), "..") {
-		return "", &PathError{Field: fieldPath, Value: rel, Message: "must not contain .. path components"}
+		return "", &PathError{
+			Field:   fieldPath,
+			Value:   rel,
+			Message: "must not contain .. path components",
+		}
 	}
 
 	return normalized, nil

@@ -19,7 +19,12 @@ func preparePlan(t *testing.T, _ string, cfg *config.Config) (syncer.SyncInput, 
 	t.Helper()
 	snap := fixtureStore(t)
 
-	resolutions, err := resolver.ResolveAll(cfg.Tasks, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	resolutions, err := resolver.ResolveAll(
+		cfg.Tasks,
+		snap.Catalog,
+		cfg.NodePackageManager,
+		cfg.NodeVersionManager,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +110,11 @@ func TestApplyPlanSkipsRootTaskfileWhenDisabled(t *testing.T) {
 	syncInput, plan := preparePlan(t, workspace, cfg)
 
 	if containsRootTaskfile(plan.Added) || containsRootTaskfile(plan.Updated) {
-		t.Fatalf("root Taskfile.yml should not be in the diff: added=%v updated=%v", plan.Added, plan.Updated)
+		t.Fatalf(
+			"root Taskfile.yml should not be in the diff: added=%v updated=%v",
+			plan.Added,
+			plan.Updated,
+		)
 	}
 
 	if containsRootTaskfile(plan.StagePaths) {
@@ -142,7 +151,16 @@ func TestApplyPlanPreservesExecutableMode(t *testing.T) {
 	workspace := t.TempDir()
 	writeRootTaskfile(t, workspace)
 
-	setupPath := filepath.Join("..", "..", "tests", "fixtures", "store", "taskfiles", "go", "setup.sh")
+	setupPath := filepath.Join(
+		"..",
+		"..",
+		"tests",
+		"fixtures",
+		"store",
+		"taskfiles",
+		"go",
+		"setup.sh",
+	)
 
 	info, err := os.Stat(setupPath)
 	if err != nil {

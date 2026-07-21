@@ -222,7 +222,10 @@ func UpdateRootTaskfile(content []byte, input RootUpdateInput) ([]byte, error) {
 	return out, nil
 }
 
-func prepareIncludesNode(root *yaml.Node, input RootUpdateInput) (*yaml.Node, map[string]*yaml.Node, error) {
+func prepareIncludesNode(
+	root *yaml.Node,
+	input RootUpdateInput,
+) (*yaml.Node, map[string]*yaml.Node, error) {
 	managedSet := make(map[string]struct{}, len(input.Tasks))
 	for _, task := range input.Tasks {
 		managedSet[task] = struct{}{}
@@ -308,7 +311,12 @@ func upsertManagedIncludes(
 	return nil
 }
 
-func isManagedInclude(entry *yaml.Node, expectedPath string, managedTasks []string, task string) bool {
+func isManagedInclude(
+	entry *yaml.Node,
+	expectedPath string,
+	managedTasks []string,
+	task string,
+) bool {
 	taskfileNode := findMappingValue(entry, "taskfile")
 	if taskfileNode != nil {
 		return taskfileNode.Value == expectedPath
@@ -463,7 +471,9 @@ func appendMappingPair(mapNode *yaml.Node, key, value *yaml.Node) {
 func deleteMappingKey(mapNode *yaml.Node, key string) {
 	for idx := 0; idx < len(mapNode.Content); idx += yamlMappingPairKeyValue {
 		if mapNode.Content[idx].Value == key {
-			mapNode.Content = append(mapNode.Content[:idx], mapNode.Content[idx+yamlMappingPairKeyValue:]...)
+			mapNode.Content = append(
+				mapNode.Content[:idx],
+				mapNode.Content[idx+yamlMappingPairKeyValue:]...)
 
 			return
 		}

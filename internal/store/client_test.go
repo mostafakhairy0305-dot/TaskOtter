@@ -26,7 +26,8 @@ func TestResolveRefDefaultBranch(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := store.NewClientWithHTTP(context.Background(), "token", srv.Client()).WithBaseURL(srv.URL)
+	client := store.NewClientWithHTTP(context.Background(), "token", srv.Client()).
+		WithBaseURL(srv.URL)
 
 	ref, err := client.ResolveRef(context.Background(), "")
 	if err != nil {
@@ -57,7 +58,8 @@ func TestResolveMissingTag(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := store.NewClientWithHTTP(context.Background(), "token", srv.Client()).WithBaseURL(srv.URL)
+	client := store.NewClientWithHTTP(context.Background(), "token", srv.Client()).
+		WithBaseURL(srv.URL)
 
 	_, err := client.ResolveRef(context.Background(), "v9.9.9")
 	if err == nil {
@@ -99,7 +101,14 @@ func TestLocalSnapshotLoadsFixture(t *testing.T) {
 		t.Fatal("namespace directory must not be catalogued as a module")
 	}
 
-	if snap.ModuleDir("internal/skipfiles") != filepath.Join(root, "taskfiles", "internal", "skipfiles") {
+	if snap.ModuleDir(
+		"internal/skipfiles",
+	) != filepath.Join(
+		root,
+		"taskfiles",
+		"internal",
+		"skipfiles",
+	) {
 		t.Fatalf("unexpected module dir: %s", snap.ModuleDir("internal/skipfiles"))
 	}
 }

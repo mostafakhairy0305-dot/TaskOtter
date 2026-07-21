@@ -29,10 +29,12 @@ var (
 	errOriginHEADNotAvailable       = errors.New("origin HEAD not available")
 	errNoRemoteBranchAtOriginHEAD   = errors.New("no remote branch at origin HEAD commit")
 	errHEADBranchNotFound           = errors.New("HEAD branch not found in remote show output")
-	errDefaultBranchDetectionFailed = errors.New("detect default branch: none of the detection methods succeeded")
-	errBranchNotOwned               = errors.New("branch exists but is not owned by TaskOtter")
-	errInvalidGitRef                = errors.New("invalid git ref")
-	errInvalidStagePath             = errors.New("invalid stage path")
+	errDefaultBranchDetectionFailed = errors.New(
+		"detect default branch: none of the detection methods succeeded",
+	)
+	errBranchNotOwned   = errors.New("branch exists but is not owned by TaskOtter")
+	errInvalidGitRef    = errors.New("invalid git ref")
+	errInvalidStagePath = errors.New("invalid stage path")
 )
 
 const maxGitRefLen = 255
@@ -132,7 +134,10 @@ func (c *Client) DefaultBranch(ctx context.Context) (string, error) {
 }
 
 // HasUnrelatedChanges reports whether the working tree has changes outside allowed paths.
-func (c *Client) HasUnrelatedChanges(ctx context.Context, allowed map[string]struct{}) (bool, error) {
+func (c *Client) HasUnrelatedChanges(
+	ctx context.Context,
+	allowed map[string]struct{},
+) (bool, error) {
 	out, err := c.output(ctx, "status", "--porcelain")
 	if err != nil {
 		return false, err
@@ -307,7 +312,14 @@ func (c *Client) defaultBranchFromOriginHEADCommit(ctx context.Context) (string,
 
 	sha = strings.TrimSpace(sha)
 
-	refs, err := c.output(ctx, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin/", "--points-at", sha)
+	refs, err := c.output(
+		ctx,
+		"for-each-ref",
+		"--format=%(refname:short)",
+		"refs/remotes/origin/",
+		"--points-at",
+		sha,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -365,7 +377,12 @@ func (c *Client) run(ctx context.Context, args ...string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
+		return fmt.Errorf(
+			"git %s: %w: %s",
+			strings.Join(args, " "),
+			err,
+			strings.TrimSpace(stderr.String()),
+		)
 	}
 
 	return nil
@@ -382,7 +399,12 @@ func (c *Client) output(ctx context.Context, args ...string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
+		return "", fmt.Errorf(
+			"git %s: %w: %s",
+			strings.Join(args, " "),
+			err,
+			strings.TrimSpace(stderr.String()),
+		)
 	}
 
 	return stdout.String(), nil

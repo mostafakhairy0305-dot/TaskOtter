@@ -12,11 +12,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestBuildPlanCorruptLockFails(t *testing.T) {
-	t.Parallel()
-
-	workspace := t.TempDir()
-	writeRootTaskfile(t, workspace)
+// writeCorruptLock seeds workspace with metadata pointing at a lock file whose
+// contents are not valid YAML.
+func writeCorruptLock(t *testing.T, workspace string) {
+	t.Helper()
 
 	err := os.MkdirAll(filepath.Join(workspace, config.DefaultTargetFolder), 0o755)
 	if err != nil {
@@ -44,6 +43,15 @@ configuration_hash: abc
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestBuildPlanCorruptLockFails(t *testing.T) {
+	t.Parallel()
+
+	workspace := t.TempDir()
+	writeRootTaskfile(t, workspace)
+
+	writeCorruptLock(t, workspace)
 
 	cfg := testConfig(workspace, func(cfg *config.Config) {
 		cfg.Tasks = []string{"go"}
@@ -88,7 +96,11 @@ func TestBuildPlanCorruptMetadataFails(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = os.WriteFile(filepath.Join(workspace, ".taskotter/metadata.yml"), []byte("{{not yaml"), 0o644)
+	err = os.WriteFile(
+		filepath.Join(workspace, ".taskotter/metadata.yml"),
+		[]byte("{{not yaml"),
+		0o644,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +183,12 @@ func TestSHAOnlyLockChangeNotChanged(t *testing.T) {
 	snap := fixtureStore(t)
 	snap.Ref.ResolvedCommit = "different-sha-only"
 
-	resolutions, err := resolver.ResolveAll(cfg.Tasks, snap.Catalog, cfg.NodePackageManager, cfg.NodeVersionManager)
+	resolutions, err := resolver.ResolveAll(
+		cfg.Tasks,
+		snap.Catalog,
+		cfg.NodePackageManager,
+		cfg.NodeVersionManager,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

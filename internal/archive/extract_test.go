@@ -107,7 +107,12 @@ func buildTarGzWithMode(t *testing.T, name string, content []byte, mode int64) [
 func TestExtractStripsSetuidMode(t *testing.T) {
 	t.Parallel()
 
-	data := buildTarGzWithMode(t, "repo-main/taskfiles/go/Taskfile.yml", []byte("version: \"3\"\n"), 0o4755)
+	data := buildTarGzWithMode(
+		t,
+		"repo-main/taskfiles/go/Taskfile.yml",
+		[]byte("version: \"3\"\n"),
+		0o4755,
+	)
 	dest := t.TempDir()
 
 	_, err := archive.ExtractTarGz(bytes.NewReader(data), dest)

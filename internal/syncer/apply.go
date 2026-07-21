@@ -177,7 +177,8 @@ func removeObsolete(plan *Plan, workspace string) error {
 }
 
 func cleanupOldTarget(plan *Plan, workspace string) error {
-	if plan.OldLock == nil || plan.OldTargetFolder == "" || plan.OldTargetFolder == plan.Metadata.TargetFolder {
+	if plan.OldLock == nil || plan.OldTargetFolder == "" ||
+		plan.OldTargetFolder == plan.Metadata.TargetFolder {
 		return nil
 	}
 
@@ -194,7 +195,10 @@ func cleanupOldTarget(plan *Plan, workspace string) error {
 		}
 	}
 
-	oldLock := pathutil.WorkspacePath(workspace, pathutil.JoinRelative(plan.OldTargetFolder, ".taskotter-lock.yml"))
+	oldLock := pathutil.WorkspacePath(
+		workspace,
+		pathutil.JoinRelative(plan.OldTargetFolder, ".taskotter-lock.yml"),
+	)
 
 	err := os.Remove(oldLock)
 	if err != nil && !os.IsNotExist(err) {

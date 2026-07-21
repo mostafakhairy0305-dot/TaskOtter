@@ -91,7 +91,9 @@ func (e *tarExtractor) processHeader(header *tar.Header) error {
 	if isTarMetadataEntry(header.Typeflag) {
 		err := discardTarEntry(e.reader, header.Size)
 		if err != nil {
-			return &ExtractError{Message: fmt.Sprintf("skip tar metadata entry %q: %v", header.Name, err)}
+			return &ExtractError{
+				Message: fmt.Sprintf("skip tar metadata entry %q: %v", header.Name, err),
+			}
 		}
 
 		return nil
@@ -263,7 +265,9 @@ func writeRegularFile(path string, reader io.Reader, size int64, mode int64) err
 	if written > MaxFileBytes {
 		_ = file.Close()
 
-		return &ExtractError{Message: fmt.Sprintf("file %q exceeds size limit during copy", cleanPath)}
+		return &ExtractError{
+			Message: fmt.Sprintf("file %q exceeds size limit during copy", cleanPath),
+		}
 	}
 
 	if size >= 0 && written != size {

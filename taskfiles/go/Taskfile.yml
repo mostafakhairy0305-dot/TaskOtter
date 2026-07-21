@@ -194,6 +194,7 @@ tasks:
   _golangci-lint:lint:
     run: once
     internal: true
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - cmd: |
           skip_pattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
@@ -304,6 +305,7 @@ tasks:
   _golangci-lint:fmt:
     run: once
     internal: true
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - cmd: |
           skip_pattern='{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}}

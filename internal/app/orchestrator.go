@@ -121,7 +121,11 @@ func (o *Orchestrator) wireDefaults(ctx context.Context, cfg *config.Config) err
 	return nil
 }
 
-func (o *Orchestrator) runGitPreconditions(ctx context.Context, cfg *config.Config, plan *syncer.Plan) (string, error) {
+func (o *Orchestrator) runGitPreconditions(
+	ctx context.Context,
+	cfg *config.Config,
+	plan *syncer.Plan,
+) (string, error) {
 	err := o.GitOps.EnsureSafeDirectory(ctx)
 	if err != nil {
 		return "", fmt.Errorf("ensure safe directory: %w", err)
@@ -160,7 +164,11 @@ func (o *Orchestrator) runGitPreconditions(ctx context.Context, cfg *config.Conf
 	return defaultBranch, nil
 }
 
-func (o *Orchestrator) runGitSync(ctx context.Context, cfg *config.Config, plan *syncer.Plan) error {
+func (o *Orchestrator) runGitSync(
+	ctx context.Context,
+	cfg *config.Config,
+	plan *syncer.Plan,
+) error {
 	err := o.GitOps.CheckoutBranch(ctx, cfg.BranchName, true)
 	if err != nil {
 		return fmt.Errorf("checkout branch: %w", err)
@@ -224,7 +232,10 @@ func (o *Orchestrator) runPR(
 	return nil
 }
 
-func (o *Orchestrator) resolveStoreRef(ctx context.Context, cfg *config.Config) (store.RefInfo, error) {
+func (o *Orchestrator) resolveStoreRef(
+	ctx context.Context,
+	cfg *config.Config,
+) (store.RefInfo, error) {
 	ref, err := runGroup(o.Logger, "Resolve source version", func() (store.RefInfo, error) {
 		resolved, resolveErr := o.StoreClient.ResolveRef(ctx, cfg.StoreVersion)
 		if resolveErr != nil {
@@ -243,7 +254,10 @@ func (o *Orchestrator) resolveStoreRef(ctx context.Context, cfg *config.Config) 
 	return ref, nil
 }
 
-func (o *Orchestrator) downloadStoreSnapshot(ctx context.Context, ref store.RefInfo) (*store.Snapshot, error) {
+func (o *Orchestrator) downloadStoreSnapshot(
+	ctx context.Context,
+	ref store.RefInfo,
+) (*store.Snapshot, error) {
 	snapshot, err := runGroup(o.Logger, "Download store", func() (*store.Snapshot, error) {
 		snap, downloadErr := o.StoreClient.DownloadSnapshot(ctx, ref)
 		if downloadErr != nil {
@@ -265,23 +279,27 @@ func (o *Orchestrator) resolveModulesAndDeps(
 	cfg *config.Config,
 	snapshot *store.Snapshot,
 ) ([]resolver.Resolution, []string, error) {
-	resolutions, err := runGroup(o.Logger, "Resolve requested modules", func() ([]resolver.Resolution, error) {
-		resolved, resolveErr := resolver.ResolveAll(
-			cfg.Tasks,
-			snapshot.Catalog,
-			cfg.NodePackageManager,
-			cfg.NodeVersionManager,
-		)
-		if resolveErr != nil {
-			return nil, fmt.Errorf("resolve modules: %w", resolveErr)
-		}
+	resolutions, err := runGroup(
+		o.Logger,
+		"Resolve requested modules",
+		func() ([]resolver.Resolution, error) {
+			resolved, resolveErr := resolver.ResolveAll(
+				cfg.Tasks,
+				snapshot.Catalog,
+				cfg.NodePackageManager,
+				cfg.NodeVersionManager,
+			)
+			if resolveErr != nil {
+				return nil, fmt.Errorf("resolve modules: %w", resolveErr)
+			}
 
-		for _, res := range resolved {
-			o.Logger.Printf("%s -> %s", res.LogicalTask, res.SourceModule)
-		}
+			for _, res := range resolved {
+				o.Logger.Printf("%s -> %s", res.LogicalTask, res.SourceModule)
+			}
 
-		return resolved, nil
-	})
+			return resolved, nil
+		},
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("resolve requested modules: %w", err)
 	}
@@ -334,7 +352,12 @@ func (o *Orchestrator) buildSyncPlan(
 		}
 
 		o.Logger.Printf("Changed: %t", built.Changed)
-		o.Logger.Printf("Added: %d Updated: %d Removed: %d", len(built.Added), len(built.Updated), len(built.Removed))
+		o.Logger.Printf(
+			"Added: %d Updated: %d Removed: %d",
+			len(built.Added),
+			len(built.Updated),
+			len(built.Removed),
+		)
 
 		return built, nil
 	})

@@ -47,7 +47,12 @@ func ResolveTransitive(requested []string, deps map[string][]string) ([]string, 
 	return transitiveDependencies(requested, needed), nil
 }
 
-func visitModule(module string, stack []string, deps map[string][]string, needed map[string]struct{}) error {
+func visitModule(
+	module string,
+	stack []string,
+	deps map[string][]string,
+	needed map[string]struct{},
+) error {
 	if _, ok := deps[module]; !ok {
 		return fmt.Errorf("%w: %q", errModuleNotDefined, module)
 	}

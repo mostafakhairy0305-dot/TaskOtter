@@ -26,7 +26,11 @@ func runApplyPlan(t *testing.T, plan *syncer.Plan, syncInput syncer.SyncInput) e
 	return syncer.ApplyPlan(plan, syncInput)
 }
 
-func withCopyFileHook(t *testing.T, hook func(path string, entry syncer.FileEntry) error, run func()) {
+func withCopyFileHook(
+	t *testing.T,
+	hook func(path string, entry syncer.FileEntry) error,
+	run func(),
+) {
 	t.Helper()
 
 	applyPlanTestMu.Lock()

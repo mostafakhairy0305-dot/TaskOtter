@@ -89,7 +89,10 @@ func planRootTaskfile(
 		return nil, false, nil, nil
 	}
 
-	rootBytes, rootExisted, err := readRootTaskfile(syncInput.Config.Workspace, syncInput.Config.RootTaskfile)
+	rootBytes, rootExisted, err := readRootTaskfile(
+		syncInput.Config.Workspace,
+		syncInput.Config.RootTaskfile,
+	)
 	if err != nil {
 		return nil, false, nil, err
 	}
@@ -188,7 +191,9 @@ func finalizePlanDiff(
 	return plan, nil
 }
 
-func planManagedFiles(syncInput SyncInput, oldLock *LockFile) ([]ManagedFile, map[string]map[string]FileEntry, error) {
+// sortedModules merges the requested and dependency modules into a single
+// source-module-ordered slice so planning is deterministic.
+func sortedModules(syncInput SyncInput) []ModuleRecord {
 	allModules := make([]ModuleRecord, 0, len(syncInput.Requested)+len(syncInput.Dependencies))
 	for _, rec := range syncInput.Requested {
 		allModules = append(allModules, rec)
@@ -199,6 +204,14 @@ func planManagedFiles(syncInput SyncInput, oldLock *LockFile) ([]ManagedFile, ma
 		return allModules[i].SourceModule < allModules[j].SourceModule
 	})
 
+	return allModules
+}
+
+func planManagedFiles(
+	syncInput SyncInput,
+	oldLock *LockFile,
+) ([]ManagedFile, map[string]map[string]FileEntry, error) {
+	allModules := sortedModules(syncInput)
 	moduleContents := make(map[string]map[string]FileEntry)
 
 	var planned []ManagedFile
@@ -208,7 +221,9 @@ func planManagedFiles(syncInput SyncInput, oldLock *LockFile) ([]ManagedFile, ma
 
 		_, err := os.Stat(sourceDir)
 		if err != nil {
-			return nil, nil, &SyncError{Message: fmt.Sprintf("source module directory %q does not exist", mod.SourceModule)}
+			return nil, nil, &SyncError{
+				Message: fmt.Sprintf("source module directory %q does not exist", mod.SourceModule),
+			}
 		}
 
 		destDirRel := pathutil.JoinRelative(syncInput.Config.TargetFolder, mod.DestinationModule)
@@ -219,7 +234,11 @@ func planManagedFiles(syncInput SyncInput, oldLock *LockFile) ([]ManagedFile, ma
 			return nil, nil, err
 		}
 
-		contents, err := CollectModuleFiles(sourceDir, syncInput.Config.IncludesDoc, syncInput.SourceToDest)
+		contents, err := CollectModuleFiles(
+			sourceDir,
+			syncInput.Config.IncludesDoc,
+			syncInput.SourceToDest,
+		)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -260,7 +279,9 @@ func validateDestination(destDirAbs string, mod ModuleRecord, oldLock *LockFile)
 	}
 
 	if !info.IsDir() {
-		return &SyncError{Message: fmt.Sprintf("destination %q exists and is not a directory", mod.Path)}
+		return &SyncError{
+			Message: fmt.Sprintf("destination %q exists and is not a directory", mod.Path),
+		}
 	}
 
 	if oldLock == nil {

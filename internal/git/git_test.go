@@ -19,7 +19,11 @@ type mockGitOps struct {
 }
 
 func (mockGitOps *mockGitOps) EnsureSafeDirectory(context.Context) error { return nil }
-func (mockGitOps *mockGitOps) HasUnrelatedChanges(context.Context, map[string]struct{}) (bool, error) {
+
+func (mockGitOps *mockGitOps) HasUnrelatedChanges(
+	context.Context,
+	map[string]struct{},
+) (bool, error) {
 	return false, nil
 }
 func (mockGitOps *mockGitOps) CheckoutBranch(context.Context, string, bool) error { return nil }
@@ -179,7 +183,11 @@ func TestStageForceAddsGitignoredMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = os.WriteFile(filepath.Join(cloneDir, ".taskotter/metadata.yml"), []byte("target_folder: taskfiles\n"), 0o644)
+	err = os.WriteFile(
+		filepath.Join(cloneDir, ".taskotter/metadata.yml"),
+		[]byte("target_folder: taskfiles\n"),
+		0o644,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

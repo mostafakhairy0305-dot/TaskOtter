@@ -17,7 +17,10 @@ type localStore struct {
 	root string
 }
 
-func (localStore *localStore) ResolveRef(_ context.Context, requestedVersion string) (store.RefInfo, error) {
+func (localStore *localStore) ResolveRef(
+	_ context.Context,
+	requestedVersion string,
+) (store.RefInfo, error) {
 	return store.RefInfo{
 		Repository:       config.StoreRepository,
 		RequestedVersion: requestedVersion,
@@ -27,7 +30,10 @@ func (localStore *localStore) ResolveRef(_ context.Context, requestedVersion str
 	}, nil
 }
 
-func (localStore *localStore) DownloadSnapshot(_ context.Context, ref store.RefInfo) (*store.Snapshot, error) {
+func (localStore *localStore) DownloadSnapshot(
+	_ context.Context,
+	ref store.RefInfo,
+) (*store.Snapshot, error) {
 	return store.LocalSnapshot(localStore.root, ref)
 }
 
