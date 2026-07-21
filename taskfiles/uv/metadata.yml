@@ -1,0 +1,15 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: uv
+taskfile: Taskfile.yml
+exported_tasks:
+  - install
+  - install:undo
+  - pip:install
+  - python:install
+  - run
+  - tool:install
+  - tool:upgrade
+  - upgrade
+  - venv
+  - version

@@ -63,6 +63,9 @@ task hadolint:version
 | `DOCKERFILE` | `Dockerfile` | Path to the Dockerfile to lint                         |
 | `CONFIG`     | empty        | Path to a hadolint config file passed via `--config`   |
 | `EXTRA_ARGS` | empty        | Extra arguments appended when CLI_ARGS is not provided |
+| `HADOLINT_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

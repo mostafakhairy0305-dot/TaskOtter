@@ -1,0 +1,10 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: hadolint
+taskfile: Taskfile.yml
+exported_tasks:
+  - install
+  - install:undo
+  - lint
+  - upgrade
+  - version
