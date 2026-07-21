@@ -3,7 +3,7 @@ source:
   repository: mostafakhairy0305-dot/TaskOtter-store
   requested_version: ""
   source_ref: refs/heads/main
-  resolved_commit: e4859566f17d291766e1624c4ae5e02baca8e770
+  resolved_commit: 3bf06d64b83715b93878ea62aa03aceb4cf9abc8
   default_branch: main
 configuration:
   target_folder: taskfiles
@@ -45,6 +45,9 @@ resolved_modules:
       destination_module: zizmor
       path: taskfiles/zizmor
   dependencies:
+    - source_module: internal/skipfiles
+      destination_module: internal/skipfiles
+      path: taskfiles/internal/skipfiles
     - source_module: jq
       destination_module: jq
       path: taskfiles/jq
@@ -112,6 +115,11 @@ managed_files:
     source_path: taskfiles/hadolint/metadata.yml
     path: taskfiles/hadolint/metadata.yml
     sha256: cd854003f22ed831770a881567a6264402e640edebc45d62607983cea1f0ccb3
+  - source_module: internal/skipfiles
+    destination_module: internal/skipfiles
+    source_path: taskfiles/internal/skipfiles/Taskfile.yml
+    path: taskfiles/internal/skipfiles/Taskfile.yml
+    sha256: 02eaf23c4c7687ef7f4bf2e5c9b4194ce4519da90c35ee1dcdcc1c0c016ad938
   - source_module: jq
     destination_module: jq
     source_path: taskfiles/jq/README.md
