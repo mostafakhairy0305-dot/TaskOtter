@@ -27,36 +27,49 @@ func TestCollectModuleFilesSkipsTestsAndDocs(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("Taskfile.yml", "version: \"3\"\n")
-	write("README.md", "docs\n")
+	write(testTaskfileName, "version: \"3\"\n")
+	write(testReadmeName, "docs\n")
 	write("docs/guide.md", "guide\n")
 	write("go_test.go", "package go_test\n")
+	write("metadata.yml", "module: go\n")
+	write("docs/metadata.yml", "module: go\n")
 
 	withDocs, err := syncer.CollectModuleFiles(dir, true, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for _, path := range []string{"Taskfile.yml", "README.md", "docs/guide.md"} {
-		if _, ok := withDocs[path]; !ok {
-			t.Fatalf("expected %q in sync output", path)
-		}
-	}
-
-	if _, ok := withDocs["go_test.go"]; ok {
-		t.Fatal("test files should never be synced")
-	}
+	// The module's own metadata.yml describes it to the store; only a
+	// same-named file deeper in the module is ordinary content.
+	assertCollected(t, withDocs, map[string]bool{
+		"Taskfile.yml":      true,
+		"README.md":         true,
+		"docs/guide.md":     true,
+		"docs/metadata.yml": true,
+		"go_test.go":        false,
+		"metadata.yml":      false,
+	})
 
 	withoutDocs, err := syncer.CollectModuleFiles(dir, false, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, ok := withoutDocs["README.md"]; ok {
-		t.Fatal("README should be excluded when includes-doc=false")
-	}
+	assertCollected(t, withoutDocs, map[string]bool{
+		"Taskfile.yml":      true,
+		"README.md":         false,
+		"docs/guide.md":     false,
+		"docs/metadata.yml": false,
+	})
+}
 
-	if _, ok := withoutDocs["docs/guide.md"]; ok {
-		t.Fatal("docs/ should be excluded when includes-doc=false")
+func assertCollected(t *testing.T, contents map[string]syncer.FileEntry, want map[string]bool) {
+	t.Helper()
+
+	for path, wantSynced := range want {
+		_, ok := contents[path]
+		if ok != wantSynced {
+			t.Fatalf("collected %q = %t, want %t", path, ok, wantSynced)
+		}
 	}
 }

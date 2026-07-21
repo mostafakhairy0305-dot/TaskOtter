@@ -8,7 +8,11 @@ import (
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/syncer"
 )
 
-const testModuleEslint = "eslint"
+const (
+	testModuleEslint = "eslint"
+	testTaskfileName = "Taskfile.yml"
+	testReadmeName   = "README.md"
+)
 
 //nolint:gochecknoglobals // serializes applyPlan hook mutations across parallel tests
 var applyPlanTestMu sync.Mutex
@@ -45,7 +49,7 @@ func testConfig(workspace string, mutate func(*config.Config)) *config.Config {
 		FailOnChanges:      false,
 		StoreVersion:       "",
 		TargetFolder:       config.DefaultTargetFolder,
-		RootTaskfile:       "Taskfile.yml",
+		RootTaskfile:       testTaskfileName,
 		GitHubToken:        "",
 		Workspace:          workspace,
 		Repository:         "",

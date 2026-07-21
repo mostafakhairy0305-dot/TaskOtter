@@ -36,6 +36,26 @@ func TestIsTestPath(t *testing.T) {
 	}
 }
 
+func TestIsModuleMetadataPath(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{"metadata.yml", true},
+		{"docs/metadata.yml", false},
+		{"metadata.yaml", false},
+		{"Taskfile.yml", false},
+	}
+	for _, testCase := range cases {
+		got := pathutil.IsModuleMetadataPath(testCase.path)
+		if got != testCase.want {
+			t.Fatalf("IsModuleMetadataPath(%q) = %t, want %t", testCase.path, got, testCase.want)
+		}
+	}
+}
+
 func TestHasFolderPrefix(t *testing.T) {
 	t.Parallel()
 

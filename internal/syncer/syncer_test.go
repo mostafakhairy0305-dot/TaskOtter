@@ -45,7 +45,7 @@ tasks:
       - echo hello
 `)
 
-	err := os.WriteFile(filepath.Join(workspace, "Taskfile.yml"), content, 0o644)
+	err := os.WriteFile(filepath.Join(workspace, testTaskfileName), content, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestBuildPlanCreatesRootTaskfile(t *testing.T) {
 }
 
 func containsRootTaskfile(list []string) bool {
-	return slices.Contains(list, "Taskfile.yml")
+	return slices.Contains(list, testTaskfileName)
 }
 
 func TestUnmanagedDestinationConflict(t *testing.T) {
@@ -250,7 +250,7 @@ func TestIncludesDocFalseSkipsReadme(t *testing.T) {
 	}
 
 	for _, managed := range plan.ManagedFiles {
-		if filepath.Base(managed.Path) == "README.md" {
+		if filepath.Base(managed.Path) == testReadmeName {
 			t.Fatal("README should be excluded when includes-doc=false")
 		}
 	}

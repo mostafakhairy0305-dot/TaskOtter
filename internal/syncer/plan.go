@@ -329,7 +329,7 @@ func collectModuleFile(
 		return nil
 	}
 
-	if pathutil.IsTestPath(rel) {
+	if pathutil.IsTestPath(rel) || pathutil.IsModuleMetadataPath(rel) {
 		return nil
 	}
 

@@ -121,6 +121,11 @@ func assertNamespacedDependency(t *testing.T, workspace string) {
 		t.Fatalf("namespaced dependency not synced: %v", err)
 	}
 
+	_, err = os.Stat(filepath.Join(workspace, "taskfiles/go/metadata.yml"))
+	if !os.IsNotExist(err) {
+		t.Fatalf("module metadata should not be synced, stat returned: %v", err)
+	}
+
 	goData, err := os.ReadFile(filepath.Join(workspace, "taskfiles/go/Taskfile.yml"))
 	if err != nil {
 		t.Fatal(err)

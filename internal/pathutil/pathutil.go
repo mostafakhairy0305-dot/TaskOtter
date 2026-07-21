@@ -299,6 +299,13 @@ func IsDocPath(rel string) bool {
 	return strings.HasPrefix(rel, "docs/") || strings.Contains(rel, "/docs/")
 }
 
+// IsModuleMetadataPath reports whether rel is a store module's metadata.yml.
+// It describes the module to the store and is not consumed by TaskOtter or the
+// consumer repository, so it is never synced.
+func IsModuleMetadataPath(rel string) bool {
+	return NormalizeSlashes(rel) == "metadata.yml"
+}
+
 // IsTestPath reports whether rel is a test file skipped during sync.
 func IsTestPath(rel string) bool {
 	rel = NormalizeSlashes(rel)
