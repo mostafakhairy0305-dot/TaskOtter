@@ -24,7 +24,7 @@ linters:
     paths: [.*\.pb\.go]
     rules:
       - path: _test\.go
-        linters: [gosec, bodyclose, noctx, errcheck, wrapcheck, funlen]
+        linters: [gosec, bodyclose, noctx, errcheck, wrapcheck]
       - path: internal/config/.*_test\.go
         linters: [paralleltest]
 issues:
