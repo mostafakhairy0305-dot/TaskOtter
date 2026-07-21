@@ -2,8 +2,6 @@
 extends: default
 ignore: |
   taskfiles/
-  tests/fixtures/
-  .taskotter/staging/
 rules:
   document-start:
     level: error
