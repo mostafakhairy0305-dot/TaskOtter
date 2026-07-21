@@ -176,7 +176,17 @@ func TestSHAOnlyLockChangeNotChanged(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	syncInput2, err := app.PrepareSyncInput(cfg, snap, resolutions, nil)
+	sources := make([]string, 0, len(resolutions))
+	for _, res := range resolutions {
+		sources = append(sources, res.SourceModule)
+	}
+
+	depSources, err := dependencySources(t, sources, snap)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	syncInput2, err := app.PrepareSyncInput(cfg, snap, resolutions, depSources)
 	if err != nil {
 		t.Fatal(err)
 	}

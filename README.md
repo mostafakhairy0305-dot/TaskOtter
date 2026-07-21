@@ -12,7 +12,7 @@ Sync pull requests target the branch that invoked TaskOtter. For pull-request wo
 
 - Validates all inputs before modifying files
 - Resolves logical task names to store variants (`eslint` + `pnpm` + `fnm` → `eslint-pnpm-fnm`)
-- Recursively resolves dependencies from `.deps.yml`
+- Recursively resolves dependencies from `.deps.yml`, including namespaced support modules (`internal/skipfiles` → `taskfiles/internal/skipfiles`)
 - Supports latest default branch or a pinned store Git tag
 - Normalizes destination directories (`eslint-pnpm-fnm` → `taskfiles/eslint`)
 - Rewrites internal Taskfile dependency includes to normalized paths

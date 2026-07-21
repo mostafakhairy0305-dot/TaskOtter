@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/config"
@@ -86,5 +87,19 @@ func TestLocalSnapshotLoadsFixture(t *testing.T) {
 
 	if len(snap.Deps["eslint-pnpm-fnm"]) != 1 {
 		t.Fatalf("unexpected deps: %#v", snap.Deps["eslint-pnpm-fnm"])
+	}
+
+	// internal/ holds no files of its own, so it is a namespace whose children
+	// are catalogued under their full namespaced name.
+	if _, ok := snap.Catalog["internal/skipfiles"]; !ok {
+		t.Fatalf("expected namespaced module in catalog: %#v", snap.Catalog)
+	}
+
+	if _, ok := snap.Catalog["internal"]; ok {
+		t.Fatal("namespace directory must not be catalogued as a module")
+	}
+
+	if snap.ModuleDir("internal/skipfiles") != filepath.Join(root, "taskfiles", "internal", "skipfiles") {
+		t.Fatalf("unexpected module dir: %s", snap.ModuleDir("internal/skipfiles"))
 	}
 }

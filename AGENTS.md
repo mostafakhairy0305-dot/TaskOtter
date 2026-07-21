@@ -12,6 +12,7 @@
 - TaskOtter is a Docker-based GitHub Action (Go 1.26.5) in `mostafakhairy0305-dot/TaskOtter`; Marketplace display name is **TaskOtter Sync**; container entrypoint is `/taskotter`; `action.yml` requires `branding` (Feather icon + color).
 - TaskOtter syncs modules from `mostafakhairy0305-dot/TaskOtter-store` into consumer repos (default `taskfiles`); modules live under `taskfiles/<module>/` with transitive deps from `.deps.yml`; consumer CI needs checkout `fetch-depth: 0` and must not set `persist-credentials: false` on the TaskOtter job.
 - Destination folder names are normalized by stripping package-manager and version-manager suffixes (e.g. `eslint-pnpm-fnm` → `taskfiles/eslint`).
+- Store directories that contain only subdirectories are namespaces, so their children are modules with slashed names (`internal/skipfiles`); namespaces nest one level deep, namespaced modules keep the namespace segment in the destination path, and they can only be pulled in as dependencies because requested `tasks` reject `/`.
 - Managed sync state is tracked in `<target-folder>/.taskotter-lock.yml`; PRs use branch `taskotter/sync-<configuration-hash>`; existing destination dirs without a lock entry are rejected as not managed.
 - Sync skips `*_test.*` files; docs (`README.md`, `docs/`) are copied only when `includes-doc: true`; root `Taskfile.yml` includes merge each module's top-level `vars`.
 - The action `js` input (YAML: `runtime`, `package-manager`, `version-manager`) replaces separate node-package-manager inputs for Node task resolution.

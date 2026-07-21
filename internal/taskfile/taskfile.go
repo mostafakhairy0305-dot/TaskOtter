@@ -94,11 +94,8 @@ func rewriteIncludePath(path string, sourceToDest map[string]string) string {
 		return path
 	}
 
-	dir := strings.TrimSuffix(normalized, "/Taskfile.yml")
-	dir = strings.TrimPrefix(dir, "./")
-
-	dir = strings.TrimPrefix(dir, "../")
-	if dir == "" || strings.Contains(dir, "/") {
+	prefix, dir := splitRelativePrefix(strings.TrimSuffix(normalized, "/Taskfile.yml"))
+	if dir == "" {
 		return path
 	}
 
@@ -107,14 +104,38 @@ func rewriteIncludePath(path string, sourceToDest map[string]string) string {
 		return path
 	}
 
-	prefix := ""
-	if strings.HasPrefix(normalized, "../") {
-		prefix = "../"
-	} else if strings.HasPrefix(normalized, "./") {
-		prefix = "./"
+	return prefix + dest + "/Taskfile.yml"
+}
+
+// splitRelativePrefix separates the leading ./ or ../ segments from the module
+// directory. Namespaced modules such as internal/skipfiles keep their slash in
+// the returned directory so it can be matched against source module names, and
+// they sit one level deeper, so their siblings are reached through ../../.
+func splitRelativePrefix(dir string) (string, string) {
+	var prefix strings.Builder
+
+	if rest, ok := strings.CutPrefix(dir, "./"); ok {
+		prefix.WriteString("./")
+
+		dir = rest
 	}
 
-	return prefix + dest + "/Taskfile.yml"
+	for {
+		rest, ok := strings.CutPrefix(dir, "../")
+		if !ok {
+			break
+		}
+
+		prefix.WriteString("../")
+
+		dir = rest
+	}
+
+	if strings.Contains(dir, "..") {
+		return "", ""
+	}
+
+	return prefix.String(), dir
 }
 
 func findMappingValue(mapNode *yaml.Node, key string) *yaml.Node {

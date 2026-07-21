@@ -9,6 +9,10 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+
 vars:
   INSTALL_DIR_UNIX: "/usr/local"
   GO_ROOT_UNIX: "{{.INSTALL_DIR_UNIX}}/go"

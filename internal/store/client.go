@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -25,6 +26,10 @@ const (
 	storeRepo  = "TaskOtter-store"
 
 	httpClientTimeout = 60 * time.Second
+
+	// maxCatalogDepth caps namespace nesting under taskfiles/ so a module name
+	// never grows beyond one namespace segment (for example internal/skipfiles).
+	maxCatalogDepth = 1
 )
 
 var (
@@ -232,22 +237,71 @@ func (c *Client) apiURL(path string) string {
 }
 
 func loadCatalog(root string) (map[string]struct{}, error) {
-	taskfilesDir := filepath.Join(root, "taskfiles")
-
-	entries, err := os.ReadDir(taskfilesDir)
-	if err != nil {
-		return nil, fmt.Errorf("load module catalog: %w", err)
-	}
-
 	catalog := make(map[string]struct{})
 
-	for _, entry := range entries {
-		if entry.IsDir() {
-			catalog[entry.Name()] = struct{}{}
-		}
+	err := collectModules(filepath.Join(root, "taskfiles"), "", 0, catalog)
+	if err != nil {
+		return nil, err
 	}
 
 	return catalog, nil
+}
+
+// collectModules walks the store taskfiles tree and records module names. A
+// directory holding files is a module; a directory holding only subdirectories
+// is a namespace (for example internal/) whose children are modules such as
+// internal/skipfiles.
+func collectModules(dir, prefix string, depth int, catalog map[string]struct{}) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("load module catalog: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		name := path.Join(prefix, entry.Name())
+		child := filepath.Join(dir, entry.Name())
+
+		isNamespace, err := isNamespaceDir(child)
+		if err != nil {
+			return err
+		}
+
+		if !isNamespace || depth >= maxCatalogDepth {
+			catalog[name] = struct{}{}
+
+			continue
+		}
+
+		err = collectModules(child, name, depth+1, catalog)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func isNamespaceDir(dir string) (bool, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false, fmt.Errorf("load module catalog: %w", err)
+	}
+
+	if len(entries) == 0 {
+		return false, nil
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func loadDeps(root string, catalog map[string]struct{}) (map[string][]string, error) {

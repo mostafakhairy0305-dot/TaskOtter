@@ -86,14 +86,16 @@ includes: {}
 		t.Fatal("expected changes")
 	}
 
-	_, err = os.Stat(filepath.Join(workspace, "taskfiles/go/Taskfile.yml"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertAggregatorIncludes(t, workspace)
+	assertNamespacedDependency(t, workspace)
+}
 
-	// The aggregator Taskfile lands inside the target folder (default
-	// <target-folder>/Taskfile.yml) and references modules with folder-relative
-	// include paths rather than repeating the target folder prefix.
+// assertAggregatorIncludes checks that the aggregator Taskfile lands inside the
+// target folder (default <target-folder>/Taskfile.yml) and references modules
+// with folder-relative include paths rather than repeating the target folder.
+func assertAggregatorIncludes(t *testing.T, workspace string) {
+	t.Helper()
+
 	rootData, err := os.ReadFile(filepath.Join(workspace, "taskfiles/Taskfile.yml"))
 	if err != nil {
 		t.Fatalf("aggregator Taskfile not written to target folder: %v", err)
@@ -105,5 +107,26 @@ includes: {}
 
 	if strings.Contains(string(rootData), "taskfiles/go/Taskfile.yml") {
 		t.Fatalf("include should not repeat the target folder, got:\n%s", rootData)
+	}
+}
+
+// assertNamespacedDependency checks that a dependency such as
+// internal/skipfiles keeps its namespace segment on disk and stays reachable
+// from the module that includes it.
+func assertNamespacedDependency(t *testing.T, workspace string) {
+	t.Helper()
+
+	_, err := os.Stat(filepath.Join(workspace, "taskfiles/internal/skipfiles/Taskfile.yml"))
+	if err != nil {
+		t.Fatalf("namespaced dependency not synced: %v", err)
+	}
+
+	goData, err := os.ReadFile(filepath.Join(workspace, "taskfiles/go/Taskfile.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(goData), "taskfile: ../internal/skipfiles/Taskfile.yml") {
+		t.Fatalf("expected namespaced include to survive rewrite, got:\n%s", goData)
 	}
 }

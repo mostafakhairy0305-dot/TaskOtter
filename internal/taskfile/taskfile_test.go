@@ -44,6 +44,44 @@ tasks:
 	}
 }
 
+func TestRewriteIncludesNamespacedModule(t *testing.T) {
+	t.Parallel()
+
+	input := []byte(`version: "3"
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+  bun:
+    taskfile: ../bun-latest/Taskfile.yml
+  sibling:
+    taskfile: ../../jq/Taskfile.yml
+  unmapped:
+    taskfile: ../unknown/Taskfile.yml
+`)
+	sourceToDest := map[string]string{
+		"internal/skipfiles": "internal/skipfiles",
+		"bun-latest":         "bun",
+		"jq":                 "jq",
+	}
+
+	out, err := taskfile.RewriteIncludes(input, sourceToDest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	text := string(out)
+	for _, want := range []string{
+		"../internal/skipfiles/Taskfile.yml",
+		"../bun/Taskfile.yml",
+		"../../jq/Taskfile.yml",
+		"../unknown/Taskfile.yml",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in rewritten Taskfile: %s", want, text)
+		}
+	}
+}
+
 func TestUpdateRootTaskfileFromTemplate(t *testing.T) {
 	t.Parallel()
 
