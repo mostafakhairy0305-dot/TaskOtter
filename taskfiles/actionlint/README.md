@@ -12,8 +12,8 @@ This module provides tasks to lint, install, and manage [actionlint](https://git
 
 ```sh
 task -t taskfiles/actionlint/Taskfile.yml lint
-task -t taskfiles/actionlint/Taskfile.yml lint TARGETS=.github/workflows/ci.yml
-task -t taskfiles/actionlint/Taskfile.yml lint EXTRA_ARGS="-ignore 'label.*'"
+task -t taskfiles/actionlint/Taskfile.yml lint ACTIONLINT_TARGETS=.github/workflows/ci.yml
+task -t taskfiles/actionlint/Taskfile.yml lint ACTIONLINT_EXTRA_ARGS="-ignore 'label.*'"
 ```
 
 ### Included in your Taskfile
@@ -23,8 +23,8 @@ includes:
   actionlint:
     taskfile: taskfiles/actionlint/Taskfile.yml
     vars:
-      TARGETS_OVERRIDE: "{{.TARGETS}}"
-      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+      ACTIONLINT_TARGETS_OVERRIDE: "{{.ACTIONLINT_TARGETS}}"
+      ACTIONLINT_EXTRA_ARGS_OVERRIDE: "{{.ACTIONLINT_EXTRA_ARGS}}"
 ```
 
 Then run:
@@ -49,8 +49,11 @@ task actionlint:install
 | Variable | Default | Description |
 |---|---|---|
 | `ACTIONLINT_VERSION` | `"1.7.12"` | Pinned version used for Linux binary download |
-| `EXTRA_ARGS` | `""` | Additional flags passed to `actionlint` (e.g. `-ignore`, `-format`) |
-| `TARGETS` | `""` | Paths to workflow files or directories; empty = auto-discover `.github/workflows` |
+| `ACTIONLINT_EXTRA_ARGS` | `""` | Additional flags passed to `actionlint` (e.g. `-ignore`, `-format`) |
+| `ACTIONLINT_TARGETS` | `""` | Paths to workflow files; empty = auto-discover `.github/workflows` |
+| `ACTIONLINT_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

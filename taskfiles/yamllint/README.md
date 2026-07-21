@@ -56,6 +56,9 @@ task yamllint:ci
 | `EXTRA_ARGS` | _(empty)_ | Extra flags forwarded to `yamllint` or `yamlfix` |
 | `YAMLLINT_VERSION` | _(empty)_ | Pin a specific yamllint release for `install`/`upgrade`; empty installs latest |
 | `YAMLFIX_VERSION` | _(empty)_ | Pin a specific yamlfix release for `lint:fix`; empty installs latest |
+| `YAMLLINT_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

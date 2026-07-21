@@ -12,9 +12,9 @@ This module provides tasks to audit, install, and manage [zizmor](https://github
 
 ```sh
 task -t taskfiles/zizmor/Taskfile.yml lint
-task -t taskfiles/zizmor/Taskfile.yml lint TARGETS=.github/workflows/main.yml
-task -t taskfiles/zizmor/Taskfile.yml lint EXTRA_ARGS="--min-severity high"
-task -t taskfiles/zizmor/Taskfile.yml lint EXTRA_ARGS="--gh-token $GITHUB_TOKEN"
+task -t taskfiles/zizmor/Taskfile.yml lint ZIZMOR_TARGETS=.github/workflows/main.yml
+task -t taskfiles/zizmor/Taskfile.yml lint ZIZMOR_EXTRA_ARGS="--min-severity high"
+task -t taskfiles/zizmor/Taskfile.yml lint ZIZMOR_EXTRA_ARGS="--gh-token $GITHUB_TOKEN"
 ```
 
 ### Included in your Taskfile
@@ -24,8 +24,8 @@ includes:
   zizmor:
     taskfile: taskfiles/zizmor/Taskfile.yml
     vars:
-      TARGETS_OVERRIDE: "{{.TARGETS}}"
-      EXTRA_ARGS_OVERRIDE: "{{.EXTRA_ARGS}}"
+      ZIZMOR_TARGETS_OVERRIDE: "{{.ZIZMOR_TARGETS}}"
+      ZIZMOR_EXTRA_ARGS_OVERRIDE: "{{.ZIZMOR_EXTRA_ARGS}}"
 ```
 
 Then run:
@@ -39,7 +39,7 @@ task zizmor:install
 
 | Task | Description |
 |---|---|
-| `lint` | Audit GitHub Actions workflows for security issues (TARGETS=path) |
+| `lint` | Audit GitHub Actions workflows for security issues |
 | `install` | Install zizmor on the current operating system |
 | `install:undo` | Remove zizmor from the current operating system |
 | `upgrade` | Upgrade zizmor to the pinned ZIZMOR_VERSION |
@@ -49,9 +49,12 @@ task zizmor:install
 
 | Variable | Default | Description |
 |---|---|---|
-| `EXTRA_ARGS` | `"--offline"` | Additional flags passed to `zizmor` (e.g. `--format`, `--min-severity`, `--gh-token`) |
-| `TARGETS` | `".github"` | Path to audit; scans workflows and composite actions under `.github` |
+| `ZIZMOR_EXTRA_ARGS` | `"--offline"` | Additional flags passed to `zizmor` (e.g. `--format`, `--min-severity`, `--gh-token`) |
+| `ZIZMOR_TARGETS` | `".github"` | Path to audit; scans workflows and composite actions under `.github` |
 | `ZIZMOR_VERSION` | `"1.25.2"` | Pinned release version for binary download |
+| `ZIZMOR_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 
