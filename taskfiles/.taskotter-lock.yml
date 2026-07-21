@@ -65,11 +65,6 @@ managed_files:
     source_path: taskfiles/actionlint/Taskfile.yml
     path: taskfiles/actionlint/Taskfile.yml
     sha256: d63e5f2ffe97b706c6ab8618388d4e889a920e8e9ef670bb998766f4fe8a8d32
-  - source_module: actionlint
-    destination_module: actionlint
-    source_path: taskfiles/actionlint/metadata.yml
-    path: taskfiles/actionlint/metadata.yml
-    sha256: 560b81053e15e624da06825d97a0c1d48ac95179c1fc793d6be58de104adaffc
   - source_module: gh
     destination_module: gh
     source_path: taskfiles/gh/README.md
@@ -80,11 +75,6 @@ managed_files:
     source_path: taskfiles/gh/Taskfile.yml
     path: taskfiles/gh/Taskfile.yml
     sha256: 4fd080d4d7ad5d64ff6373130d1cd8dbf76935c4c37ac55764ac2084dfff09b5
-  - source_module: gh
-    destination_module: gh
-    source_path: taskfiles/gh/metadata.yml
-    path: taskfiles/gh/metadata.yml
-    sha256: b9228a0cc75e53d484098ba923de3ddb49f732df34c1ea09648ef9de79f7504c
   - source_module: go
     destination_module: go
     source_path: taskfiles/go/README.md
@@ -95,11 +85,6 @@ managed_files:
     source_path: taskfiles/go/Taskfile.yml
     path: taskfiles/go/Taskfile.yml
     sha256: a4a5cced548099115792b6d0650e1d7e2a2c6e3cc1cbffdc76851eb79e69e570
-  - source_module: go
-    destination_module: go
-    source_path: taskfiles/go/metadata.yml
-    path: taskfiles/go/metadata.yml
-    sha256: dc0309a933c3bc76d9546aaf6c73670395b536efdf61d1efbb81ae71b7fb19f8
   - source_module: hadolint
     destination_module: hadolint
     source_path: taskfiles/hadolint/README.md
@@ -110,11 +95,6 @@ managed_files:
     source_path: taskfiles/hadolint/Taskfile.yml
     path: taskfiles/hadolint/Taskfile.yml
     sha256: 7d7a37f3b6e4f3b6542c01f9979cbdd82309d9ae30238ebfaa1a1f97ee19b95b
-  - source_module: hadolint
-    destination_module: hadolint
-    source_path: taskfiles/hadolint/metadata.yml
-    path: taskfiles/hadolint/metadata.yml
-    sha256: cd854003f22ed831770a881567a6264402e640edebc45d62607983cea1f0ccb3
   - source_module: internal/skipfiles
     destination_module: internal/skipfiles
     source_path: taskfiles/internal/skipfiles/Taskfile.yml
@@ -130,11 +110,6 @@ managed_files:
     source_path: taskfiles/jq/Taskfile.yml
     path: taskfiles/jq/Taskfile.yml
     sha256: d60b4f9d9390e36fb71a8b784b33974923253381a5b3599e85d5eea7b1cb3709
-  - source_module: jq
-    destination_module: jq
-    source_path: taskfiles/jq/metadata.yml
-    path: taskfiles/jq/metadata.yml
-    sha256: 85b6be5a85c61f39ad769a752c2905069ce80f9923c6819751e184c57b6c361c
   - source_module: uv
     destination_module: uv
     source_path: taskfiles/uv/README.md
@@ -145,11 +120,6 @@ managed_files:
     source_path: taskfiles/uv/Taskfile.yml
     path: taskfiles/uv/Taskfile.yml
     sha256: 79553eff015f6c1e96856504e0bb430a50c41a815d4133a1b60db233f4b034b7
-  - source_module: uv
-    destination_module: uv
-    source_path: taskfiles/uv/metadata.yml
-    path: taskfiles/uv/metadata.yml
-    sha256: aeb930619614aea506be86b4d9c8a484a782305075fa3e1560d427a8c52baaa0
   - source_module: yamllint
     destination_module: yamllint
     source_path: taskfiles/yamllint/README.md
@@ -160,11 +130,6 @@ managed_files:
     source_path: taskfiles/yamllint/Taskfile.yml
     path: taskfiles/yamllint/Taskfile.yml
     sha256: 49c3c7d834fc3bb239e69825491deb66bd7e05e890fc27d1f0a03e1b0ca065f3
-  - source_module: yamllint
-    destination_module: yamllint
-    source_path: taskfiles/yamllint/metadata.yml
-    path: taskfiles/yamllint/metadata.yml
-    sha256: cb08993bb74e9360d2359a22d255e8971fe80146a6f9d3e2d1e3564bc5bfb2b9
   - source_module: zizmor
     destination_module: zizmor
     source_path: taskfiles/zizmor/README.md
@@ -175,8 +140,3 @@ managed_files:
     source_path: taskfiles/zizmor/Taskfile.yml
     path: taskfiles/zizmor/Taskfile.yml
     sha256: 4f2cf135b817c8e5a6b1f6a8bb03fc88434546edccde033e2840910dfb53fd01
-  - source_module: zizmor
-    destination_module: zizmor
-    source_path: taskfiles/zizmor/metadata.yml
-    path: taskfiles/zizmor/metadata.yml
-    sha256: 64a716471bd099548b7ee922a656e5160e63065939101447d62ed99814e61548
