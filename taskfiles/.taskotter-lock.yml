@@ -3,7 +3,7 @@ source:
   repository: mostafakhairy0305-dot/TaskOtter-store
   requested_version: ""
   source_ref: refs/heads/main
-  resolved_commit: 3bf06d64b83715b93878ea62aa03aceb4cf9abc8
+  resolved_commit: 28025c708d1d1badc13e6a11e6432a565298ea7b
   default_branch: main
 configuration:
   target_folder: taskfiles
@@ -84,7 +84,7 @@ managed_files:
     destination_module: go
     source_path: taskfiles/go/Taskfile.yml
     path: taskfiles/go/Taskfile.yml
-    sha256: a4a5cced548099115792b6d0650e1d7e2a2c6e3cc1cbffdc76851eb79e69e570
+    sha256: e348522154239e57d386f8c876a09cd6cd6002e1a00f12c7a947b20b48c3085c
   - source_module: hadolint
     destination_module: hadolint
     source_path: taskfiles/hadolint/README.md
@@ -129,7 +129,7 @@ managed_files:
     destination_module: yamllint
     source_path: taskfiles/yamllint/Taskfile.yml
     path: taskfiles/yamllint/Taskfile.yml
-    sha256: 49c3c7d834fc3bb239e69825491deb66bd7e05e890fc27d1f0a03e1b0ca065f3
+    sha256: 347661dc34273cfd0b37104daeaf18a21f13a04e8a8ff965fc70e497c3123ee7
   - source_module: zizmor
     destination_module: zizmor
     source_path: taskfiles/zizmor/README.md
