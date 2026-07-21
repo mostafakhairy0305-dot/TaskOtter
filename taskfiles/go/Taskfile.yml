@@ -236,21 +236,26 @@ tasks:
       - cmd: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $skipPattern = '{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}'; if (-not $skipPattern) {
 
+
             & '{{.GLOBAL_GO_BIN}}/golangci-lint' run
               {{.GO_LINT_FIX}}
               {{.GO_LINT_ARGS}};
             exit $LASTEXITCODE;
           }; $configPath = (& '{{.GLOBAL_GO_BIN}}/golangci-lint' config path 2>$null | Select-Object -First 1); if ($LASTEXITCODE -ne 0) {
 
+
             $configPath = '';
           }; if ($configPath) {
+
 
             $configPath = (Resolve-Path -LiteralPath $configPath).Path;
             $configDir = Split-Path -Parent $configPath;
           } else {
 
+
             $configDir = (Get-Location).Path;
           }; $overlayConfig = Join-Path $configDir ('.golangci-taskotter.' + [Guid]::NewGuid().ToString('N') + '.yml'); try {
+
 
             & task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
               prepare-overlay
@@ -267,6 +272,7 @@ tasks:
               --config $overlayConfig;
             $exitCode = $LASTEXITCODE;
           } finally {
+
 
             Remove-Item -LiteralPath $overlayConfig -Force -ErrorAction SilentlyContinue;
           }; exit $exitCode"
@@ -357,12 +363,14 @@ tasks:
       - cmd: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $skipPattern = '{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.GO_FMT_SKIP_PATTERN}}{{end}}'; if (-not $skipPattern) {
 
+
             & '{{.GLOBAL_GO_BIN}}/golangci-lint' fmt
               {{.GO_FMT_DIFF}}
               {{.GO_FMT_FORMATTER_FLAGS}}
               {{.GO_FMT_TARGETS}};
             exit $LASTEXITCODE;
           }; $targets = '{{.GO_FMT_TARGETS}}' -split '\s+'; $files = @($targets | ForEach-Object {
+
 
             $target = $_ -replace '\.\.\.$', '';
             $target = $target.TrimEnd('/').TrimEnd('\');
@@ -374,6 +382,7 @@ tasks:
             };
           } | Where-Object {
 
+
             $path = [string](Resolve-Path -LiteralPath $_.FullName -Relative);
             $path = $path.Replace('\', '/');
             $path -notlike '*/node_modules/*' -and
@@ -381,9 +390,11 @@ tasks:
               $path -notlike '*/vendor/*';
           } | ForEach-Object FullName |
 
+
             task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
               filter ('SKIPFILES_PATTERN=' + $skipPattern));
           if ($files.Count -gt 0) {
+
 
             & '{{.GLOBAL_GO_BIN}}/golangci-lint' fmt
               {{.GO_FMT_DIFF}}
@@ -466,16 +477,19 @@ tasks:
       - cmd: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command "$skipPattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}'; if (-not $skipPattern) {
 
+
             & '{{.GO_ANALYSIS_BINARY}}' {{.GO_ANALYSIS_PREFIX_ARGS}}
               {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}};
             exit $LASTEXITCODE
           }; $targets=@(); $options=@(); foreach ($argument in '{{.CLI_ARGS}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+
 
             if ($argument -eq '.' -or $argument.Contains('/') -or
                 $argument.Contains('\') -or $argument.EndsWith('...')) {
               $targets += $argument
             } else { $options += $argument }
           }; if (-not $targets) { $targets=@('./...') }; $env:SKIPFILES_PATTERN = $skipPattern; $env:SKIPFILES_GO_TARGETS = $targets -join ' '; $packages=@(& task --silent
+
 
             --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
             go-packages);
@@ -625,6 +639,7 @@ tasks:
       - cmd: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $coverageLog=[System.IO.Path]::GetTempFileName(); try {
 
+
             & go test -covermode atomic -coverprofile '{{.GO_COVER_OUT}}'
               {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
               *> $coverageLog;
@@ -672,6 +687,7 @@ tasks:
                 Write-Output ($percentage + '%  ' + $_.Package);
               };
           } finally {
+
 
             Remove-Item -LiteralPath $coverageLog -Force -ErrorAction SilentlyContinue;
           }"
@@ -888,6 +904,7 @@ tasks:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 }; $requested = '{{.GO_VERSION}}'; if (Get-Command go -ErrorAction SilentlyContinue) {
 
+
           if ([string]::IsNullOrWhiteSpace($requested)
           -or ((& go version).Split()[2] -eq $requested)) { exit 0 }
         }; exit 1"
@@ -906,8 +923,10 @@ tasks:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $version = '{{.GO_VERSION}}'; if ([string]::IsNullOrWhiteSpace($version)) {
 
+
           $version = ((Invoke-RestMethod -Uri '{{.GO_VERSION_URL}}') -split \"`n\")[0].Trim()
         }; $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }; $package = \"$version.windows-$arch.msi\"; $workDir = Join-Path $env:TEMP ('taskotter-go-' + [Guid]::NewGuid().ToString('N')); New-Item -ItemType Directory -Path $workDir | Out-Null; try {
+
 
           $installer = Join-Path $workDir $package;
           Write-Host \"Downloading $package...\";
@@ -921,6 +940,7 @@ tasks:
           Start-Process msiexec.exe -Wait
             -ArgumentList @('/i', $installer, '/quiet', '/norestart');
         } finally {
+
 
           Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction SilentlyContinue;
         }"
