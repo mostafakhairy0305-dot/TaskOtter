@@ -1,7 +1,7 @@
-FROM golang:1.26.5-alpine3.22 AS builder
+FROM golang:1.26.5-alpine3.24 AS builder
 
 WORKDIR /src
-RUN apk add --no-cache ca-certificates=20260611-r0 git=2.49.1-r0
+RUN apk add --no-cache ca-certificates=20260611-r0 git=2.54.0-r0
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -9,9 +9,9 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /taskotter ./cmd/taskotter-sync
 
-FROM alpine:3.22
+FROM alpine:3.24
 
-RUN apk add --no-cache ca-certificates=20260611-r0 git=2.49.1-r0
+RUN apk add --no-cache ca-certificates=20260611-r0 git=2.54.0-r0
 
 COPY --from=builder /taskotter /taskotter
 
